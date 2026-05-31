@@ -222,6 +222,7 @@ input{font-family:inherit;outline:none}
 .parent-chars{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
 .parent-char{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.9em;font-weight:bold;color:#fff;transition:transform .15s}
 .parent-char .pc-score{font-size:.5em;font-weight:normal;opacity:.85}
+.batch-active{background:#7F77DD!important;color:#fff!important}
 
 /* ===== 词语和例句区域 ===== */
 .learn-word-area{display:flex;align-items:center;gap:8px;margin-top:4px;flex-shrink:0}
@@ -509,6 +510,17 @@ input{font-family:inherit;outline:none}
       <span style="font-size:.85em;color:#666">单日目标：</span>
       <input type="number" id="dailyGoalInput" min="1" max="30" style="width:60px;padding:4px 8px;border:1px solid #ddd;border-radius:8px;font-size:.9em;text-align:center">
       <button class="pwd-change-btn" onclick="setDailyGoal()" style="margin-left:6px">设置</button>
+    </div>
+    <div style="text-align:center;margin:8px 0">
+      <button class="pwd-change-btn" onclick="toggleBatchMode()">☑ 批量操作</button>
+    </div>
+    <div id="batchActions" style="display:none;text-align:center;margin:6px 0">
+      <button class="debug-btn" onclick="batchSelectAll()" style="font-size:.8em">全选</button>
+      <button class="debug-btn" onclick="batchDeselectAll()" style="font-size:.8em">取消</button>
+      <button class="debug-btn" onclick="batchSetScore(100)" style="font-size:.8em;background:#2ecc71;color:#fff">✓ 掌握</button>
+      <button class="debug-btn" onclick="batchSetScore(0)" style="font-size:.8em;background:#e74c3c;color:#fff">✕ 未学</button>
+      <button class="debug-btn" onclick="batchCustomScore()" style="font-size:.8em">自定义</button>
+      <div id="batchCount" style="font-size:.7em;color:#999;margin-top:4px">已选 0 个字</div>
     </div>
     <div class="parent-legend">
       <div class="lg-item"><div class="lg-dot" style="background:#2ecc71"></div>掌握(≥80)</div>
@@ -2754,6 +2766,8 @@ function verifyParentPwd(){
 }
 
 function hideParentPanel(){
+  if(_batchMode){_batchMode=false;_selectedChars={};}
+  document.getElementById('batchActions').style.display='none';
   document.getElementById('parentOverlay').classList.remove('visible');
 }
 
@@ -2791,6 +2805,65 @@ function doChangePwd(){
   alert('密码已更新');
 }
 
+// 批量操作
+var _batchMode = false;
+var _selectedChars = {};
+
+function toggleBatchMode(){
+  _batchMode = !_batchMode;
+  if(!_batchMode) _selectedChars = {};
+  document.getElementById('batchActions').style.display = _batchMode ? '' : 'none';
+  var btn=document.querySelector('[onclick="toggleBatchMode()"]');
+  if(btn)btn.className='pwd-change-btn'+(_batchMode?' batch-active':'');
+  renderParentPanel();
+}
+function toggleSelectChar(ch){
+  if(_selectedChars[ch]){delete _selectedChars[ch]}
+  else{_selectedChars[ch]=true}
+  renderParentPanel();
+}
+function batchSelectAll(){
+  ALL_CHARS.forEach(function(ch){_selectedChars[ch]=true});
+  renderParentPanel();
+}
+function batchDeselectAll(){
+  _selectedChars={};
+  renderParentPanel();
+}
+function batchSetScore(score){
+  var p=getProfile();if(!p)return;
+  var count=Object.keys(_selectedChars).length;
+  if(count===0){alert('请先选择要操作的字');return}
+  if(!confirm('将'+count+'个字的得分设为'+(score===100?'掌握(100分)':score===0?'未学(删除记录)':score+'分')+'，确定吗？'))return;
+  Object.keys(_selectedChars).forEach(function(ch){
+    if(score===0){
+      delete p.learnedChars[ch];
+    }else{
+      if(!p.learnedChars)p.learnedChars={};
+      if(!p.learnedChars[ch]){
+        p.learnedChars[ch]={score:score,learnedDate:today(),practiceScore:score};
+      }else{
+        p.learnedChars[ch].score=score;
+      }
+    }
+  });
+  _selectedChars={};
+  p.todayState=null;
+  initTodayState(p);
+  updateDashboard();
+  saveProfiles();
+  renderParentPanel();
+  alert('已更新'+count+'个字！');
+}
+function batchCustomScore(){
+  var p=getProfile();if(!p)return;
+  var count=Object.keys(_selectedChars).length;
+  if(count===0){alert('请先选择要操作的字');return}
+  var score=parseInt(prompt('请输入分数（0-100）：\n0=删除记录，100=掌握'));
+  if(isNaN(score)||score<0||score>100){alert('请输入0-100的数字');return}
+  batchSetScore(score);
+}
+
 function renderParentPanel(){
   const p=getProfile();
   if(!p){document.getElementById('parentOverlay').classList.remove('visible');return}
@@ -2813,8 +2886,13 @@ function renderParentPanel(){
     else if(rec.score>=80){bg='#2ecc71';st=rec.score}
     else if(rec.score>=60){bg='#f9a825';st=rec.score}
     else{bg='#e74c3c';st=rec.score}
-    return `<div class="parent-char" style="background:${bg}" onclick="editCharStatus('${ch}')">${ch}${st?`<span class="pc-score">${st}</span>`:''}</div>`;
+    const sel=_batchMode&&_selectedChars[ch]?' outline:3px solid #333;outline-offset:-2px;transform:scale(1.08)':'';
+    const click=_batchMode?`toggleSelectChar('${ch}')`:`editCharStatus('${ch}')`;
+    return `<div class="parent-char" style="background:${bg}${sel}" onclick="${click}">${ch}${st?`<span class="pc-score">${st}</span>`:''}</div>`;
   }).join('');
+  // 更新批量选择计数
+  var bc=document.getElementById('batchCount');
+  if(bc)bc.textContent='已选 '+Object.keys(_selectedChars).length+' 个字';
   // 更新调试按钮状态
   var dbgBtn=document.getElementById('debugToggle');
   if(dbgBtn){
@@ -2824,6 +2902,11 @@ function renderParentPanel(){
   // 加载单日目标
   var goalInput=document.getElementById('dailyGoalInput');
   if(goalInput)goalInput.value=p.dailyGoal||10;
+  // 确保批量操作区域状态正确
+  var ba=document.getElementById('batchActions');
+  if(ba)ba.style.display=_batchMode?'':'none';
+  var bb=document.querySelector('[onclick="toggleBatchMode()"]');
+  if(bb)bb.className='pwd-change-btn'+(_batchMode?' batch-active':'');
 }
 function setDailyGoal(){
   var p=getProfile();if(!p)return;
