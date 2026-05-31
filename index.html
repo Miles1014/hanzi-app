@@ -2830,10 +2830,12 @@ function setDailyGoal(){
   var v=parseInt(document.getElementById('dailyGoalInput').value);
   if(isNaN(v)||v<1||v>30){alert('请输入1-30之间的数字');return;}
   p.dailyGoal=v;
-  // 重置今日状态以应用新目标
+  // 重置并立即重新生成今日学习列表
   p.todayState=null;
+  initTodayState(p);
+  updateDashboard();
   saveProfiles();
-  alert('每日目标已设为'+v+'字，明天生效');
+  alert('每日目标已设为'+v+'字');
   renderParentPanel();
 }
 
