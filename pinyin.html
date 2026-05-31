@@ -44,7 +44,8 @@ input{font-family:inherit;outline:none}
 
 #addProfilePage{background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);align-items:center;justify-content:center;padding:40px 20px}
 #addProfilePage h2{font-size:1.8em;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,0.12);margin-bottom:16px}
-#addProfilePage input{padding:12px 18px;border:none;border-radius:12px;font-size:1.05em;width:260px;text-align:center;margin-bottom:6px}
+#addProfilePage input,#addProfilePage [contenteditable]{padding:12px 18px;border:none;border-radius:12px;font-size:1.05em;width:260px;text-align:center;margin-bottom:6px;background:#fff;outline:none}
+#addProfilePage [contenteditable]:empty:before{content:attr(data-placeholder);color:#999}
 #addProfilePage .input-hint{font-size:.8em;color:rgba(255,255,255,0.65);margin-bottom:16px}
 .age-selector{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;justify-content:center}
 .age-btn{padding:8px 18px;border-radius:20px;background:rgba(255,255,255,0.15);color:#fff;font-size:.95em;font-weight:bold;transition:all .2s;border:2px solid transparent}
@@ -300,7 +301,7 @@ input{font-family:inherit;outline:none}
 <!-- ===== 添加小朋友 ===== -->
 <div id="addProfilePage" class="page">
   <h2>添加新小朋友</h2>
-  <input type="text" id="newProfileName" placeholder="输入名字" maxlength="8" onkeydown="if(event.key==='Enter')addNewProfile()" ontouchstart="this.focus()">
+  <div contenteditable="true" id="newProfileName" data-placeholder="输入名字" role="textbox" aria-multiline="false" onkeydown="if(event.key==='Enter'){event.preventDefault();addNewProfile()}"></div>
   <div class="input-hint">几岁啦？</div>
   <div class="age-selector" id="ageSelector"></div>
   <div class="btn-group">
@@ -1118,7 +1119,7 @@ function deleteProfile(name) {
 
 function showAddProfile() {
   showPage('addProfilePage');
-  document.getElementById('newProfileName').value='';
+  document.getElementById('newProfileName').textContent='';
   renderAgeSelector();
   setTimeout(function(){document.getElementById('newProfileName').focus();},300);
 }
@@ -1128,7 +1129,7 @@ function renderAgeSelector() {
 function selectAge(a) { selectedAge=a; document.querySelectorAll('.age-btn').forEach(function(b){b.classList.toggle('selected',b.textContent==a+'岁')}); }
 
 function addNewProfile() {
-  var name = document.getElementById('newProfileName').value.trim();
+  var name = document.getElementById('newProfileName').textContent.trim();
   if (!name) { alert('请输入名字'); return; }
   if (profiles.find(function(p){return p.name===name})) { alert('这个名字已存在'); return; }
   profiles.push({name:name, initial:name.charAt(0).toUpperCase(), color:PROFILE_COLORS[profiles.length%PROFILE_COLORS.length], age:selectedAge, learnedChars:{}, todayState:null, dailyRecords:[], pinyin:{currentGroup:0,groupStats:{},dailyRecords:[],todayState:null,weakSounds:{}}});
