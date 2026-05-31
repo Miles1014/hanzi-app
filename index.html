@@ -46,10 +46,6 @@ input{font-family:inherit;outline:none}
 #addProfilePage input,#addProfilePage [contenteditable]{padding:12px 18px;border:none;border-radius:12px;font-size:1.05em;width:260px;text-align:center;margin-bottom:6px;background:#fff;outline:none}
 #addProfilePage [contenteditable]:empty:before{content:attr(data-placeholder);color:#999}
 #addProfilePage .input-hint{font-size:.8em;color:rgba(255,255,255,0.65);margin-bottom:16px}
-.age-selector{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;justify-content:center}
-.age-btn{padding:8px 18px;border-radius:20px;background:rgba(255,255,255,0.15);color:#fff;font-size:.95em;font-weight:bold;transition:all .2s;border:2px solid transparent}
-.age-btn:hover{background:rgba(255,255,255,0.25)}
-.age-btn.selected{background:#fff;color:#a18cd1;border-color:#fff}
 .btn-group{display:flex;gap:12px}
 .btn-primary{background:#fff;color:#a18cd1;padding:10px 32px;border-radius:12px;font-size:1em;font-weight:bold;transition:all .2s}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,0.15)}
@@ -63,7 +59,6 @@ input{font-family:inherit;outline:none}
 .dash-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1em;font-weight:bold;color:#fff;flex-shrink:0}
 .dash-user-info{font-size:.85em}
 .dash-user-info .name{font-weight:bold;color:#333;font-size:1.1em}
-.dash-user-info .age{color:#999}
 .dash-cal-btn{width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;font-size:1.1em;transition:all .2s;border:none}
 .dash-cal-btn:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.12)}
 .dash-date{text-align:center;margin-bottom:20px;flex-shrink:0}
@@ -334,8 +329,6 @@ input{font-family:inherit;outline:none}
 <div id="addProfilePage" class="page">
   <h2>添加新小朋友</h2>
   <div contenteditable="true" id="newProfileName" data-placeholder="输入名字" role="textbox" aria-multiline="false" onkeydown="if(event.key==='Enter'){event.preventDefault();addNewProfile()}"></div>
-  <div class="input-hint">几岁啦？</div>
-  <div class="age-selector" id="ageSelector"></div>
   <div class="btn-group">
     <button class="btn-primary" onclick="addNewProfile()">确认添加</button>
     <button class="btn-secondary" onclick="showProfilePage()">返回</button>
@@ -349,7 +342,6 @@ input{font-family:inherit;outline:none}
       <div class="dash-avatar" id="dashAvatar">M</div>
       <div class="dash-user-info">
         <div class="name" id="dashName">小朋友</div>
-        <div class="age" id="dashAge">6岁 切换</div>
       </div>
     </div>
     <div style="display:flex;gap:6px">
@@ -563,7 +555,6 @@ function practiceCanvasSize(){ return canvasSize(320); }
 function quizCanvasSize(){ return canvasSize(300); }
 const PROFILE_COLORS = ['#a18cd1','#e74c3c','#2ecc71','#f9a825','#9b59b6','#1abc9c','#e67e22','#3498db'];
 var debugMode=false; // 调试模式：取消学习和汉字限制
-const AGE_OPTIONS = [4,5,6,7,8,9,10,11,12];
 
 // =============================================
 // 词语和例句数据
@@ -1849,7 +1840,7 @@ function getCharWordSentence(ch) {
   };
 }
 
-function getDailyCount(age) {
+function getDailyCount() {
   if(debugMode)return ALL_CHARS.length;
   // 检查当前用户是否有自定义目标
   const p=getProfile();
@@ -1874,7 +1865,6 @@ function loadProfiles() {
         currentUser=p.currentUser||null;
         // 确保每个 profile 有必要的字段
         profiles.forEach(prof=>{
-          if(typeof prof.age!=='number')prof.age=6;
           if(!prof.learnedChars)prof.learnedChars={};
           if(!prof.dailyRecords)prof.dailyRecords=[];
           if(prof.todayState&&prof.todayState.date!==today())prof.todayState=null;
@@ -1997,20 +1987,11 @@ function deleteProfile(name){
 function showAddProfile(){
   showPage('addProfilePage');
   document.getElementById('newProfileName').textContent='';
-  renderAgeSelector();
   // iOS Safari 需要延迟一下才能弹出键盘
   setTimeout(function(){
     document.getElementById('newProfileName').focus();
   },300);
 }
-
-function renderAgeSelector(){
-  const sel=document.getElementById('ageSelector');
-  sel.innerHTML=AGE_OPTIONS.map(a=>`<button class="age-btn${a===6?' selected':''}" onclick="selectAge(${a})">${a}岁</button>`).join('');
-}
-
-let selectedAge=6;
-function selectAge(a){selectedAge=a;document.querySelectorAll('.age-btn').forEach(b=>b.classList.toggle('selected',b.textContent==a+'岁'))}
 
 function addNewProfile(){
   const name=document.getElementById('newProfileName').textContent.trim();
@@ -2018,7 +1999,7 @@ function addNewProfile(){
   if(profiles.find(p=>p.name===name)){alert('这个名字已存在');return}
   profiles.push({
     name,initial:name.charAt(0).toUpperCase(),color:PROFILE_COLORS[profiles.length%PROFILE_COLORS.length],
-    age:selectedAge,learnedChars:{},todayState:null,dailyRecords:[]
+    learnedChars:{},todayState:null,dailyRecords:[]
   });
   currentUser=name;saveProfiles();enterDashboard();
 }
@@ -2033,7 +2014,6 @@ function enterDashboard(){
   document.getElementById('dashAvatar').textContent=p.initial;
   document.getElementById('dashAvatar').style.background=p.color;
   document.getElementById('dashName').textContent=p.name;
-  document.getElementById('dashAge').textContent=p.age+'岁';
   document.getElementById('dateStr').textContent=getDateStr(new Date());
 
   // 初始化今日状态
@@ -2061,7 +2041,7 @@ function enterDashboard(){
 
 function initTodayState(p){
   const d=today();
-  const expectedCount=getDailyCount(p.age);
+  const expectedCount=getDailyCount();
   // 如果今日状态已存在且字数匹配，则跳过
   if(p.todayState&&p.todayState.date===d&&p.todayState.studyList&&p.todayState.studyList.length===expectedCount)return;
   // 生成今日学习列表
@@ -2072,7 +2052,7 @@ function initTodayState(p){
 
 function generateStudyList(p){
   const learned=p.learnedChars||{};
-  const count=getDailyCount(p.age);
+  const count=getDailyCount();
   // 调试模式：返回全部汉字
   if(debugMode)return ALL_CHARS.slice(0,count);
   // weak字（score<60）
@@ -2822,7 +2802,7 @@ function renderParentPanel(){
   ui.innerHTML=`
     <div class="pu-avatar" style="background:${p.color}">${p.initial}</div>
     <div>
-      <div class="pu-name">${p.name}（${p.age}岁）</div>
+      <div class="pu-name">${p.name}</div>
       <div class="pu-stats">已学 ${learnedCount}/${total} 个字 · 需复习 ${weakCount} 个</div>
     </div>`;
   const grid=document.getElementById('parentChars');

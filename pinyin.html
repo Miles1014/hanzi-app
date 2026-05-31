@@ -298,8 +298,6 @@ input{font-family:inherit;outline:none}
 <div id="addProfilePage" class="page">
   <h2>添加新小朋友</h2>
   <div contenteditable="true" id="newProfileName" data-placeholder="输入名字" role="textbox" aria-multiline="false" onkeydown="if(event.key==='Enter'){event.preventDefault();addNewProfile()}"></div>
-  <div class="input-hint">几岁啦？</div>
-  <div class="age-selector" id="ageSelector"></div>
   <div class="btn-group">
     <button class="btn-primary" onclick="addNewProfile()">确认添加</button>
     <button class="btn-secondary" onclick="showProfilePage()">返回</button>
@@ -311,10 +309,9 @@ input{font-family:inherit;outline:none}
   <div class="dash-header">
     <div class="dash-user" onclick="switchUser()">
       <div class="dash-avatar" id="dashAvatar">M</div>
-      <div class="dash-user-info">
-        <div class="name" id="dashName">小朋友</div>
-        <div class="age" id="dashAge">6岁 切换</div>
-      </div>
+        <div class="dash-user-info">
+          <div class="name" id="dashName">小朋友</div>
+        </div>
     </div>
     <div style="display:flex;gap:6px">
       <button class="dash-cal-btn" onclick="toggleParentPanel()" title="家长控制">👤</button>
@@ -1006,8 +1003,6 @@ var CHAR_PY_MAP = {"一":"yi1","丁":"ding1","七":"qi1","万":"wan4","三":"san
 // =============================================
 var profiles = [], currentUser = null;
 var PROFILE_COLORS = ['#4facfe','#e74c3c','#2ecc71','#f9a825','#9b59b6','#1abc9c','#e67e22','#3498db'];
-var AGE_OPTIONS = [4,5,6,7,8,9,10,11,12];
-var selectedAge = 6;
 var dailyCount = 8, examCount = 15;
 var DAILY_NEED = 3, EXAM_PASS = 80;
 var debugMode = false;
@@ -1119,16 +1114,12 @@ function showAddProfile() {
   renderAgeSelector();
   setTimeout(function(){document.getElementById('newProfileName').focus();},300);
 }
-function renderAgeSelector() {
-  document.getElementById('ageSelector').innerHTML = AGE_OPTIONS.map(function(a){return '<button class="age-btn'+(a===6?' selected':'')+'" onclick="selectAge('+a+')">'+a+'岁</button>'}).join('');
-}
-function selectAge(a) { selectedAge=a; document.querySelectorAll('.age-btn').forEach(function(b){b.classList.toggle('selected',b.textContent==a+'岁')}); }
 
 function addNewProfile() {
   var name = document.getElementById('newProfileName').textContent.trim();
   if (!name) { alert('请输入名字'); return; }
   if (profiles.find(function(p){return p.name===name})) { alert('这个名字已存在'); return; }
-  profiles.push({name:name, initial:name.charAt(0).toUpperCase(), color:PROFILE_COLORS[profiles.length%PROFILE_COLORS.length], age:selectedAge, learnedChars:{}, todayState:null, dailyRecords:[], pinyin:{currentGroup:0,groupStats:{},dailyRecords:[],todayState:null,weakSounds:{}}});
+  profiles.push({name:name, initial:name.charAt(0).toUpperCase(), color:PROFILE_COLORS[profiles.length%PROFILE_COLORS.length], learnedChars:{}, todayState:null, dailyRecords:[], pinyin:{currentGroup:0,groupStats:{},dailyRecords:[],todayState:null,weakSounds:{}}});
   currentUser=name; saveProfiles(); enterDashboard();
 }
 
@@ -1148,7 +1139,6 @@ function enterDashboard() {
   document.getElementById('dashAvatar').textContent = p.initial;
   document.getElementById('dashAvatar').style.background = p.color;
   document.getElementById('dashName').textContent = p.name;
-  document.getElementById('dashAge').textContent = p.age+'岁';
   document.getElementById('dateStr').textContent = getDateStr(new Date());
   updateDashboard(); renderGroupTags();
 }
@@ -1740,7 +1730,7 @@ function renderParentPanel() {
     var sel=document.getElementById('groupSelect');
     if(sel)sel.innerHTML=PINYIN_GROUPS.map(function(g,i){return '<option value="'+i+'"'+(i===py.currentGroup?' selected':'')+'>'+g.label+' '+g.name+'</option>'}).join('');
   }
-  document.getElementById('parentUserInfo').innerHTML='<div class="pu-avatar" style="background:'+p.color+'">'+p.initial+'</div><div><div class="pu-name">'+p.name+'（'+p.age+'岁）</div><div class="pu-stats">累计测验 '+total+' 次 · 平均 '+avg+' 分 · 通过 '+passed+'/'+PINYIN_GROUPS.length+' 组</div></div>';
+  document.getElementById('parentUserInfo').innerHTML='<div class="pu-avatar" style="background:'+p.color+'">'+p.initial+'</div><div><div class="pu-name">'+p.name+'</div><div class="pu-stats">累计测验 '+total+' 次 · 平均 '+avg+' 分 · 通过 '+passed+'/'+PINYIN_GROUPS.length+' 组</div></div>';
   var gs=py.groupStats||{};
   document.getElementById('groupReportGrid').innerHTML = PINYIN_GROUPS.map(function(group,idx){
     var s=gs[String(idx)], bg, txt;
