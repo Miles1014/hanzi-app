@@ -2305,14 +2305,24 @@ var _recMatchCount=0;
 
 function _createRecognizer(){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR)return;
+  if(!SR){
+    document.getElementById('quizReadResult').textContent='此浏览器不支持语音识别';
+    document.getElementById('quizReadResult').style.color='#e74c3c';
+    return;
+  }
   if(_activeRec){try{_activeRec.onresult=null}catch(e){}try{_activeRec.abort()}catch(e){}}
   _activeRec=new SR();
   _activeRec.lang='zh-CN';
-  _activeRec.continuous=true;
+  _activeRec.continuous=false;
   _activeRec.interimResults=true;
   _activeRec.maxAlternatives=8;
   _recMatchCount=0;
+  _activeRec.onerror=function(e){
+    var hint=document.getElementById('quizReadHint');
+    hint.textContent='语音识别出错 ('+e.error+')，试试点跳过';
+    hint.style.color='#e74c3c';
+    document.getElementById('quizMicBtn').classList.remove('listening');
+  };
   _activeRec.onresult=function(e){
     var ra=document.getElementById('quizReadArea');
     if(ra.style.display==='none')return;
@@ -2353,8 +2363,6 @@ function startQuiz(){
   const p=getProfile();if(!p)return;
   quizCharIndex=0;
   showPage('quizPage');
-  _createRecognizer();
-  try{_activeRec.start()}catch(e){}
   renderQuizChar();
 }
 
@@ -2470,11 +2478,11 @@ function startQuizReading(){
   result.style.color='';
   btn.classList.add('listening');
   hint.textContent='正在听，大声读出来！';
+  hint.style.color='';
   readingAttempts=0;
-  if(_recMatchCount>=4){
-    _createRecognizer();
-    try{_activeRec.start()}catch(e){}
-  }
+  // 每次点麦克风都重建 recognizer，确保从用户手势启动，不被 iOS 静默掐掉
+  _createRecognizer();
+  try{_activeRec.start()}catch(e){}
 }
 
 function skipQuizReading(){
