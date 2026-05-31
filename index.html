@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>每日汉字打卡</title>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.0/dist/hanzi-writer.min.js"></script>
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="每日汉字打卡">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden}
@@ -2894,10 +2890,7 @@ if(currentUser&&getProfile()){
 }else{
   showPage('welcomePage');
 }
-// 注册 Service Worker（PWA 离线支持）
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(function(){});
-}
+
 </script>
 </body>
 </html>
