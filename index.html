@@ -416,6 +416,7 @@ input{font-family:inherit;outline:none}
 <!-- ===== 测验页 ===== -->
 <div id="quizPage" class="page">
   <div class="quiz-header">
+    <button class="learn-back" onclick="goToDashboard()">←</button>
     <h3>📝 今日小测验</h3>
     <span class="quiz-progress" id="quizProgress">1/5</span>
   </div>
@@ -512,6 +513,11 @@ input{font-family:inherit;outline:none}
     <div class="parent-user" id="parentUserInfo"></div>
     <div style="text-align:center;margin:8px 0">
       <button class="pwd-change-btn" onclick="showChangePwd()">更改密码</button>
+    </div>
+    <div style="text-align:center;margin:8px 0">
+      <span style="font-size:.85em;color:#666">单日目标：</span>
+      <input type="number" id="dailyGoalInput" min="1" max="30" style="width:60px;padding:4px 8px;border:1px solid #ddd;border-radius:8px;font-size:.9em;text-align:center">
+      <button class="pwd-change-btn" onclick="setDailyGoal()" style="margin-left:6px">设置</button>
     </div>
     <div class="parent-legend">
       <div class="lg-item"><div class="lg-dot" style="background:#2ecc71"></div>掌握(≥80)</div>
@@ -1846,6 +1852,9 @@ function getCharWordSentence(ch) {
 
 function getDailyCount(age) {
   if(debugMode)return ALL_CHARS.length;
+  // 检查当前用户是否有自定义目标
+  const p=getProfile();
+  if(p&&p.dailyGoal)return p.dailyGoal;
   return 10;
 }
 
@@ -2833,6 +2842,20 @@ function renderParentPanel(){
     dbgBtn.textContent=debugMode?'🔧 调试模式：开':'🔧 调试模式：关';
     dbgBtn.className='debug-btn'+(debugMode?' on':'');
   }
+  // 加载单日目标
+  var goalInput=document.getElementById('dailyGoalInput');
+  if(goalInput)goalInput.value=p.dailyGoal||10;
+}
+function setDailyGoal(){
+  var p=getProfile();if(!p)return;
+  var v=parseInt(document.getElementById('dailyGoalInput').value);
+  if(isNaN(v)||v<1||v>30){alert('请输入1-30之间的数字');return;}
+  p.dailyGoal=v;
+  // 重置今日状态以应用新目标
+  p.todayState=null;
+  saveProfiles();
+  alert('每日目标已设为'+v+'字，明天生效');
+  renderParentPanel();
 }
 
 function editCharStatus(ch){
