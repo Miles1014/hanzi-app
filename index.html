@@ -2886,7 +2886,7 @@ function renderParentPanel(){
     else if(rec.score>=80){bg='#2ecc71';st=rec.score}
     else if(rec.score>=60){bg='#f9a825';st=rec.score}
     else{bg='#e74c3c';st=rec.score}
-    const sel=_batchMode&&_selectedChars[ch]?' outline:3px solid #333;outline-offset:-2px;transform:scale(1.08)':'';
+    const sel=_batchMode&&_selectedChars[ch]?';box-shadow:inset 0 0 0 3px #333':'';
     const click=_batchMode?`toggleSelectChar('${ch}')`:`editCharStatus('${ch}')`;
     return `<div class="parent-char" style="background:${bg}${sel}" onclick="${click}">${ch}${st?`<span class="pc-score">${st}</span>`:''}</div>`;
   }).join('');
