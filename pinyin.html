@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="拼音小测验">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#e8f4f8;color:#333;min-height:100vh;overflow:hidden}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#e8f4f8;color:#333;position:fixed;width:100%;height:100%;overflow:hidden}
 button{cursor:pointer;font-family:inherit;border:none;outline:none;-webkit-tap-highlight-color:transparent}
 input{font-family:inherit;outline:none}
 
@@ -1115,7 +1115,12 @@ function deleteProfile(name) {
   if (!currentUser) showPage('welcomePage');
 }
 
-function showAddProfile() { showPage('addProfilePage'); document.getElementById('newProfileName').value=''; renderAgeSelector(); }
+function showAddProfile() {
+  showPage('addProfilePage');
+  document.getElementById('newProfileName').value='';
+  renderAgeSelector();
+  setTimeout(function(){document.getElementById('newProfileName').focus();},300);
+}
 function renderAgeSelector() {
   document.getElementById('ageSelector').innerHTML = AGE_OPTIONS.map(function(a){return '<button class="age-btn'+(a===6?' selected':'')+'" onclick="selectAge('+a+')">'+a+'岁</button>'}).join('');
 }
