@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>拼音小测验</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="拼音小测验">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#e8f4f8;color:#333;min-height:100vh;overflow:hidden}
+button{cursor:pointer;font-family:inherit;border:none;outline:none;-webkit-tap-highlight-color:transparent}
+input{font-family:inherit;outline:none}
+
+.page{display:none;width:100vw;height:100vh;position:fixed;top:0;left:0}
+.page.visible{display:flex;flex-direction:column}
+
+/* ===== 欢迎页 ===== */
+#welcomePage{background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);align-items:center;justify-content:center;text-align:center;padding:40px 20px}
+#welcomePage h1{font-size:3em;color:#fff;text-shadow:0 3px 15px rgba(0,0,0,0.12);margin-bottom:6px}
+#welcomePage p{font-size:1.1em;color:rgba(255,255,255,0.85);margin-bottom:30px}
+.welcome-btn{background:#fff;color:#4facfe;padding:14px 48px;border-radius:50px;font-size:1.2em;font-weight:bold;box-shadow:0 4px 20px rgba(0,0,0,0.1);transition:transform .2s}
+.welcome-btn:hover{transform:translateY(-3px)scale(1.02)}
+.welcome-bg{font-size:4.5em;opacity:.06;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;user-select:none;letter-spacing:.15em;white-space:nowrap}
+
+/* ===== 选小朋友 / 添加 ===== */
+#profilePage{background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);align-items:center;justify-content:center;padding:40px 20px}
+#profilePage h2{font-size:1.8em;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,0.12);margin-bottom:20px}
+.profile-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:420px}
+.profile-card{width:110px;padding:14px 10px;border-radius:20px;background:rgba(255,255,255,0.2);backdrop-filter:blur(4px);text-align:center;cursor:pointer;transition:all .25s;border:2px solid transparent}
+.profile-card:hover{background:rgba(255,255,255,0.35);transform:translateY(-4px)}
+.profile-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:1.5em;font-weight:bold;color:#fff;border:3px solid rgba(255,255,255,0.5);position:relative}
+.profile-del{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:rgba(231,76,60,0.85);color:#fff;font-size:.55em;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;line-height:1;border:2px solid rgba(255,255,255,0.6)}
+.profile-del:hover{transform:scale(1.2)}
+.profile-name{font-size:1em;font-weight:bold;color:#fff}
+.profile-stats{font-size:.75em;color:rgba(255,255,255,0.75);margin-top:2px}
+.add-profile-btn{width:110px;padding:14px 10px;border-radius:20px;background:rgba(255,255,255,0.12);backdrop-filter:blur(4px);text-align:center;cursor:pointer;transition:all .25s;border:2px dashed rgba(255,255,255,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.add-profile-btn:hover{background:rgba(255,255,255,0.25);transform:translateY(-4px)}
+.add-profile-btn .plus-icon{font-size:2em;color:rgba(255,255,255,0.8);line-height:1}
+.add-profile-btn .add-label{font-size:.85em;color:rgba(255,255,255,0.7)}
+
+#addProfilePage{background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);align-items:center;justify-content:center;padding:40px 20px}
+#addProfilePage h2{font-size:1.8em;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,0.12);margin-bottom:16px}
+#addProfilePage input{padding:12px 18px;border:none;border-radius:12px;font-size:1.05em;width:260px;text-align:center;margin-bottom:6px}
+#addProfilePage .input-hint{font-size:.8em;color:rgba(255,255,255,0.65);margin-bottom:16px}
+.age-selector{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;justify-content:center}
+.age-btn{padding:8px 18px;border-radius:20px;background:rgba(255,255,255,0.15);color:#fff;font-size:.95em;font-weight:bold;transition:all .2s;border:2px solid transparent}
+.age-btn:hover{background:rgba(255,255,255,0.25)}
+.age-btn.selected{background:#fff;color:#4facfe;border-color:#fff}
+.btn-group{display:flex;gap:12px}
+.btn-primary{background:#fff;color:#4facfe;padding:10px 32px;border-radius:12px;font-size:1em;font-weight:bold;transition:all .2s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,0.15)}
+.btn-secondary{background:transparent;color:#fff;padding:10px 32px;border-radius:12px;font-size:1em;border:2px solid rgba(255,255,255,0.5);transition:all .2s}
+.btn-secondary:hover{background:rgba(255,255,255,0.15)}
+
+/* ===== 首页 ===== */
+#dashboardPage{background:linear-gradient(180deg,#e8f4f8 0%,#f0fdf4 100%);align-items:center;padding:20px}
+.dash-header{width:100%;max-width:500px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-shrink:0}
+.dash-user{display:flex;align-items:center;gap:10px;cursor:pointer}
+.dash-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1em;font-weight:bold;color:#fff;flex-shrink:0}
+.dash-user-info{font-size:.85em}
+.dash-user-info .name{font-weight:bold;color:#333;font-size:1.1em}
+.dash-user-info .age{color:#999}
+.dash-cal-btn{width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;font-size:1.1em;transition:all .2s}
+.dash-cal-btn:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.12)}
+.dash-date{text-align:center;margin-bottom:20px;flex-shrink:0}
+.dash-date .date-str{font-size:1.1em;font-weight:bold;color:#555}
+.dash-date .date-sub{font-size:.8em;color:#999;margin-top:2px}
+
+.task-cards{width:100%;max-width:420px;display:flex;flex-direction:column;gap:14px;flex:1;justify-content:center;padding:10px 0}
+.task-card{background:#fff;border-radius:24px;padding:20px 24px;box-shadow:0 4px 20px rgba(0,0,0,0.06);cursor:pointer;transition:all .25s;border:3px solid transparent;position:relative;overflow:hidden}
+.task-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,0.1)}
+.task-card:active{transform:scale(.98)}
+.task-card .card-icon{font-size:2.2em;margin-bottom:4px}
+.task-card .card-title{font-size:1.2em;font-weight:bold;color:#333;margin-bottom:2px}
+.task-card .card-desc{font-size:.85em;color:#999}
+.task-card .card-progress{height:6px;background:#e8e8e8;border-radius:3px;margin-top:10px;overflow:hidden}
+.task-card .card-progress-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.task-card .card-status{font-size:.8em;color:#999;margin-top:6px;text-align:right}
+.task-card.disabled{opacity:.5;cursor:default;pointer-events:none}
+.task-card.daily-card{border-color:#4facfe}
+.task-card.daily-card .card-progress-fill{background:linear-gradient(90deg,#4facfe,#00f2fe)}
+.task-card.exam-card{border-color:#f9a825}
+.task-card.exam-card .card-progress-fill{background:linear-gradient(90deg,#f9a825,#ffcc02)}
+.task-card .lock-badge{position:absolute;top:12px;right:14px;font-size:.8em;color:#ccc}
+
+/* 声母组状态标签 */
+.group-tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;justify-content:center}
+.group-tag{font-size:.72em;padding:3px 8px;border-radius:10px;background:#f0f0f0;color:#999;white-space:nowrap}
+.group-tag.passed{background:#d4edda;color:#2e7d32}
+.group-tag.current{background:#e3f2fd;color:#1565c0;font-weight:bold}
+.group-tag.locked{background:#f5f5f5;color:#bbb}
+
+/* ===== 测验页 ===== */
+#testPage{background:#fff}
+.test-header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;flex-shrink:0;border-bottom:1px solid #f0f0f0}
+.test-back{width:36px;height:36px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:1.1em;transition:background .2s}
+.test-back:hover{background:#e8e8e8}
+.test-progress{font-size:.85em;color:#999;font-weight:bold}
+.test-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 20px;gap:16px;overflow-y:auto}
+
+/* 题目标题 */
+.test-question-label{font-size:.9em;color:#aaa;text-align:center}
+
+/* 音频播放按钮 */
+.audio-play-btn{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;font-size:1.8em;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;box-shadow:0 4px 15px rgba(79,172,254,0.3)}
+.audio-play-btn:active{transform:scale(.92)}
+.audio-play-btn.playing{animation:audio-pulse .6s infinite alternate;box-shadow:0 0 24px rgba(79,172,254,0.5)}
+.audio-play-btn.played{background:#e0e0e0;box-shadow:none}
+@keyframes audio-pulse{from{transform:scale(1)}to{transform:scale(1.1)}}
+
+.audio-hint{font-size:.8em;color:#aaa;margin-top:2px}
+
+/* 调试按钮 */
+.debug-btn{padding:6px 18px;border-radius:20px;font-size:.8em;cursor:pointer;border:none;background:#f0f0f0;color:#888;transition:all .2s}
+.debug-btn.on{background:#ff9800;color:#fff}
+.debug-btn:hover{opacity:.85}
+
+/* 拼音选项 */
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:360px}
+.option-btn{padding:16px 12px;border-radius:16px;background:#f5f7fa;font-size:1.4em;font-weight:bold;color:#333;text-align:center;transition:all .2s;min-height:56px;display:flex;align-items:center;justify-content:center;border:2px solid transparent}
+.option-btn:active{transform:scale(.95)}
+.option-btn.correct{background:#d4edda;border-color:#2ecc71;color:#2e7d32}
+.option-btn.wrong{background:#fde8e8;border-color:#e74c3c;color:#c0392b}
+.option-btn.disabled{pointer-events:none}
+
+/* 声母选项 */
+.initial-options{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.initial-btn{width:72px;height:72px;border-radius:50%;background:#f5f7fa;font-size:2em;font-weight:bold;color:#555;display:flex;align-items:center;justify-content:center;transition:all .2s;border:2px solid transparent}
+.initial-btn:active{transform:scale(.9)}
+.initial-btn.correct{background:#d4edda;border-color:#2ecc71;color:#2e7d32}
+.initial-btn.wrong{background:#fde8e8;border-color:#e74c3c;color:#c0392b}
+.initial-btn.disabled{pointer-events:none}
+
+/* 声调选项 */
+.tone-options{display:flex;gap:12px;justify-content:center}
+.tone-btn{width:68px;height:80px;border-radius:16px;font-size:1.6em;font-weight:bold;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .2s;border:2px solid transparent;gap:4px}
+.tone-btn .tone-mark{font-size:1.3em;line-height:1}
+.tone-btn .tone-label{font-size:.45em;color:#999}
+.tone-btn:nth-child(1){background:#fff3e0}
+.tone-btn:nth-child(2){background:#e8f5e9}
+.tone-btn:nth-child(3){background:#e3f2fd}
+.tone-btn:nth-child(4){background:#fce4ec}
+.tone-btn:active{transform:scale(.92)}
+.tone-btn.correct{border-color:#2ecc71;box-shadow:0 0 0 3px rgba(46,204,113,0.3)}
+.tone-btn.wrong{border-color:#e74c3c;box-shadow:0 0 0 3px rgba(231,76,60,0.3)}
+.tone-btn.disabled{pointer-events:none}
+
+/* 朗读区域 */
+.read-area{display:flex;flex-direction:column;align-items:center;gap:8px}
+.read-pinyin-display{font-size:3em;font-weight:bold;color:#4facfe}
+.read-mic-btn{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);color:#fff;font-size:1.5em;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.read-mic-btn:active{transform:scale(.92)}
+.read-mic-btn.listening{animation:mic-pulse .6s infinite alternate;box-shadow:0 0 20px rgba(161,140,209,0.5)}
+@keyframes mic-pulse{from{transform:scale(1)}to{transform:scale(1.12)}}
+.read-result{font-size:.85em;min-height:20px;text-align:center}
+.read-skip{font-size:.75em;color:#bbb;cursor:pointer;text-decoration:underline;margin-top:4px}
+
+/* 测验底部 */
+.test-bottom{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 20px 28px;flex-shrink:0}
+.test-next-btn{padding:10px 32px;border-radius:14px;font-size:1.1em;font-weight:bold;transition:all .2s;background:#4facfe;color:#fff;min-width:120px}
+.test-next-btn:disabled{opacity:.4;cursor:default}
+.test-next-btn.success{background:#2ecc71}
+.test-feedback{font-size:.85em;color:#888;text-align:center;min-height:20px}
+.test-score{font-size:1.2em;font-weight:bold;color:#f9a825}
+
+/* ===== 总结页 ===== */
+#summaryPage{background:linear-gradient(135deg,#a8edea 0%,#fed6e3 100%);align-items:center;justify-content:center;padding:40px 20px;text-align:center}
+#summaryPage h2{font-size:2em;color:#fff;margin-bottom:6px;text-shadow:0 2px 10px rgba(0,0,0,0.1)}
+.summary-date{color:rgba(255,255,255,0.8);font-size:.95em;margin-bottom:16px}
+.summary-circle{width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;backdrop-filter:blur(4px)}
+.summary-circle .score{font-size:2.2em;font-weight:bold;color:#fff}
+.summary-circle .score-unit{font-size:.8em;color:rgba(255,255,255,0.8)}
+.summary-stats{display:flex;gap:20px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.summary-stat{text-align:center;background:rgba(255,255,255,0.2);border-radius:16px;padding:12px 20px;backdrop-filter:blur(4px)}
+.summary-stat .num{font-size:1.3em;font-weight:bold;color:#fff}
+.summary-stat .lbl{font-size:.75em;color:rgba(255,255,255,0.75)}
+.summary-detail{color:rgba(255,255,255,0.85);font-size:.85em;margin-bottom:16px;max-width:360px;line-height:1.6}
+.summary-btns{display:flex;gap:12px}
+.summary-btn{padding:10px 32px;border-radius:14px;font-size:1em;font-weight:bold;transition:all .2s}
+.summary-btn.primary{background:#fff;color:#333}
+.summary-btn.primary:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,0.1)}
+.result-badge{display:inline-block;padding:6px 20px;border-radius:20px;font-size:.85em;font-weight:bold;color:#fff;margin-bottom:10px}
+.result-badge.pass{background:#2ecc71}
+.result-badge.fail{background:#e74c3c}
+
+/* ===== 日历弹窗 ===== */
+#calendarOverlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center}
+#calendarOverlay.visible{display:flex}
+.calendar-box{background:#fff;border-radius:24px;padding:20px;width:340px;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.cal-header h3{font-size:1.1em;color:#333}
+.cal-close{width:32px;height:32px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:.9em;cursor:pointer;transition:background .2s}
+.cal-close:hover{background:#e0e0e0}
+.cal-month-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cal-month-nav .month-text{font-size:1em;font-weight:bold;color:#555}
+.cal-month-nav .nav-btn{width:30px;height:30px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s}
+.cal-month-nav .nav-btn:hover{background:#e0e0e0}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:.75em;color:#999;margin-bottom:6px}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85em;color:#555;flex-direction:column;gap:2px;cursor:pointer;transition:all .15s;position:relative}
+.cal-day:hover{background:#f5f5f5}
+.cal-day.other-month{color:#ddd}
+.cal-day.today{font-weight:bold;color:#4facfe}
+.cal-day.has-record::after{content:'';width:8px;height:8px;border-radius:50%;position:absolute;bottom:2px;left:50%;transform:translateX(-50%)}
+.cal-day.has-record.good::after{background:#2ecc71}
+.cal-day.has-record.fair::after{background:#f9a825}
+.cal-day.has-record.poor::after{background:#e74c3c}
+.cal-day-detail{margin-top:12px;padding:12px;border-radius:12px;background:#f8f9ff;display:none}
+.cal-day-detail.visible{display:block}
+.cal-day-detail .detail-date{font-size:.85em;font-weight:bold;color:#555;margin-bottom:6px}
+.cal-day-detail .detail-item{font-size:.8em;color:#888;padding:2px 0}
+.cal-empty{text-align:center;color:#bbb;font-size:.8em;padding:20px 0}
+
+/* ===== 家长面板 ===== */
+#parentOverlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center}
+#parentOverlay.visible{display:flex}
+.parent-box{background:#fff;border-radius:24px;padding:20px;width:380px;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.parent-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.parent-header h3{font-size:1.1em;color:#333}
+.parent-close{width:32px;height:32px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:.9em;cursor:pointer;transition:background .2s}
+.parent-close:hover{background:#e0e0e0}
+.parent-user{margin-bottom:14px;padding:12px;border-radius:12px;background:#f8f9ff;display:flex;align-items:center;gap:10px}
+.parent-user .pu-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1em;font-weight:bold;color:#fff;flex-shrink:0}
+.parent-user .pu-name{font-weight:bold;color:#333;font-size:.95em}
+.parent-user .pu-stats{font-size:.75em;color:#999}
+.parent-legend{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.parent-legend .lg-item{display:flex;align-items:center;gap:4px;font-size:.75em;color:#888}
+.parent-legend .lg-dot{width:12px;height:12px;border-radius:4px}
+.group-report{margin-bottom:10px}
+.group-report h4{font-size:.9em;color:#555;margin-bottom:6px}
+.group-report-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.group-report-item{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.8em;font-weight:bold;color:#fff;transition:transform .15s;flex-direction:column;gap:1px}
+.group-report-item .gr-score{font-size:.5em;opacity:.85}
+.weak-report{margin-top:12px;padding:10px;border-radius:10px;background:#fff3e0;font-size:.8em;color:#e67e22}
+
+/* 密码弹窗 */
+#parentPwdOverlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:200;display:none;align-items:center;justify-content:center}
+#parentPwdOverlay.visible{display:flex}
+.parent-pwd-box{background:#fff;border-radius:20px;padding:28px 24px;width:300px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.pwd-header{font-size:1.2em;font-weight:bold;color:#555;margin-bottom:6px}
+.pwd-hint{font-size:.85em;color:#999;margin-bottom:16px}
+.pwd-input{width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:10px;font-size:1em;text-align:center;box-sizing:border-box;transition:border-color .2s}
+.pwd-input:focus{border-color:#4facfe;outline:none}
+.pwd-error{font-size:.8em;color:#e74c3c;min-height:1.2em;margin-top:4px}
+.pwd-btns{display:flex;gap:10px;margin-top:14px;justify-content:center}
+.pwd-btn{padding:8px 24px;border-radius:10px;font-size:.9em;font-weight:bold;border:none;cursor:pointer;transition:all .2s}
+.pwd-btn.cancel{background:#f0f0f0;color:#666}
+.pwd-btn.cancel:hover{background:#e0e0e0}
+.pwd-btn.ok{background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff}
+.pwd-btn.ok:hover{transform:translateY(-1px)}
+
+/* 组选择器（手动切换声母组） */
+.group-selector{margin-top:12px;padding:8px 12px;background:#f8f9ff;border-radius:12px;display:none}
+.group-selector.visible{display:block}
+.group-selector select{width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;font-size:.9em}
+
+@media(max-width:500px){
+  .options-grid{gap:8px;max-width:320px}
+  .option-btn{font-size:1.1em;padding:12px 8px;min-height:48px}
+  .initial-btn{width:60px;height:60px;font-size:1.6em}
+  .tone-btn{width:60px;height:72px;font-size:1.3em}
+  .audio-play-btn{width:52px;height:52px;font-size:1.5em}
+  .read-pinyin-display{font-size:2.2em}
+}
+@media(min-width:900px){
+  .task-cards{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:16px;max-width:700px}
+  .task-card{width:300px}
+  .options-grid{grid-template-columns:repeat(4,1fr);max-width:600px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 欢迎页 ===== -->
+<div id="welcomePage" class="page visible">
+  <div class="welcome-bg">b p m f d t n l</div>
+  <h1>拼音小测验</h1>
+  <p>听一听、选一选，看看拼音学得怎么样</p>
+  <button class="welcome-btn" onclick="showProfilePage()">开始测验</button>
+  <div style="margin-top:20px">
+    <span style="font-size:.75em;color:rgba(255,255,255,0.5);cursor:pointer;text-decoration:underline" onclick="if(confirm('重置所有拼音学习数据？（不影响汉字数据）')){resetPinyinData();location.reload()}">重置拼音数据</span>
+  </div>
+</div>
+
+<!-- ===== 选择小朋友 ===== -->
+<div id="profilePage" class="page">
+  <h2>选择小朋友</h2>
+  <div class="profile-grid" id="profileGrid"></div>
+  <div class="btn-group" style="margin-top:20px">
+    <button class="btn-primary" onclick="exportData()">📤 导出数据</button>
+    <button class="btn-secondary" onclick="document.getElementById('importInput').click()">📥 导入数据</button>
+    <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<!-- ===== 添加小朋友 ===== -->
+<div id="addProfilePage" class="page">
+  <h2>添加新小朋友</h2>
+  <input type="text" id="newProfileName" placeholder="输入名字" maxlength="8" onkeydown="if(event.key==='Enter')addNewProfile()">
+  <div class="input-hint">几岁啦？</div>
+  <div class="age-selector" id="ageSelector"></div>
+  <div class="btn-group">
+    <button class="btn-primary" onclick="addNewProfile()">确认添加</button>
+    <button class="btn-secondary" onclick="showProfilePage()">返回</button>
+  </div>
+</div>
+
+<!-- ===== 首页 ===== -->
+<div id="dashboardPage" class="page">
+  <div class="dash-header">
+    <div class="dash-user" onclick="switchUser()">
+      <div class="dash-avatar" id="dashAvatar">M</div>
+      <div class="dash-user-info">
+        <div class="name" id="dashName">小朋友</div>
+        <div class="age" id="dashAge">6岁 切换</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="dash-cal-btn" onclick="toggleParentPanel()" title="家长控制">👤</button>
+      <button class="dash-cal-btn" onclick="toggleCalendar()" title="学习日历">📅</button>
+    </div>
+  </div>
+  <div class="dash-date">
+    <div class="date-str" id="dateStr">5月24日 星期日</div>
+    <div class="date-sub">每天测一测，拼音进步看得见！</div>
+  </div>
+
+  <!-- 声母组进度条 -->
+  <div class="group-tags" id="groupTags" style="margin-bottom:8px"></div>
+
+  <div class="task-cards">
+    <div class="task-card daily-card" id="dailyCard" onclick="startDailyTest()">
+      <div class="card-icon">📝</div>
+      <div class="card-title">每日拼音测验</div>
+      <div class="card-desc" id="dailyDesc">8道题 · 混合题型</div>
+      <div class="card-progress"><div class="card-progress-fill" id="dailyProgress" style="width:0%"></div></div>
+      <div class="card-status" id="dailyStatus">开始测验</div>
+    </div>
+    <div class="task-card exam-card" id="examCard">
+      <div class="card-icon">🏆</div>
+      <div class="card-title" id="examTitle">阶段考试</div>
+      <div class="card-desc" id="examDesc">完成每日测验后解锁</div>
+      <div class="lock-badge" id="examLock">🔒</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 测验页 ===== -->
+<div id="testPage" class="page">
+  <div class="test-header">
+    <button class="test-back" onclick="confirmQuitTest()">←</button>
+    <span class="test-progress" id="testProgress">1/8</span>
+    <span style="font-size:.8em;color:#999" id="testTypeLabel">每日测验</span>
+  </div>
+  <div class="test-body" id="testBody">
+    <!-- 动态渲染题目内容 -->
+  </div>
+  <div class="test-bottom">
+    <div class="test-feedback" id="testFeedback"></div>
+    <button class="test-next-btn" id="testNextBtn" disabled onclick="nextQuestion()">下一题 →</button>
+  </div>
+</div>
+
+<!-- ===== 总结页 ===== -->
+<div id="summaryPage" class="page">
+  <h2 id="summaryTitle">测验完成！</h2>
+  <div class="summary-date" id="summaryDate">5月24日</div>
+  <div class="result-badge" id="summaryBadge" style="display:none"></div>
+  <div class="summary-circle"><div><span class="score" id="summaryScore">85</span><span class="score-unit">分</span></div></div>
+  <div class="summary-stats">
+    <div class="summary-stat"><div class="num" id="summaryCorrect">6</div><div class="lbl">答对</div></div>
+    <div class="summary-stat"><div class="num" id="summaryWrong">2</div><div class="lbl">答错</div></div>
+    <div class="summary-stat"><div class="num" id="summaryTotal">8</div><div class="lbl">总题数</div></div>
+  </div>
+  <div class="summary-detail" id="summaryDetail"></div>
+  <div class="summary-btns">
+    <button class="summary-btn primary" onclick="goToDashboard()">返回首页</button>
+  </div>
+</div>
+
+<!-- ===== 日历弹窗 ===== -->
+<div id="calendarOverlay">
+  <div class="calendar-box">
+    <div class="cal-header">
+      <h3>拼音测验日历</h3>
+      <button class="cal-close" onclick="toggleCalendar()">✕</button>
+    </div>
+    <div class="cal-month-nav">
+      <button class="nav-btn" onclick="calMonth(-1)">‹</button>
+      <span class="month-text" id="calMonthText">2026年5月</span>
+      <button class="nav-btn" onclick="calMonth(1)">›</button>
+    </div>
+    <div class="cal-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+    <div class="cal-days" id="calDays"></div>
+    <div class="cal-day-detail" id="calDayDetail">
+      <div class="detail-date" id="calDetailDate"></div>
+      <div id="calDetailContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 家长密码验证 ===== -->
+<div id="parentPwdOverlay">
+  <div class="parent-pwd-box">
+    <div class="pwd-header">👤 家长验证</div>
+    <div class="pwd-hint">请输入家长密码</div>
+    <input class="pwd-input" id="parentPwdInput" type="password" maxlength="20" placeholder="输入密码" autocomplete="off">
+    <div class="pwd-error" id="parentPwdError"></div>
+    <div class="pwd-btns">
+      <button class="pwd-btn cancel" onclick="hideParentPwd()">取消</button>
+      <button class="pwd-btn ok" onclick="verifyParentPwd()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 家长控制面板 ===== -->
+<div id="parentOverlay">
+  <div class="parent-box">
+    <div class="parent-header">
+      <h3>拼音学习报告</h3>
+      <button class="parent-close" onclick="hideParentPanel()">✕</button>
+    </div>
+    <div style="text-align:center;margin:0 0 10px">
+      <button class="debug-btn" id="debugToggle" onclick="toggleDebugMode()">🔧 调试模式：关</button>
+      <div class="group-selector" id="groupSelector" style="display:none;margin-top:8px;text-align:left">
+        <div style="font-size:.75em;color:#999;margin-bottom:4px">手动切换学习组：</div>
+        <select id="groupSelect" onchange="switchGroup(this.value)" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;font-size:.85em"></select>
+      </div>
+    </div>
+    <div class="parent-user" id="parentUserInfo"></div>
+    <div class="parent-legend">
+      <div class="lg-item"><div class="lg-dot" style="background:#2ecc71"></div>已通过</div>
+      <div class="lg-item"><div class="lg-dot" style="background:#f9a825"></div>学习中</div>
+      <div class="lg-item"><div class="lg-dot" style="background:#e74c3c"></div>未通过</div>
+      <div class="lg-item"><div class="lg-dot" style="background:#e0e0e0"></div>未开始</div>
+    </div>
+    <div class="group-report">
+      <h4>声母组进度</h4>
+      <div class="group-report-grid" id="groupReportGrid"></div>
+    </div>
+    <div class="weak-report" id="weakReport" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// 拼音音节数据库
+// =============================================
+const PINYIN_GROUPS = [
+  { id:0, name:'b p m f', initials:['b','p','m','f'], label:'第一组' },
+  { id:1, name:'d t n l', initials:['d','t','n','l'], label:'第二组' },
+  { id:2, name:'g k h', initials:['g','k','h'], label:'第三组' },
+  { id:3, name:'j q x', initials:['j','q','x'], label:'第四组' },
+  { id:4, name:'zh ch sh r', initials:['zh','ch','sh','r'], label:'第五组' },
+  { id:5, name:'z c s', initials:['z','c','s'], label:'第六组' },
+  { id:6, name:'y w', initials:['y','w'], label:'第七组' }
+];
+
+// 声调标记
+const TONE_MARKS = ['', '¯','ˊ','ˇ','ˋ'];
+const TONE_NAMES = ['轻声','一声','二声','三声','四声'];
+
+// 添加声调到拼音音节
+function addTone(base, tone) {
+  const toneMap = {
+    'a': {1:'ā',2:'á',3:'ǎ',4:'à'},
+    'e': {1:'ē',2:'é',3:'ě',4:'è'},
+    'i': {1:'ī',2:'í',3:'ǐ',4:'ì'},
+    'o': {1:'ō',2:'ó',3:'ǒ',4:'ò'},
+    'u': {1:'ū',2:'ú',3:'ǔ',4:'ù'},
+    'v': {1:'ǖ',2:'ǘ',3:'ǚ',4:'ǜ'},
+  };
+  if (tone === 0 || tone === 5) return base;
+  // 找主要元音（按 a e i o u 优先级）
+  const order = ['a','e','i','o','u','v'];
+  for (const v of order) {
+    const idx = base.indexOf(v==='v'?'ü':v);
+    if (idx >= 0) {
+      const c = toneMap[v];
+      if (c && c[tone]) {
+        return base.substring(0, idx) + c[tone] + base.substring(idx + 1);
+      }
+    }
+  }
+  // fallback: 如果有 u，用 u
+  for (const v of ['u','i']) {
+    const idx = base.indexOf(v);
+    if (idx >= 0 && toneMap[v] && toneMap[v][tone]) {
+      return base.substring(0, idx) + toneMap[v][tone] + base.substring(idx + 1);
+    }
+  }
+  return base;
+}
+
+// 音节数据: {base, tones[], final}
+// tones 数组表示该音节支持的声调，如 [1,2,3,4] 表示四个声调都有
+const SYLLABLE_DATA = {
+  b: [
+    {base:'ba', tones:[1,2,3,4], final:'a'},
+    {base:'bai', tones:[1,2,3,4], final:'ai'},
+    {base:'ban', tones:[1,3,4], final:'an'},
+    {base:'bang', tones:[1,3,4], final:'ang'},
+    {base:'bao', tones:[1,2,3,4], final:'ao'},
+    {base:'bei', tones:[1,3,4], final:'ei'},
+    {base:'ben', tones:[1,3,4], final:'en'},
+    {base:'beng', tones:[1,2,3,4], final:'eng'},
+    {base:'bi', tones:[1,2,3,4], final:'i'},
+    {base:'bian', tones:[1,3,4], final:'ian'},
+    {base:'biao', tones:[1,3,4], final:'iao'},
+    {base:'bie', tones:[1,2,3,4], final:'ie'},
+    {base:'bin', tones:[1,4], final:'in'},
+    {base:'bing', tones:[1,3,4], final:'ing'},
+    {base:'bo', tones:[1,2,3,4], final:'o'},
+    {base:'bu', tones:[1,2,3,4], final:'u'},
+  ],
+  p: [
+    {base:'pa', tones:[1,2,4], final:'a'},
+    {base:'pai', tones:[1,2,3,4], final:'ai'},
+    {base:'pan', tones:[1,2,4], final:'an'},
+    {base:'pang', tones:[1,2,3,4], final:'ang'},
+    {base:'pao', tones:[1,2,3,4], final:'ao'},
+    {base:'pei', tones:[1,2,4], final:'ei'},
+    {base:'pen', tones:[1,2,4], final:'en'},
+    {base:'peng', tones:[1,2,3,4], final:'eng'},
+    {base:'pi', tones:[1,2,3,4], final:'i'},
+    {base:'pian', tones:[1,2,3,4], final:'ian'},
+    {base:'piao', tones:[1,2,3,4], final:'iao'},
+    {base:'pie', tones:[1,3,4], final:'ie'},
+    {base:'pin', tones:[1,2,3,4], final:'in'},
+    {base:'ping', tones:[1,2,4], final:'ing'},
+    {base:'po', tones:[1,2,3,4], final:'o'},
+    {base:'pou', tones:[1,2,3], final:'ou'},
+    {base:'pu', tones:[1,2,3,4], final:'u'},
+  ],
+  m: [
+    {base:'ma', tones:[1,2,3,4], final:'a'},
+    {base:'mai', tones:[2,3,4], final:'ai'},
+    {base:'man', tones:[1,2,3,4], final:'an'},
+    {base:'mang', tones:[2,3], final:'ang'},
+    {base:'mao', tones:[1,2,3,4], final:'ao'},
+    {base:'mei', tones:[2,3,4], final:'ei'},
+    {base:'men', tones:[1,2,4], final:'en'},
+    {base:'meng', tones:[1,2,3,4], final:'eng'},
+    {base:'mi', tones:[1,2,3,4], final:'i'},
+    {base:'mian', tones:[2,3,4], final:'ian'},
+    {base:'miao', tones:[1,2,3,4], final:'iao'},
+    {base:'mie', tones:[1,4], final:'ie'},
+    {base:'min', tones:[2,3], final:'in'},
+    {base:'ming', tones:[2,3,4], final:'ing'},
+    {base:'miu', tones:[4], final:'iu'},
+    {base:'mo', tones:[1,2,3,4], final:'o'},
+    {base:'mou', tones:[1,2,3], final:'ou'},
+    {base:'mu', tones:[2,3,4], final:'u'},
+  ],
+  f: [
+    {base:'fa', tones:[1,2,3,4], final:'a'},
+    {base:'fan', tones:[1,2,3,4], final:'an'},
+    {base:'fang', tones:[1,2,3,4], final:'ang'},
+    {base:'fei', tones:[1,2,3,4], final:'ei'},
+    {base:'fen', tones:[1,2,3,4], final:'en'},
+    {base:'feng', tones:[1,2,3,4], final:'eng'},
+    {base:'fo', tones:[2], final:'o'},
+    {base:'fou', tones:[3], final:'ou'},
+    {base:'fu', tones:[1,2,3,4], final:'u'},
+  ],
+  d: [
+    {base:'da', tones:[1,2,3,4], final:'a'},
+    {base:'dai', tones:[1,3,4], final:'ai'},
+    {base:'dan', tones:[1,3,4], final:'an'},
+    {base:'dang', tones:[1,3,4], final:'ang'},
+    {base:'dao', tones:[1,3,4], final:'ao'},
+    {base:'de', tones:[2,0], final:'e'},
+    {base:'dei', tones:[3], final:'ei'},
+    {base:'den', tones:[4], final:'en'},
+    {base:'deng', tones:[1,3,4], final:'eng'},
+    {base:'di', tones:[1,2,3,4], final:'i'},
+    {base:'dian', tones:[1,3,4], final:'ian'},
+    {base:'diao', tones:[1,4], final:'iao'},
+    {base:'die', tones:[1,2], final:'ie'},
+    {base:'ding', tones:[1,3,4], final:'ing'},
+    {base:'diu', tones:[1], final:'iu'},
+    {base:'dong', tones:[1,3,4], final:'ong'},
+    {base:'dou', tones:[1,3,4], final:'ou'},
+    {base:'du', tones:[1,2,3,4], final:'u'},
+    {base:'duan', tones:[1,3,4], final:'uan'},
+    {base:'dui', tones:[1,4], final:'ui'},
+    {base:'dun', tones:[1,3,4], final:'un'},
+    {base:'duo', tones:[1,2,3,4], final:'uo'},
+  ],
+  t: [
+    {base:'ta', tones:[1,3,4], final:'a'},
+    {base:'tai', tones:[1,2,4], final:'ai'},
+    {base:'tan', tones:[1,2,3,4], final:'an'},
+    {base:'tang', tones:[1,2,3,4], final:'ang'},
+    {base:'tao', tones:[1,2,3,4], final:'ao'},
+    {base:'te', tones:[4], final:'e'},
+    {base:'teng', tones:[2], final:'eng'},
+    {base:'ti', tones:[1,2,3,4], final:'i'},
+    {base:'tian', tones:[1,2,3,4], final:'ian'},
+    {base:'tiao', tones:[1,2,3,4], final:'iao'},
+    {base:'tie', tones:[1,3,4], final:'ie'},
+    {base:'ting', tones:[1,2,3,4], final:'ing'},
+    {base:'tong', tones:[1,2,3,4], final:'ong'},
+    {base:'tou', tones:[1,2,3,4], final:'ou'},
+    {base:'tu', tones:[1,2,3,4], final:'u'},
+    {base:'tuan', tones:[1,2,3,4], final:'uan'},
+    {base:'tui', tones:[1,2,3,4], final:'ui'},
+    {base:'tun', tones:[1,2,4], final:'un'},
+    {base:'tuo', tones:[1,2,3,4], final:'uo'},
+  ],
+  n: [
+    {base:'na', tones:[1,2,3,4], final:'a'},
+    {base:'nai', tones:[3,4], final:'ai'},
+    {base:'nan', tones:[1,2,3,4], final:'an'},
+    {base:'nang', tones:[1,2,3], final:'ang'},
+    {base:'nao', tones:[1,2,3,4], final:'ao'},
+    {base:'ne', tones:[2,0], final:'e'},
+    {base:'nei', tones:[3,4], final:'ei'},
+    {base:'nen', tones:[4], final:'en'},
+    {base:'neng', tones:[2], final:'eng'},
+    {base:'ni', tones:[1,2,3,4], final:'i'},
+    {base:'nian', tones:[1,2,3,4], final:'ian'},
+    {base:'niang', tones:[2,4], final:'iang'},
+    {base:'niao', tones:[3,4], final:'iao'},
+    {base:'nie', tones:[1,4], final:'ie'},
+    {base:'nin', tones:[2], final:'in'},
+    {base:'ning', tones:[2,3,4], final:'ing'},
+    {base:'niu', tones:[1,2,3,4], final:'iu'},
+    {base:'nong', tones:[2,4], final:'ong'},
+    {base:'nou', tones:[4], final:'ou'},
+    {base:'nu', tones:[2,3,4], final:'u'},
+    {base:'nuan', tones:[3], final:'uan'},
+    {base:'nü', tones:[3,4], final:'ü'},
+    {base:'nüe', tones:[4], final:'üe'},
+    {base:'nuo', tones:[2,4], final:'uo'},
+  ],
+  l: [
+    {base:'la', tones:[1,2,3,4], final:'a'},
+    {base:'lai', tones:[2,4], final:'ai'},
+    {base:'lan', tones:[2,3,4], final:'an'},
+    {base:'lang', tones:[1,2,3,4], final:'ang'},
+    {base:'lao', tones:[1,2,3,4], final:'ao'},
+    {base:'le', tones:[4,0], final:'e'},
+    {base:'lei', tones:[1,2,3,4], final:'ei'},
+    {base:'leng', tones:[2,3,4], final:'eng'},
+    {base:'li', tones:[1,2,3,4], final:'i'},
+    {base:'lia', tones:[3], final:'ia'},
+    {base:'lian', tones:[2,3,4], final:'ian'},
+    {base:'liang', tones:[2,3,4], final:'iang'},
+    {base:'liao', tones:[1,2,3,4], final:'iao'},
+    {base:'lie', tones:[3,4], final:'ie'},
+    {base:'lin', tones:[1,2,3,4], final:'in'},
+    {base:'ling', tones:[1,2,3,4], final:'ing'},
+    {base:'liu', tones:[1,2,3,4], final:'iu'},
+    {base:'long', tones:[1,2,3,4], final:'ong'},
+    {base:'lou', tones:[1,2,3,4], final:'ou'},
+    {base:'lu', tones:[1,2,3,4], final:'u'},
+    {base:'luan', tones:[2,3,4], final:'uan'},
+    {base:'lun', tones:[1,2,4], final:'un'},
+    {base:'luo', tones:[1,2,3,4], final:'uo'},
+    {base:'lü', tones:[2,3,4], final:'ü'},
+    {base:'lüe', tones:[3,4], final:'üe'},
+  ],
+  g: [
+    {base:'ga', tones:[1,2,3,4], final:'a'},
+    {base:'gai', tones:[1,3,4], final:'ai'},
+    {base:'gan', tones:[1,3,4], final:'an'},
+    {base:'gang', tones:[1,3,4], final:'ang'},
+    {base:'gao', tones:[1,3,4], final:'ao'},
+    {base:'ge', tones:[1,2,3,4], final:'e'},
+    {base:'gei', tones:[3], final:'ei'},
+    {base:'gen', tones:[1,2,3,4], final:'en'},
+    {base:'geng', tones:[1,3,4], final:'eng'},
+    {base:'gong', tones:[1,3,4], final:'ong'},
+    {base:'gou', tones:[1,3,4], final:'ou'},
+    {base:'gu', tones:[1,2,3,4], final:'u'},
+    {base:'gua', tones:[1,3,4], final:'ua'},
+    {base:'guai', tones:[1,3,4], final:'uai'},
+    {base:'guan', tones:[1,3,4], final:'uan'},
+    {base:'guang', tones:[1,3,4], final:'uang'},
+    {base:'gui', tones:[1,3,4], final:'ui'},
+    {base:'gun', tones:[3,4], final:'un'},
+    {base:'guo', tones:[1,2,3,4], final:'uo'},
+  ],
+  k: [
+    {base:'ka', tones:[1,3], final:'a'},
+    {base:'kai', tones:[1,3,4], final:'ai'},
+    {base:'kan', tones:[1,3,4], final:'an'},
+    {base:'kang', tones:[1,2,4], final:'ang'},
+    {base:'kao', tones:[1,3,4], final:'ao'},
+    {base:'ke', tones:[1,2,3,4], final:'e'},
+    {base:'ken', tones:[3,4], final:'en'},
+    {base:'keng', tones:[1], final:'eng'},
+    {base:'kong', tones:[1,3,4], final:'ong'},
+    {base:'kou', tones:[1,3,4], final:'ou'},
+    {base:'ku', tones:[1,3,4], final:'u'},
+    {base:'kua', tones:[1,3,4], final:'ua'},
+    {base:'kuai', tones:[1,4], final:'uai'},
+    {base:'kuan', tones:[1,3], final:'uan'},
+    {base:'kuang', tones:[1,2,4], final:'uang'},
+    {base:'kui', tones:[1,2,3,4], final:'ui'},
+    {base:'kun', tones:[1,3,4], final:'un'},
+    {base:'kuo', tones:[4], final:'uo'},
+  ],
+  h: [
+    {base:'ha', tones:[1,2,3], final:'a'},
+    {base:'hai', tones:[1,2,3,4], final:'ai'},
+    {base:'han', tones:[1,2,3,4], final:'an'},
+    {base:'hang', tones:[1,2,4], final:'ang'},
+    {base:'hao', tones:[1,2,3,4], final:'ao'},
+    {base:'he', tones:[1,2,4], final:'e'},
+    {base:'hei', tones:[1], final:'ei'},
+    {base:'hen', tones:[2,3,4], final:'en'},
+    {base:'heng', tones:[1,2,4], final:'eng'},
+    {base:'hong', tones:[1,2,3,4], final:'ong'},
+    {base:'hou', tones:[1,2,3,4], final:'ou'},
+    {base:'hu', tones:[1,2,3,4], final:'u'},
+    {base:'hua', tones:[1,2,4], final:'ua'},
+    {base:'huai', tones:[2,4], final:'uai'},
+    {base:'huan', tones:[1,2,3,4], final:'uan'},
+    {base:'huang', tones:[1,2,3,4], final:'uang'},
+    {base:'hui', tones:[1,2,3,4], final:'ui'},
+    {base:'hun', tones:[1,2,4], final:'un'},
+    {base:'huo', tones:[1,2,3,4], final:'uo'},
+  ],
+  j: [
+    {base:'ji', tones:[1,2,3,4], final:'i'},
+    {base:'jia', tones:[1,2,3,4], final:'ia'},
+    {base:'jian', tones:[1,3,4], final:'ian'},
+    {base:'jiang', tones:[1,3,4], final:'iang'},
+    {base:'jiao', tones:[1,2,3,4], final:'iao'},
+    {base:'jie', tones:[1,2,3,4], final:'ie'},
+    {base:'jin', tones:[1,3,4], final:'in'},
+    {base:'jing', tones:[1,3,4], final:'ing'},
+    {base:'jiong', tones:[1,3,4], final:'iong'},
+    {base:'jiu', tones:[1,3,4], final:'iu'},
+    {base:'ju', tones:[1,2,3,4], final:'u'},
+    {base:'juan', tones:[1,3,4], final:'uan'},
+    {base:'jue', tones:[1,2,4], final:'ue'},
+    {base:'jun', tones:[1,4], final:'un'},
+  ],
+  q: [
+    {base:'qi', tones:[1,2,3,4], final:'i'},
+    {base:'qia', tones:[1,3,4], final:'ia'},
+    {base:'qian', tones:[1,2,3,4], final:'ian'},
+    {base:'qiang', tones:[1,2,3,4], final:'iang'},
+    {base:'qiao', tones:[1,2,3,4], final:'iao'},
+    {base:'qie', tones:[1,2,3,4], final:'ie'},
+    {base:'qin', tones:[1,2,3,4], final:'in'},
+    {base:'qing', tones:[1,2,3,4], final:'ing'},
+    {base:'qiong', tones:[2], final:'iong'},
+    {base:'qiu', tones:[1,2,3], final:'iu'},
+    {base:'qu', tones:[1,2,3,4], final:'u'},
+    {base:'quan', tones:[1,2,3,4], final:'uan'},
+    {base:'que', tones:[1,2,4], final:'ue'},
+    {base:'qun', tones:[1,2], final:'un'},
+  ],
+  x: [
+    {base:'xi', tones:[1,2,3,4], final:'i'},
+    {base:'xia', tones:[1,2,4], final:'ia'},
+    {base:'xian', tones:[1,2,3,4], final:'ian'},
+    {base:'xiang', tones:[1,2,3,4], final:'iang'},
+    {base:'xiao', tones:[1,2,3,4], final:'iao'},
+    {base:'xie', tones:[1,2,3,4], final:'ie'},
+    {base:'xin', tones:[1,2,4], final:'in'},
+    {base:'xing', tones:[1,2,3,4], final:'ing'},
+    {base:'xiong', tones:[1,2,4], final:'iong'},
+    {base:'xiu', tones:[1,3,4], final:'iu'},
+    {base:'xu', tones:[1,2,3,4], final:'u'},
+    {base:'xuan', tones:[1,2,3,4], final:'uan'},
+    {base:'xue', tones:[1,2,3,4], final:'ue'},
+    {base:'xun', tones:[1,2,4], final:'un'},
+  ],
+  zh: [
+    {base:'zha', tones:[1,2,3,4], final:'a'},
+    {base:'zhai', tones:[1,2,3,4], final:'ai'},
+    {base:'zhan', tones:[1,3,4], final:'an'},
+    {base:'zhang', tones:[1,3,4], final:'ang'},
+    {base:'zhao', tones:[1,2,3,4], final:'ao'},
+    {base:'zhe', tones:[1,2,3,4], final:'e'},
+    {base:'zhei', tones:[4], final:'ei'},
+    {base:'zhen', tones:[1,3,4], final:'en'},
+    {base:'zheng', tones:[1,3,4], final:'eng'},
+    {base:'zhi', tones:[1,2,3,4], final:'i'},
+    {base:'zhong', tones:[1,3,4], final:'ong'},
+    {base:'zhou', tones:[1,2,3,4], final:'ou'},
+    {base:'zhu', tones:[1,2,3,4], final:'u'},
+    {base:'zhua', tones:[1,3], final:'ua'},
+    {base:'zhuai', tones:[1,3,4], final:'uai'},
+    {base:'zhuan', tones:[1,3,4], final:'uan'},
+    {base:'zhuang', tones:[1,3,4], final:'uang'},
+    {base:'zhui', tones:[1,4], final:'ui'},
+    {base:'zhun', tones:[1,3], final:'un'},
+    {base:'zhuo', tones:[1,2], final:'uo'},
+  ],
+  ch: [
+    {base:'cha', tones:[1,2,3,4], final:'a'},
+    {base:'chai', tones:[1,2,4], final:'ai'},
+    {base:'chan', tones:[1,2,3,4], final:'an'},
+    {base:'chang', tones:[1,2,3,4], final:'ang'},
+    {base:'chao', tones:[1,2,3,4], final:'ao'},
+    {base:'che', tones:[1,3,4], final:'e'},
+    {base:'chen', tones:[1,2,3,4], final:'en'},
+    {base:'cheng', tones:[1,2,3,4], final:'eng'},
+    {base:'chi', tones:[1,2,3,4], final:'i'},
+    {base:'chong', tones:[1,2,3,4], final:'ong'},
+    {base:'chou', tones:[1,2,3,4], final:'ou'},
+    {base:'chu', tones:[1,2,3,4], final:'u'},
+    {base:'chua', tones:[1], final:'ua'},
+    {base:'chuai', tones:[1,3,4], final:'uai'},
+    {base:'chuan', tones:[1,2,3,4], final:'uan'},
+    {base:'chuang', tones:[1,2,3,4], final:'uang'},
+    {base:'chui', tones:[1,2], final:'ui'},
+    {base:'chun', tones:[1,2,3], final:'un'},
+    {base:'chuo', tones:[1,4], final:'uo'},
+  ],
+  sh: [
+    {base:'sha', tones:[1,2,3,4], final:'a'},
+    {base:'shai', tones:[1,3,4], final:'ai'},
+    {base:'shan', tones:[1,3,4], final:'an'},
+    {base:'shang', tones:[1,3,4], final:'ang'},
+    {base:'shao', tones:[1,2,3,4], final:'ao'},
+    {base:'she', tones:[1,2,3,4], final:'e'},
+    {base:'shei', tones:[2], final:'ei'},
+    {base:'shen', tones:[1,2,3,4], final:'en'},
+    {base:'sheng', tones:[1,2,3,4], final:'eng'},
+    {base:'shi', tones:[1,2,3,4], final:'i'},
+    {base:'shou', tones:[1,2,3,4], final:'ou'},
+    {base:'shu', tones:[1,2,3,4], final:'u'},
+    {base:'shua', tones:[1,3], final:'ua'},
+    {base:'shuai', tones:[1,3,4], final:'uai'},
+    {base:'shuan', tones:[1], final:'uan'},
+    {base:'shuang', tones:[1,3], final:'uang'},
+    {base:'shui', tones:[2,3,4], final:'ui'},
+    {base:'shun', tones:[3,4], final:'un'},
+    {base:'shuo', tones:[1,4], final:'uo'},
+  ],
+  r: [
+    {base:'ran', tones:[2,3], final:'an'},
+    {base:'rang', tones:[1,2,3,4], final:'ang'},
+    {base:'rao', tones:[2,3,4], final:'ao'},
+    {base:'re', tones:[3,4], final:'e'},
+    {base:'ren', tones:[2,3,4], final:'en'},
+    {base:'reng', tones:[1,2], final:'eng'},
+    {base:'ri', tones:[4], final:'i'},
+    {base:'rong', tones:[2,3,4], final:'ong'},
+    {base:'rou', tones:[2,4], final:'ou'},
+    {base:'ru', tones:[2,3,4], final:'u'},
+    {base:'ruan', tones:[3], final:'uan'},
+    {base:'rui', tones:[2,3,4], final:'ui'},
+    {base:'run', tones:[4], final:'un'},
+    {base:'ruo', tones:[4], final:'uo'},
+  ],
+  z: [
+    {base:'za', tones:[1,2,3], final:'a'},
+    {base:'zai', tones:[1,3,4], final:'ai'},
+    {base:'zan', tones:[1,2,3,4], final:'an'},
+    {base:'zang', tones:[1,3,4], final:'ang'},
+    {base:'zao', tones:[1,2,3,4], final:'ao'},
+    {base:'ze', tones:[2,4], final:'e'},
+    {base:'zei', tones:[2], final:'ei'},
+    {base:'zen', tones:[3], final:'en'},
+    {base:'zeng', tones:[1,4], final:'eng'},
+    {base:'zi', tones:[1,3,4], final:'i'},
+    {base:'zong', tones:[1,3,4], final:'ong'},
+    {base:'zou', tones:[3,4], final:'ou'},
+    {base:'zu', tones:[1,2,3,4], final:'u'},
+    {base:'zuan', tones:[1,3,4], final:'uan'},
+    {base:'zui', tones:[1,3,4], final:'ui'},
+    {base:'zun', tones:[1,3,4], final:'un'},
+    {base:'zuo', tones:[1,2,3,4], final:'uo'},
+  ],
+  c: [
+    {base:'ca', tones:[1,3], final:'a'},
+    {base:'cai', tones:[1,2,3,4], final:'ai'},
+    {base:'can', tones:[1,2,3,4], final:'an'},
+    {base:'cang', tones:[1,2], final:'ang'},
+    {base:'cao', tones:[1,2,3,4], final:'ao'},
+    {base:'ce', tones:[4], final:'e'},
+    {base:'cen', tones:[1,2], final:'en'},
+    {base:'ceng', tones:[1,2], final:'eng'},
+    {base:'ci', tones:[1,2,3,4], final:'i'},
+    {base:'cong', tones:[1,2], final:'ong'},
+    {base:'cou', tones:[4], final:'ou'},
+    {base:'cu', tones:[1,4], final:'u'},
+    {base:'cuan', tones:[1,2,4], final:'uan'},
+    {base:'cui', tones:[1,3,4], final:'ui'},
+    {base:'cun', tones:[1,2,3,4], final:'un'},
+    {base:'cuo', tones:[1,2,3,4], final:'uo'},
+  ],
+  s: [
+    {base:'sa', tones:[1,3,4], final:'a'},
+    {base:'sai', tones:[1,3,4], final:'ai'},
+    {base:'san', tones:[1,3,4], final:'an'},
+    {base:'sang', tones:[1,3,4], final:'ang'},
+    {base:'sao', tones:[1,3,4], final:'ao'},
+    {base:'se', tones:[4], final:'e'},
+    {base:'sen', tones:[1], final:'en'},
+    {base:'seng', tones:[1], final:'eng'},
+    {base:'si', tones:[1,3,4], final:'i'},
+    {base:'song', tones:[1,3,4], final:'ong'},
+    {base:'sou', tones:[1,3,4], final:'ou'},
+    {base:'su', tones:[1,2,4], final:'u'},
+    {base:'suan', tones:[1,4], final:'uan'},
+    {base:'sui', tones:[1,2,3,4], final:'ui'},
+    {base:'sun', tones:[1,3,4], final:'un'},
+    {base:'suo', tones:[1,3,4], final:'uo'},
+  ],
+  y: [
+    {base:'ya', tones:[1,2,3,4], final:'a'},
+    {base:'yan', tones:[1,2,3,4], final:'an'},
+    {base:'yang', tones:[1,2,3,4], final:'ang'},
+    {base:'yao', tones:[1,2,3,4], final:'ao'},
+    {base:'ye', tones:[1,2,3,4], final:'e'},
+    {base:'yi', tones:[1,2,3,4], final:'i'},
+    {base:'yin', tones:[1,2,3,4], final:'in'},
+    {base:'ying', tones:[1,2,3,4], final:'ing'},
+    {base:'yo', tones:[1], final:'o'},
+    {base:'yong', tones:[1,2,3,4], final:'ong'},
+    {base:'you', tones:[1,2,3,4], final:'ou'},
+    {base:'yu', tones:[1,2,3,4], final:'u'},
+    {base:'yuan', tones:[1,2,3,4], final:'uan'},
+    {base:'yue', tones:[1,4], final:'ue'},
+    {base:'yun', tones:[1,2,3,4], final:'un'},
+  ],
+  w: [
+    {base:'wa', tones:[1,2,3,4], final:'a'},
+    {base:'wai', tones:[1,3,4], final:'ai'},
+    {base:'wan', tones:[1,2,3,4], final:'an'},
+    {base:'wang', tones:[1,2,3,4], final:'ang'},
+    {base:'wei', tones:[1,2,3,4], final:'ei'},
+    {base:'wen', tones:[1,2,3,4], final:'en'},
+    {base:'weng', tones:[1,3,4], final:'eng'},
+    {base:'wo', tones:[1,3,4], final:'o'},
+    {base:'wu', tones:[1,2,3,4], final:'u'},
+  ],
+};
+
+// =============================================
+// 音节数据辅助函数
+// =============================================
+function expandSyllables() {
+  var result = {};
+  for (var init in SYLLABLE_DATA) {
+    result[init] = [];
+    SYLLABLE_DATA[init].forEach(function(item) {
+      item.tones.forEach(function(tone) {
+        var py = addTone(item.base, tone);
+        result[init].push({py:py, initial:init, final:item.final, tone:tone, base:item.base});
+      });
+    });
+  }
+  return result;
+}
+var ALL_SYLLABLES = expandSyllables();
+
+function getGroupSyllables(groupIdx) {
+  var group = PINYIN_GROUPS[groupIdx];
+  var syllables = [];
+  group.initials.forEach(function(init) {
+    if (ALL_SYLLABLES[init]) syllables = syllables.concat(ALL_SYLLABLES[init]);
+  });
+  return syllables;
+}
+
+function getAllInitials() { return Object.keys(ALL_SYLLABLES); }
+
+// =============================================
+// 拼音→汉字映射（用于 TTS 清晰朗读）
+// =============================================
+var PY_CHAR_MAP={"yi1":"一","ding1":"丁","qi1":"七","wan4":"万","san1":"三","shang4":"上","xia4":"下","bu4":"不","yu3":"与","chou3":"丑","zhuan1":"专","qie3":"且","shi4":"世","ye4":"业","cong2":"丛","dong1":"东","si1":"丝","diu1":"丢","liang3":"两","yan2":"严","ge4":"个","zhong1":"中","feng1":"丰","chuan4":"串","dan1":"丹","wei4":"为","zhu3":"主","li4":"丽","ju3":"举","jiu3":"久","me":"么","yi4":"义","zhi1":"之","wu1":"乌","hu1":"乎","le4":"乐","cheng2":"乘","ye3":"也","xi2":"习","shu1":"书","mai3":"买","le":"了","zheng1":"争","er4":"二","yu2":"于","yun2":"云","hu4":"互","wu3":"五","jing3":"井","ya4":"亚","xie1":"些","jiao1":"交","chan3":"产","jing1":"京","liang4":"亮","qin1":"亲","ren2":"人","shen2":"什","jin1":"今","jie4":"介","reng2":"仍","zai3":"仔","ta1":"他","dai4":"代","ling4":"令","yi3":"以","men":"们","jian4":"件","fen4":"份","fang3":"仿","xiu1":"休","zhong4":"众","you1":"优","huo3":"伙","hui4":"会","san3":"伞","wei3":"伟","shang1":"伤","bo2":"伯","ban4":"伴","shen1":"伸","dan4":"但","di1":"低","zhu4":"住","ti3":"体","he2":"何","fu2":"佛","zuo4":"作","ni3":"你","shi3":"使","bian4":"便","bao3":"保","xin4":"信","lia3":"俩","dao4":"倒","hou4":"候","jia3":"假","pian1":"偏","ting2":"停","bang4":"傍","ao4":"傲","sha3":"傻","xiang4":"像","er2":"儿","yuan2":"元","xiong1":"兄","xian1":"先","guang1":"光","ke4":"克","tu4":"兔","ru4":"入","quan2":"全","ba1":"八","gong1":"公","liu4":"六","lan2":"兰","gong4":"共","guan1":"关","xing1":"兴","qi2":"其","ju4":"具","gang1":"冈","ce4":"册","zai4":"再","mao4":"冒","xie3":"写","jun1":"军","nong2":"农","bing1":"冰","chong1":"冲","jue2":"决","leng3":"冷","dong4":"冻","jing4":"净","zhun3":"准","liang2":"凉","ning2":"凝","ji3":"几","feng4":"凤","huang2":"凰","chu1":"出","dao1":"刀","fen1":"分","qie4":"切","hua4":"划","lie4":"列","liu2":"刘","chuang4":"创","pao2":"刨","bie2":"别","shua1":"刷","ci4":"刺","qian2":"前","ge1":"割","jia1":"加","jin4":"劲","lao2":"劳","yong3":"勇","gou1":"勾","bao1":"包","bei3":"北","jiang4":"匠","qu1":"区","shi2":"十","qian1":"千","hua2":"华","nan2":"南","bu3":"卜","ka3":"卡","yin4":"印","wei1":"危","ji2":"即","luan3":"卵","juan4":"卷","chang3":"厂","ting1":"厅","ya1":"压","chu2":"厨","li3":"里","xia3":"厦","xian3":"显","chen2":"陈","chuang3":"闯","dan3":"胆","ji4":"记","cuo4":"错","zhua1":"抓","cu2":"粗","zhuo1":"桌","wa1":"蛙","zhan1":"沾","chong2":"虫","jia1":"家","song1":"松","fa1":"发","shang3":"上","tuo1":"拖","hang2":"航","gan3":"感","cai4":"蔡","gua1":"瓜","yin3":"引","mu4":"目","ci2":"词","sao1":"搔","xue3":"雪","biao1":"标","nian4":"念","you2":"由","di4":"地","lun1":"轮","yan3":"眼","xi4":"细","lang2":"狼","cui1":"崔","bo1":"播","dui1":"堆","xue4":"血","fan4":"饭","ding4":"定","zhi2":"直","que1":"缺","dao3":"导","za2":"杂","jin1":"今","zhi3":"只","yun4":"运","gua4":"挂","sha4":"厦","hong2":"红","you4":"又","huo2":"活","fou3":"否","tiao2":"条","zou3":"走","zhao3":"找","pang4":"胖","qiang2":"强","ku4":"库","pi2":"皮","yu4":"玉","sai1":"塞","xiang2":"详","die1":"跌","xun2":"寻","si3":"死","qiu1":"秋","xie2":"鞋","shu3":"数","suan4":"算","zha2":"炸","lai2":"来","wai4":"外","gan4":"干","shan4":"善","lao3":"老","bing4":"病","hou2":"猴","jie4":"计","nuan3":"暖","xue1":"削","kuai4":"快","tou2":"头","jing2":"井","qiong2":"穷","tao2":"逃","ma1":"妈","ning2":"宁","she2":"蛇","tie3":"铁","cha2":"茶","shao1":"烧","cong1":"聪","zhua3":"爪","huai4":"坏","zong1":"宗","bie4":"别","teng2":"腾","tan1":"贪","pan4":"判","liang2":"良","cu4":"促","bo4":"薄","wa3":"瓦","gan1":"干","miao3":"秒","sa1":"撒","po1":"坡","fen3":"粉","jiao3":"脚","ru4":"人","kai3":"凯","zang1":"脏","tu3":"土","chang2":"长","quan1":"圈","shao3":"少","chi4":"翅","di3":"底","ya3":"哑","xiao1":"小","huo3":"火","shua1":"刷","kai1":"开","zan4":"赞","yun3":"允","hun2":"魂","yuan3":"远","guai3":"拐","qing4":"庆","keng1":"坑","zeng1":"增","dao4":"到","xie4":"谢","zhuang1":"庄","lie4":"列","guang1":"光","kuang1":"筐","yang4":"样","ning4":"宁","shun4":"顺","chuo4":"绰","za1":"扎","zheng3":"整","cuo1":"挫","pian4":"片","dou1":"都","lian4":"练","gun3":"滚","shu4":"树","heng2":"恒","nan3":"南","qiao1":"敲","ban3":"板","che4":"彻","han2":"寒","huo4":"或","zhao4":"照","tai4":"太","xiang3":"想","juan1":"捐","shang1":"伤","ku3":"苦","rao2":"饶","wen2":"文","pao1":"抛","suo1":"缩","ling4":"另","jia4":"架","kuo4":"扩","pu1":"扑","geng3":"耿","sha1":"沙","nu4":"怒","nie1":"捏","tuo3":"妥","nao3":"脑","chu4":"处","ba4":"爸","ju4":"句","hen4":"恨","cha1":"插","e4":"饿","zhi4":"至","mao1":"猫","ge2":"格","su4":"速","kua1":"夸","meng1":"蒙","fei4":"费","xiao4":"笑","su2":"俗","la1":"拉","shuai4":"率","chi2":"池","qia1":"掐","ke3":"可","ci1":"差","pan1":"攀","qian3":"浅","zhao1":"招","tuan2":"团","xian1":"先","jia2":"夹","gong1":"工","hang1":"夯","ying3":"影","tai1":"胎","dou4":"豆","zan2":"咱","suo3":"所","mei3":"美","luo3":"裸","kan3":"砍","chai2":"柴","gun4":"棍","shuang1":"双","liao2":"辽","diao1":"刁","chuang2":"床","zui3":"嘴","di2":"敌","beng1":"崩","cuo2":"矬","lian2":"连","shan3":"闪","liu4":"六","lai4":"赖","min3":"敏","kai4":"忾","zong3":"总","la4":"辣","qiang1":"枪","mie4":"灭","ang2":"昂","tian3":"舔","shu1":"书","zhu3":"主","nv3":"女","kang1":"康","ou1":"欧","nu3":"努","jiu3":"九","kou4":"扣","fen4":"愤","shuo4":"硕","cen2":"岑","huang2":"黄","xun4":"训","qing2":"情","bang1":"帮","ci4":"刺","dian3":"点","zou1":"邹","jie1":"接","xiu4":"秀","yu2":"鱼","fo2":"佛","shou1":"收","chou4":"臭","lve4":"略","jie2":"节","chuan1":"穿","sun3":"损","shen1":"深","hua1":"花","ban1":"班","bin1":"宾","ta3":"塔","diu1":"丢","che3":"扯","hu4":"户","zuan1":"钻","dun3":"吨","chao2":"潮","sou1":"搜","lu4":"路","shao2":"苕","wen1":"温","seng1":"僧","qian4":"欠","juan3":"卷","ping1":"乒","chou3":"丑","peng1":"烹","tian1":"天","cheng1":"称","zhan3":"展","na4":"那","luo1":"啰","huan1":"欢","qia3":"卡","jue2":"决","mao2":"毛","jian4":"见","sui4":"岁","shuai1":"摔","xia2":"霞","zhang4":"丈","yang3":"养","bang3":"绑","ba3":"把","qiu2":"球","tui1":"推","zhai2":"宅","que4":"却","huang1":"荒","pao2":"咆","dui4":"对","shuo1":"说","cha4":"岔","sang3":"嗓","tan2":"谈","rang4":"让","hai4":"害","shou3":"手","xiu1":"修","ruo4":"弱","teng1":"熥","shan1":"山","tang4":"烫","mo1":"摸","ju2":"局","pie1":"撇","cui4":"翠","gui1":"归","nao4":"闹","kan1":"刊","zhen3":"枕","xie1":"些","ai1":"哀","sa3":"洒","han3":"喊","wa2":"娃","xuan2":"悬","song4":"送","hang4":"巷","yun2":"云","ju3":"举","zai1":"灾","jiong3":"窘","duan4":"断","peng2":"朋","yao3":"咬","kui4":"愧","cong4":"从","you3":"有","xun1":"勋","ran3":"染","bai1":"掰","tian2":"甜","de2":"德","chuai4":"踹","zhi1":"之","po4":"破","yin1":"因","lv3":"旅","qu3":"取","can1":"参","zha3":"眨","chi3":"尺","ke4":"课","zai4":"在","fang4":"放","pu2":"葡","hui3":"毁","bian3":"扁","zhou3":"肘","zhou4":"宙","suo4":"索","qing1":"清","sa4":"萨","min2":"民","fu2":"扶","te4":"特","bian1":"边","chuai1":"揣","rang3":"壤","chuai3":"揣","tie1":"贴","nong4":"弄","tiao3":"挑","jiao4":"叫","bai2":"白","song3":"耸","zhuang4":"壮","hui2":"回","chao3":"吵","shuai3":"甩","ke1":"科","jiong1":"窘","ru4":"人","jun4":"俊","pi3":"匹","shou4":"受","fu3":"府","ji1":"机","qie3":"且","gang3":"岗","jiao1":"交","wen4":"问","chuan3":"喘","miao1":"喵","yong3":"永","tie4":"帖","qie4":"窃","fu4":"父","kai2":"凯","shang4":"上","rao3":"扰","nian1":"拈","zan1":"簪","gui4":"贵","zhai1":"摘","shuan1":"拴","a4":"啊","zu1":"租","huang4":"晃","tai2":"台","pian2":"便","ma2":"麻","lou1":"搂","zong4":"纵","shuan4":"涮","zu3":"组","yi2":"移","sun4":"孙","shui4":"睡","lian3":"脸","tuo2":"驮","tao3":"讨","shu2":"熟","zheng4":"正","xing1":"星","ji2":"及","kou3":"口","ao2":"熬","shai1":"筛","luo2":"罗","zao3":"早","kui2":"葵","tuan3":"疃","po3":"叵","an4":"按","ne2":"呢","ruan3":"软","fang1":"方","wen3":"稳","qun2":"裙","lei4":"泪","yao4":"要","chong1":"冲","weng1":"翁","xiong2":"熊","xuan1":"宣","liao1":"撩","lu3":"鲁","kuan1":"宽","nao1":"孬","jie3":"姐","shun3":"吮","ga1":"嘎","kang4":"抗","men2":"门","ca1":"擦","huang3":"谎","heng4":"横","ju1":"居","sun1":"孙","nv4":"衄","nu2":"奴","na2":"拿","lu2":"炉","hei1":"黑","huo1":"豁","sai4":"赛","nv1":"女","nai3":"奶","zai3":"仔","zei2":"贼","zhuai3":"拽","che1":"车","chua1":"欻","zhua1":"抓","shua3":"耍","zhei4":"这","shei2":"谁","liu1":"溜","miu4":"谬","nou4":"耨","lv2":"驴","nve4":"虐","ruan1":"软"};
+
+// 转换显示拼音 "bā" → 查找汉字 "八"
+function pyToChar(py) {
+  var toneMap={'ā':'1','á':'2','ǎ':'3','à':'4','ē':'1','é':'2','ě':'3','è':'4','ī':'1','í':'2','ǐ':'3','ì':'4','ō':'1','ó':'2','ǒ':'3','ò':'4','ū':'1','ú':'2','ǔ':'3','ù':'4','ǖ':'1','ǘ':'2','ǚ':'3','ǜ':'4'};
+  var base='',tone='';
+  for(var i=0;i<py.length;i++){
+    var c=py[i];
+    if(toneMap[c]){base+=c;tone=toneMap[c]}
+    else base+=c;
+  }
+  var norm=base.replace(/[āáǎà]/g,'a').replace(/[ēéěè]/g,'e').replace(/[īíǐì]/g,'i').replace(/[ōóǒò]/g,'o').replace(/[ūúǔù]/g,'u').replace(/[ǖǘǚǜ]/g,'v').replace(/ü/g,'v');
+  return PY_CHAR_MAP[norm+tone]||py;
+}
+
+// 转换显示拼音 "bā" → CDN URL "https://.../ba1.mp3"
+var PINYIN_AUDIO_BASE='https://e8crbs46y2e.exactdn.com/wp-content/uploads/2024/01/';
+function pyToUrl(py) {
+  var toneMap={'ā':'1','á':'2','ǎ':'3','à':'4','ē':'1','é':'2','ě':'3','è':'4','ī':'1','í':'2','ǐ':'3','ì':'4','ō':'1','ó':'2','ǒ':'3','ò':'4','ū':'1','ú':'2','ǔ':'3','ù':'4','ǖ':'1','ǘ':'2','ǚ':'3','ǜ':'4'};
+  var base='',tone='';
+  for(var i=0;i<py.length;i++){
+    var c=py[i];
+    if(toneMap[c]){base+=c;tone=toneMap[c]}
+    else base+=c;
+  }
+  var norm=base.replace(/[āáǎà]/g,'a').replace(/[ēéěè]/g,'e').replace(/[īíǐì]/g,'i').replace(/[ōóǒò]/g,'o').replace(/[ūúǔù]/g,'u').replace(/[ǖǘǚǜ]/g,'v').replace(/ü/g,'v');
+  return PINYIN_AUDIO_BASE+norm+tone+'.mp3';
+}
+
+// 构建逆映射：汉字→拼音key（如"八"→"ba1"），供语音识别匹配
+var CHAR_PY_MAP = {"一":"yi1","丁":"ding1","七":"qi1","万":"wan4","三":"san1","上":"shang4","下":"xia4","不":"bu4","与":"yu3","丑":"chou3","专":"zhuan1","且":"qie3","世":"shi4","业":"ye4","丛":"cong2","东":"dong1","丝":"si1","丢":"diu1","两":"liang3","严":"yan2","个":"ge4","中":"zhong1","丰":"feng1","串":"chuan4","丹":"dan1","为":"wei4","主":"zhu3","丽":"li4","举":"ju3","久":"jiu3","么":"me","义":"yi4","之":"zhi1","乌":"wu1","乎":"hu1","乐":"le4","乘":"cheng2","九":"jiu3","也":"ye3","习":"xi2","书":"shu1","买":"mai3","了":"le","争":"zheng1","事":"shi4","二":"er4","于":"yu2","云":"yun2","互":"hu4","五":"wu3","井":"jing3","亚":"ya4","些":"xie1","交":"jiao1","产":"chan3","京":"jing1","亮":"liang4","亲":"qin1","人":"ren2","亿":"yi4","什":"shen2","今":"jin1","介":"jie4","仍":"reng2","从":"cong2","仔":"zai3","他":"ta1","代":"dai4","令":"ling4","以":"yi3","们":"men","件":"jian4","份":"fen4","仿":"fang3","休":"xiu1","众":"zhong4","优":"you1","伙":"huo3","会":"hui4","伞":"san3","伟":"wei3","伤":"shang1","伯":"bo2","伴":"ban4","伸":"shen1","但":"dan4","位":"wei4","低":"di1","住":"zhu4","体":"ti3","何":"he2","佛":"fu2","作":"zuo4","你":"ni3","使":"shi3","便":"bian4","保":"bao3","信":"xin4","俩":"lia3","修":"xiu1","倒":"dao4","候":"hou4","借":"jie4","假":"jia3","偏":"pian1","做":"zuo4","停":"ting2","傍":"bang4","傲":"ao4","傻":"sha3","像":"xiang4","儿":"er2","元":"yuan2","兄":"xiong1","先":"xian1","光":"guang1","克":"ke4","兔":"tu4","入":"ru4","全":"quan2","八":"ba1","公":"gong1","六":"liu4","兰":"lan2","共":"gong4","关":"guan1","兴":"xing1","其":"qi2","具":"ju4","冈":"gang1","册":"ce4","再":"zai4","冒":"mao4","写":"xie3","军":"jun1","农":"nong2","冬":"dong1","冰":"bing1","冲":"chong1","决":"jue2","冷":"leng3","冻":"dong4","净":"jing4","准":"zhun3","凉":"liang2","凝":"ning2","几":"ji3","凤":"feng4","凰":"huang2","出":"chu1","刀":"dao1","分":"fen1","切":"qie4","划":"hua4","列":"lie4","刘":"liu2","刚":"gang1","创":"chuang4","初":"chu1","刨":"pao2","利":"li4","别":"bie2","到":"dao4","刷":"shua1","刺":"ci4","刻":"ke4","前":"qian2","割":"ge1","力":"li4","办":"ban4","功":"gong1","加":"jia1","动":"dong4","助":"zhu4","劲":"jin4","劳":"lao2","勇":"yong3","勾":"gou1","包":"bao1","北":"bei3","匠":"jiang4","区":"qu1","医":"yi1","十":"shi2","千":"qian1","午":"wu3","半":"ban4","华":"hua2","南":"nan2","卜":"bu3","卡":"ka3","卫":"wei4","印":"yin4","危":"wei1","即":"ji2","卵":"luan3","卷":"juan4","厂":"chang3","厅":"ting1","历":"li4","压":"ya1","原":"yuan2","厨":"chu2","去":"qu4","县":"xian4","参":"can1","又":"you4","叉":"cha1","及":"ji2","友":"you3","双":"shuang1","反":"fan3","发":"fa1","取":"qu3","受":"shou4","变":"bian4","口":"kou3","古":"gu3","句":"ju4","另":"ling4","只":"zhi3","叫":"jiao4","召":"zhao4","可":"ke3","台":"tai2","史":"shi3","右":"you4","号":"hao4","吃":"chi1","各":"ge4","合":"he2","吉":"ji2","同":"tong2","名":"ming2","后":"hou4","吐":"tu3","向":"xiang4","吓":"xia4","吗":"ma","呀":"ya","告":"gao4","呢":"ne","周":"zhou1","味":"wei4","命":"ming4","和":"he2","咕":"gu1","咱":"zan2","响":"xiang3","哪":"na3","哭":"ku1","唐":"tang2","售":"shou4","唱":"chang4","商":"shang1","啊":"a","啦":"la","喊":"han3","喝":"he1","喂":"wei4","喀":"ka1","善":"shan4","嗓":"sang3","嘀":"di1","嘴":"zui3","喊":"han3","四":"si4","回":"hui2","因":"yin1","团":"tuan2","围":"wei2","困":"kun4","园":"yuan2","图":"tu2","圆":"yuan2","圈":"quan1","土":"tu3","圣":"sheng4","地":"di4","场":"chang3","圾":"ji1","坏":"huai4","坐":"zuo4","坡":"po1","城":"cheng2","埋":"mai2","堆":"dui1","堂":"tang2","堡":"bao3","塔":"ta3","墓":"mu4","墓":"mu4","境":"jing4","墨":"mo4","壁":"bi4","士":"shi4","声":"sheng1","壳":"qiao4","壶":"hu2","壮":"zhuang4","多":"duo1","夜":"ye4","大":"da4","天":"tian1","太":"tai4","头":"tou2","央":"yang1","失":"shi1","奔":"ben1","奖":"jiang3","套":"tao4","女":"nv3","奶":"nai3","她":"ta1","好":"hao3","妈":"ma1","姐":"jie3","姨":"yi2","娃":"wa2","娘":"niang2","婚":"hun1","嫂":"sao3","子":"zi3","孔":"kong3","字":"zi4","孙":"sun1","存":"cun2","孝":"xiao4","季":"ji4","学":"xue2","孩":"hai2","宁":"ning2","守":"shou3","安":"an1","完":"wan2","宝":"bao3","实":"shi2","客":"ke4","室":"shi4","宫":"gong1","家":"jia1","容":"rong2","密":"mi4","富":"fu4","寒":"han2","察":"cha2","寸":"cun4","封":"feng1","专":"zhuan1","将":"jiang1","小":"xiao3","尖":"jian1","尚":"shang4","就":"jiu4","尸":"shi1","尺":"chi3","尼":"ni2","尾":"wei3","尿":"niao4","屁":"pi4","层":"ceng2","居":"ju1","屋":"wu1","屎":"shi3","展":"zhan3","山":"shan1","屿":"yu3","岁":"sui4","岗":"gang3","岩":"yan2","岭":"ling3","岸":"an4","峰":"feng1","岛":"dao3","峡":"xia2","川":"chuan1","州":"zhou1","工":"gong1","左":"zuo3","巧":"qiao3","巨":"ju4","己":"ji3","已":"yi3","巴":"ba1","币":"bi4","市":"shi4","布":"bu4","帆":"fan1","希":"xi1","帮":"bang1","带":"dai4","常":"chang2","帽":"mao4","幅":"fu2","干":"gan1","平":"ping2","年":"nian2","并":"bing4","幸":"xing4","幼":"you4","几":"ji3","广":"guang3","床":"chuang2","应":"ying1","底":"di3","废":"fei4","座":"zuo4","厅":"ting1","建":"jian4","开":"kai1","弄":"nong4","弓":"gong1","引":"yin3","弟":"di4","张":"zhang1","弯":"wan1","弹":"dan4","强":"qiang2","归":"gui1","当":"dang1","录":"lu4","形":"xing2","彩":"cai3","影":"ying3","很":"hen3","得":"de2","德":"de2","心":"xin1","必":"bi4","忘":"wang4","忙":"mang2","忠":"zhong1","快":"kuai4","念":"nian4","忽":"hu1","怎":"zen3","思":"si1","急":"ji2","性":"xing4","怨":"yuan4","总":"zong3","息":"xi1","您":"nin2","悲":"bei1","情":"qing2","惜":"xi1","惊":"jing1","想":"xiang3","感":"gan3","愿":"yuan4","慢":"man4","懂":"dong3","懒":"lan3","成":"cheng2","我":"wo3","战":"zhan4","戏":"xi4","房":"fang2","所":"suo3","扇":"shan4","手":"shou3","才":"cai2","打":"da3","托":"tuo1","抓":"zhua1","护":"hu4","报":"bao4","抱":"bao4","拉":"la1","拍":"pai1","拔":"ba2","招":"zhao1","挂":"gua4","指":"zhi3","捧":"peng3","接":"jie1","推":"tui1","描":"miao2","提":"ti2","握":"wo4","摆":"bai3","掉":"diao4","换":"huan4","摘":"zhai1","撕":"si1","播":"bo1","擦":"ca1","支":"zhi1","收":"shou1","攻":"gong1","放":"fang4","故":"gu4","教":"jiao1","救":"jiu4","敢":"gan3","散":"san4","敬":"jing4","数":"shu3","整":"zheng3","敌":"di2","文":"wen2","斗":"dou4","新":"xin1","断":"duan4","方":"fang1","旅":"lv3","旁":"pang2","旗":"qi2","无":"wu2","日":"ri4","旧":"jiu4","早":"zao3","时":"shi2","明":"ming2","星":"xing1","春":"chun1","昨":"zuo2","是":"shi4","显":"xian3","晒":"shai4","晓":"xiao3","晨":"chen2","景":"jing3","晴":"qing2","晶":"jing1","智":"zhi4","暗":"an4","暮":"mu4","历":"li4","最":"zui4","会":"hui4","月":"yue4","有":"you3","朋":"peng2","服":"fu2","朗":"lang3","朝":"zhao1","期":"qi1","木":"mu4","本":"ben3","术":"shu4","机":"ji1","杀":"sha1","杂":"za2","李":"li3","条":"tiao2","杏":"xing4","材":"cai2","村":"cun1","杆":"gan3","来":"lai2","杨":"yang2","果":"guo3","枝":"zhi1","林":"lin2","枣":"zao3","枪":"qiang1","枯":"ku1","树":"shu4","柳":"liu3","柴":"chai2","桃":"tao2","桐":"tong2","桑":"sang1","梁":"liang2","梅":"mei2","梳":"shu1","梧":"wu2","棍":"gun4","棉":"mian2","棒":"bang4","棚":"peng2","森":"sen1","棵":"ke1","楼":"lou2","概":"gai4","榴":"liu2","模":"mo2","樟":"zhang1","橡":"xiang4","桥":"qiao2","樱":"ying1","浆":"jiang1","橙":"cheng2","毛":"mao2","毫":"hao2","民":"min2","气":"qi4","氧":"yang3","池":"chi2","汗":"han4","求":"qiu2","汇":"hui4","汉":"han4","江":"jiang1","汤":"tang1","汽":"qi4","沥":"li4","沙":"sha1","沟":"gou1","沥":"li4","没":"mei2","河":"he2","油":"you2","治":"zhi4","沾":"zhan1","泉":"quan2","法":"fa3","泡":"pao4","波":"bo1","泥":"ni2","注":"zhu4","洋":"yang2","洒":"sa3","洗":"xi3","活":"huo2","派":"pai4","流":"liu2","浪":"lang4","浮":"fu2","浴":"yu4","海":"hai3","消":"xiao1","浅":"qian3","淋":"lin2","渔":"yu2","净":"jing4","湖":"hu2","湿":"shi1","温":"wen1","游":"you2","滴":"di1","漂":"piao1","漫":"man4","湖":"hu2","滩":"tan1","漏":"lou4","潮":"chao2","澡":"zao3","激":"ji1","灌":"guan4","火":"huo3","灭":"mie4","灯":"deng1","灾":"zai1","炉":"lu2","烂":"lan4","烧":"shao1","热":"re4","烟":"yan1","照":"zhao4","熟":"shu2","燃":"ran2","爱":"ai4","牙":"ya2","物":"wu4","特":"te4","猜":"cai1","猫":"mao1","猴":"hou2","狗":"gou3","狐":"hu2","狮":"shi1","狼":"lang2","狸":"li2","猎":"lie4","猪":"zhu1","猫":"mao1","王":"wang2","班":"ban1","球":"qiu2","理":"li3","琴":"qin2","甜":"tian2","生":"sheng1","瓜":"gua1","田":"tian2","男":"nan2","留":"liu2","疑":"yi2","电":"dian4","画":"hua4","病":"bing4","痛":"tong4","瘦":"shou4","登":"deng1","白":"bai2","的":"de","百":"bai3","皮":"pi2","盆":"pen2","盏":"zhan3","目":"mu4","看":"kan4","真":"zhen1","眨":"zha3","睡":"shui4","着":"zhuo2","眼":"yan3","睛":"jing1","瞧":"qiao2","知":"zhi1","矮":"ai3","石":"shi2","矿":"kuang4","砍":"kan3","砸":"za2","破":"po4","碗":"wan3","碰":"peng4","碟":"die2","礼":"li3","社":"she4","祝":"zhu4","神":"shen2","票":"piao4","禁":"jin4","福":"fu2","离":"li2","秋":"qiu1","种":"zhong3","科":"ke1","积":"ji1","秤":"cheng4","税":"shui4","程":"cheng2","稍":"shao1","稻":"dao4","稳":"wen3","空":"kong1","突":"tu1","穿":"chuan1","窗":"chuang1","窝":"wo1","立":"li4","童":"tong2","端":"duan1","竹":"zhu2","笋":"sun3","笔":"bi3","笛":"di2","笨":"ben4","笼":"long2","等":"deng3","答":"da2","筷":"kuai4","算":"suan4","管":"guan3","箱":"xiang1","篇":"pian1","篮":"lan2","米":"mi3","粉":"fen3","粒":"li4","精":"jing1","糖":"tang2","糟":"zao1","系":"xi4","纪":"ji4","红":"hong2","纹":"wen2","纸":"zhi3","纺":"fang3","织":"zhi1","线":"xian4","组":"zu3","细":"xi4","结":"jie2","绘":"hui4","统":"tong3","绿":"lv4","维":"wei2","缤":"bin1","缩":"suo1","绑":"bang3","绸":"chou2","缠":"chan2","壮":"zhuang4","美":"mei3","群":"qun2","义":"yi4","习":"xi2","羽":"yu3","翅":"chi4","翠":"cui4","老":"lao3","考":"kao3","者":"zhe3","耳":"er3","聪":"cong1","肉":"rou4","肚":"du4","肛":"gang1","肝":"gan1","肠":"chang2","背":"bei4","胡":"hu2","脑":"nao3","脚":"jiao3","脸":"lian3","腰":"yao1","腿":"tui3","膝":"xi1","臂":"bi4","自":"zi4","至":"zhi4","舍":"she3","舒":"shu1","舞":"wu3","舟":"zhou1","航":"hang2","艘":"sou1","良":"liang2","色":"se4","花":"hua1","芬":"fen1","芽":"ya2","苹":"ping2","苦":"ku3","英":"ying1","草":"cao3","茫":"mang2","荷":"he2","菜":"cai4","葡":"pu2","葱":"cong1","落":"luo4","蓝":"lan2","藏":"cang2","艺":"yi4","苏":"su1","若":"ruo4","英":"ying1","茂":"mao4","莲":"lian2","获":"huo4","菇":"gu1","萝":"luo2","蒸":"zheng1","蒙":"meng2","蔚":"wei4","蕾":"lei3","范":"fan4","药":"yao4","荷":"he2","藤":"teng2","虎":"hu3","虚":"xu1","虫":"chong2","蚜":"ya2","蚯":"qiu1","蛇":"she2","蛋":"dan4","蛙":"wa1","蜻":"qing1","蝴":"hu2","蝶":"die2","蝗":"huang2","蚊":"wen2","鱼":"ming2","蝉":"chan2","蜜":"mi4","蜓":"ting2","蝇":"ying2","蜘":"zhi1","蛛":"zhu1","蜡":"la4","蝌":"ke1","蝌":"ke1","蝎":"xie1","蝴":"hu2","蝇":"ying2","蟆":"ma2","蟹":"xie4","蚁":"yi3","虹":"hong2","蚊":"wen2","蛇":"she2","融":"rong2","螳":"tang2","螃":"pang2","蟹":"xie4","衣":"yi1","补":"bu3","表":"biao3","袋":"dai4","裙":"qun2","西":"xi1","视":"shi4","觉":"jue2","角":"jiao3","解":"jie3","言":"yan2","记":"ji4","许":"xu3","论":"lun4","识":"shi2","诉":"su4","话":"hua4","详":"xiang2","语":"yu3","读":"du2","课":"ke4","谁":"shei2","调":"diao4","讲":"jiang3","让":"rang4","认":"ren4","讨":"tao3","许":"xu3","诚":"cheng2","说":"shuo1","请":"qing3","谢":"xie4","课":"ke4","豆":"dou4","象":"xiang4","貌":"mao4","贝":"bei4","货":"huo4","贼":"zei2","质":"zhi4","买":"mai3","费":"fei4","赛":"sai4","赞":"zan4","跟":"gen1","踢":"ti1","蹲":"dun1","身":"shen1","转":"zhuan3","车":"che1","软":"ruan3","轮":"lun2","轻":"qing1","载":"zai4","辆":"liang4","输":"shu1","辫":"bian4","边":"bian1","过":"guo4","运":"yun4","近":"jin4","迎":"ying2","还":"hai2","这":"zhe4","进":"jin4","远":"yuan3","连":"lian2","迟":"chi2","追":"zhui1","退":"tui4","送":"song4","适":"shi4","逃":"tao2","透":"tou4","造":"zao4","逢":"feng2","游":"you2","道":"dao4","邀":"yao1","那":"na4","邮":"you2","邻":"lin2","部":"bu4","都":"dou1","郊":"jiao1","酉":"you3","酒":"jiu3","醋":"cu4","醇":"chun2","醉":"zui4","醒":"xing3","金":"jin1","钉":"ding1","针":"zhen1","钓":"diao4","钟":"zhong1","钢":"gang1","铁":"tie3","铜":"tong2","银":"yin2","锄":"chu2","锁":"suo3","锋":"feng1","键":"jian4","铅":"qian1","镜":"jing4","闪":"shan3","问":"wen4","闲":"xian2","间":"jian1","阁":"ge2","阅":"yue4","隔":"ge2","门":"men2","闪":"shan3","闭":"bi4","阔":"kuo4","队":"dui4","阵":"zhen4","阳":"yang2","阴":"yin1","陀":"tuo2","除":"chu2","院":"yuan4","难":"nan2","雨":"yu3","雪":"xue3","雷":"lei2","霞":"xia2","霜":"shuang1","露":"lu4","青":"qing1","静":"jing4","非":"fei1","面":"mian4","革":"ge2","音":"yin1","顶":"ding3","项":"xiang4","领":"ling3","颗":"ke1","颜":"yan2","题":"ti2","风":"feng1","飘":"piao1","飞":"fei1","食":"shi2","饭":"fan4","饮":"yin3","饱":"bao3","饼":"bing3","餐":"can1","饿":"e4","饺":"jiao3","馆":"guan3","香":"xiang1","马":"ma3","骑":"qi2","驼":"tuo2","高":"gao1","鱼":"yu2","鲜":"xian1","鸟":"niao3","鸡":"ji1","鸭":"ya1","凤":"feng4","鸥":"ou1","鸽":"ge1","鹅":"e2","鹰":"ying1","鹿":"lu4","麒":"qi2","麟":"lin2","麦":"mai4","麻":"ma2","黄":"huang2","黑":"hei1","龙":"long2","龟":"gui1","齿":"chi3","龄":"ling2","鼠":"shu3","鼻":"bi2"};
+
+// =============================================
+// 数据管理
+// =============================================
+var profiles = [], currentUser = null;
+var PROFILE_COLORS = ['#4facfe','#e74c3c','#2ecc71','#f9a825','#9b59b6','#1abc9c','#e67e22','#3498db'];
+var AGE_OPTIONS = [4,5,6,7,8,9,10,11,12];
+var selectedAge = 6;
+var dailyCount = 8, examCount = 15;
+var DAILY_NEED = 3, EXAM_PASS = 80;
+var debugMode = false;
+
+function loadProfiles() {
+  try {
+    var d = localStorage.getItem('learningProfiles');
+    if (d) {
+      var p = JSON.parse(d);
+      if (p && p.profiles && Array.isArray(p.profiles)) {
+        profiles = p.profiles;
+        currentUser = p.currentUser || null;
+        profiles.forEach(function(prof) {
+          if (typeof prof.age !== 'number') prof.age = 6;
+          if (!prof.pinyin) prof.pinyin = {currentGroup:0,groupStats:{},dailyRecords:[],todayState:null,weakSounds:{}};
+          var ts = prof.pinyin.todayState;
+          if (ts && ts.date !== today()) prof.pinyin.todayState = null;
+        });
+        return;
+      }
+    }
+  } catch(e) {}
+  profiles = []; currentUser = null;
+}
+
+function saveProfiles() {
+  var data = {profiles:profiles, currentUser:currentUser};
+  localStorage.setItem('learningProfiles', JSON.stringify(data));
+}
+// 导出/导入数据（替代服务器备份）
+function exportData(){
+  var data={profiles:profiles,currentUser:currentUser};
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='pinyin-data-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importData(evt){
+  var file=evt.target.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var d=JSON.parse(e.target.result);
+      if(!d||!d.profiles||!Array.isArray(d.profiles)){alert('数据格式错误');return;}
+      if(!confirm('导入将会覆盖当前所有数据，确定继续吗？'))return;
+      profiles=d.profiles;
+      currentUser=d.currentUser||null;
+      localStorage.setItem('learningProfiles',JSON.stringify({profiles:profiles,currentUser:currentUser}));
+      renderProfiles();
+      alert('导入成功！');
+    }catch(err){alert('导入失败：'+err.message);}
+  };
+  reader.readAsText(file);
+  evt.target.value='';
+}
+
+function getProfile() { return profiles.find(function(p){return p.name===currentUser}); }
+function today() { return new Date().toISOString().slice(0,10); }
+function getDateStr(d) { var o=['日','一','二','三','四','五','六']; return (d.getMonth()+1)+'月'+d.getDate()+'日 星期'+o[d.getDay()]; }
+
+// =============================================
+// 页面切换
+// =============================================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('visible')});
+  var el = document.getElementById(id);
+  if (el) el.classList.add('visible');
+}
+
+// =============================================
+// 小朋友管理
+// =============================================
+function showProfilePage() {
+  loadProfiles();
+  renderProfiles();
+  showPage('profilePage');
+}
+
+function renderProfiles() {
+  var g = document.getElementById('profileGrid');
+  var html = '';
+  profiles.forEach(function(p) {
+    var py = p.pinyin || {};
+    var done = py.dailyRecords ? py.dailyRecords.length : 0;
+    html += '<div class="profile-card" onclick="selectProfile(\''+p.name+'\')"><div class="profile-avatar" style="background:'+p.color+';position:relative">'+p.initial+'<div class="profile-del" onclick="event.stopPropagation();deleteProfile(\''+p.name+'\')">✕</div></div><div class="profile-name">'+p.name+'</div><div class="profile-stats">测验 '+done+' 天</div></div>';
+  });
+  html += '<div class="add-profile-btn" onclick="showAddProfile()"><div class="plus-icon">+</div><div class="add-label">添加新小朋友</div></div>';
+  g.innerHTML = html;
+}
+
+function selectProfile(name) { currentUser = name; saveProfiles(); enterDashboard(); }
+
+function deleteProfile(name) {
+  if (!confirm('确定要删除「'+name+'」的所有拼音学习数据吗？')) return;
+  var idx = profiles.findIndex(function(p){return p.name===name});
+  if (idx < 0) return;
+  profiles.splice(idx, 1);
+  if (currentUser === name) currentUser = profiles.length > 0 ? profiles[0].name : null;
+  saveProfiles(); renderProfiles();
+  if (!currentUser) showPage('welcomePage');
+}
+
+function showAddProfile() { showPage('addProfilePage'); document.getElementById('newProfileName').value=''; renderAgeSelector(); }
+function renderAgeSelector() {
+  document.getElementById('ageSelector').innerHTML = AGE_OPTIONS.map(function(a){return '<button class="age-btn'+(a===6?' selected':'')+'" onclick="selectAge('+a+')">'+a+'岁</button>'}).join('');
+}
+function selectAge(a) { selectedAge=a; document.querySelectorAll('.age-btn').forEach(function(b){b.classList.toggle('selected',b.textContent==a+'岁')}); }
+
+function addNewProfile() {
+  var name = document.getElementById('newProfileName').value.trim();
+  if (!name) { alert('请输入名字'); return; }
+  if (profiles.find(function(p){return p.name===name})) { alert('这个名字已存在'); return; }
+  profiles.push({name:name, initial:name.charAt(0).toUpperCase(), color:PROFILE_COLORS[profiles.length%PROFILE_COLORS.length], age:selectedAge, learnedChars:{}, todayState:null, dailyRecords:[], pinyin:{currentGroup:0,groupStats:{},dailyRecords:[],todayState:null,weakSounds:{}}});
+  currentUser=name; saveProfiles(); enterDashboard();
+}
+
+function switchUser() {
+  if (_activeRec) { try{_activeRec.abort()}catch(e){} _activeRec=null; }
+  if (_readTimeout) { clearTimeout(_readTimeout); _readTimeout=null; }
+  showProfilePage();
+}
+
+// =============================================
+// Dashboard
+// =============================================
+function enterDashboard() {
+  showPage('dashboardPage');
+  var p = getProfile(); if (!p) return;
+  if (!p.pinyin) p.pinyin = {currentGroup:0,groupStats:{},dailyRecords:[],todayState:null,weakSounds:{}};
+  document.getElementById('dashAvatar').textContent = p.initial;
+  document.getElementById('dashAvatar').style.background = p.color;
+  document.getElementById('dashName').textContent = p.name;
+  document.getElementById('dashAge').textContent = p.age+'岁';
+  document.getElementById('dateStr').textContent = getDateStr(new Date());
+  updateDashboard(); renderGroupTags();
+}
+
+function updateDashboard() {
+  var p = getProfile(); if (!p||!p.pinyin) return;
+  var py = p.pinyin, gs = py.groupStats||{}, gi = py.currentGroup||0;
+  var group = PINYIN_GROUPS[gi];
+  var stat = gs[String(gi)] || {dailyDone:0,examDone:false,examScore:null,passed:false};
+  var todayDone = py.todayState && py.todayState.date===today() && py.todayState.done;
+
+  document.getElementById('dailyDesc').textContent = dailyCount+'道题 · '+group.name+' 组';
+  document.getElementById('dailyProgress').style.width = Math.min(100,(stat.dailyDone/DAILY_NEED)*100)+'%';
+
+  var dc = document.getElementById('dailyCard');
+  if (todayDone) { document.getElementById('dailyStatus').textContent='今日已完成 ✓'; dc.classList.add('disabled'); }
+  else { document.getElementById('dailyStatus').textContent='开始测验'; dc.classList.remove('disabled'); dc.onclick=startDailyTest; }
+
+  var ec = document.getElementById('examCard'), el = document.getElementById('examLock');
+  if (debugMode) {
+    ec.classList.remove('disabled'); el.textContent = '🔓';
+    document.getElementById('examTitle').textContent = group.label+' 阶段考试';
+    document.getElementById('examDesc').textContent = '调试模式：直接开始';
+    ec.onclick = startExam;
+  } else if (stat.examDone) {
+    ec.classList.remove('disabled'); el.textContent = stat.passed?'✅':'⚠️';
+    document.getElementById('examTitle').textContent = group.label+' 阶段考试';
+    document.getElementById('examDesc').textContent = stat.passed?('已通过 · 得分 '+stat.examScore):('未通过('+stat.examScore+'分) · 可重考');
+    ec.onclick = startExam;
+  } else if (stat.dailyDone >= DAILY_NEED) {
+    ec.classList.remove('disabled'); el.textContent = '🔓';
+    document.getElementById('examTitle').textContent = group.label+' 阶段考试';
+    document.getElementById('examDesc').textContent = examCount+'题 · 约10分钟';
+    ec.onclick = startExam;
+  } else {
+    ec.classList.add('disabled'); el.textContent = '🔒';
+    document.getElementById('examTitle').textContent = group.label+' 阶段考试';
+    document.getElementById('examDesc').textContent = '需完成 '+(DAILY_NEED-stat.dailyDone)+' 次每日测验后解锁';
+    ec.onclick = null;
+  }
+}
+
+function renderGroupTags() {
+  var p = getProfile(); if (!p||!p.pinyin) return;
+  var py = p.pinyin, gi = py.currentGroup||0, gs = py.groupStats||{};
+  var html = '';
+  PINYIN_GROUPS.forEach(function(group, idx) {
+    var stat = gs[String(idx)], cls = 'group-tag';
+    if (stat&&stat.passed) cls+=' passed';
+    else if (idx===gi) cls+=' current';
+    else if (idx>gi) cls+=' locked';
+    html += '<span class="'+cls+'">'+(stat&&stat.passed?group.name+' ✓':(idx===gi?group.name+' ●':group.name))+'</span>';
+  });
+  document.getElementById('groupTags').innerHTML = html;
+}
+
+// =============================================
+// 题目生成
+// =============================================
+function shuffle(arr) { var a=arr.slice(); for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;} return a; }
+function pickRandom(arr,count) { return shuffle(arr).slice(0,count); }
+
+function getConfusable(init) {
+  var m={'b':['p','m'],'p':['b','m'],'m':['b','p'],'f':['b','p'],'d':['t','n'],'t':['d','n'],'n':['d','l'],'l':['n','d'],'g':['k','h'],'k':['g','h'],'h':['g','k'],'j':['q','x'],'q':['j','x'],'x':['j','q'],'zh':['ch','sh'],'ch':['zh','sh'],'sh':['zh','ch'],'r':['zh','sh'],'z':['c','s','zh'],'c':['z','s','ch'],'s':['z','c','sh'],'y':['w'],'w':['y']};
+  return m[init]||[];
+}
+
+function generateQuestions(groupIdx, count, testType) {
+  var groupSyl = getGroupSyllables(groupIdx);
+  if (groupSyl.length < 4) return [];
+
+  var typeDist;
+  if (testType==='daily') {
+    typeDist = [
+      {type:'pinyin', cnt:Math.round(count*0.4)},
+      {type:'initial', cnt:Math.round(count*0.25)},
+      {type:'tone', cnt:Math.round(count*0.25)},
+      {type:'read', cnt:Math.round(count*0.1)}
+    ];
+  } else {
+    typeDist = [
+      {type:'pinyin', cnt:Math.round(count*0.33)},
+      {type:'initial', cnt:Math.round(count*0.2)},
+      {type:'tone', cnt:Math.round(count*0.2)},
+      {type:'read', cnt:Math.round(count*0.27)}
+    ];
+  }
+  var totalAlloc = typeDist.reduce(function(s,t){return s+t.cnt},0);
+  typeDist[0].cnt += (count-totalAlloc);
+
+  var questions = [], used = {}, group = PINYIN_GROUPS[groupIdx];
+  var p = getProfile(), weakSounds = (p&&p.pinyin&&p.pinyin.weakSounds)||{};
+
+  typeDist.forEach(function(td) {
+    for (var i=0;i<td.cnt;i++) {
+      var q = createQuestion(td.type, groupSyl, group, used, weakSounds);
+      if (q) questions.push(q);
+    }
+  });
+  return shuffle(questions);
+}
+
+function createQuestion(type, groupSyl, group, used, weakSounds) {
+  var candidates = groupSyl.filter(function(s){return !used[s.py]});
+  if (candidates.length===0) { used={}; candidates=groupSyl; }
+  if (candidates.length===0) return null;
+
+  var target = null;
+  var weakKeys = Object.keys(weakSounds);
+  if (Math.random()<0.3 && weakKeys.length>0) {
+    weakKeys.sort(function(a,b){return weakSounds[b]-weakSounds[a]});
+    var wc = candidates.filter(function(s){return s.initial===weakKeys[0]});
+    if (wc.length>0) target = wc[Math.floor(Math.random()*wc.length)];
+  }
+  if (!target) target = candidates[Math.floor(Math.random()*candidates.length)];
+  used[target.py] = true;
+
+  switch(type) {
+    case 'pinyin': return createPinyinQ(target, groupSyl);
+    case 'initial': return createInitialQ(target, group);
+    case 'tone': return createToneQ(target);
+    case 'read': return {type:'read',label:'🎤 看着拼音读出来',target:target,correctAnswer:target.py};
+    default: return null;
+  }
+}
+
+function createPinyinQ(target, groupSyl) {
+  var options = [target], usedPy = {}; usedPy[target.py]=true;
+  // 同声母不同韵母
+  var sameInit = groupSyl.filter(function(s){return s.initial===target.initial&&!usedPy[s.py]});
+  if (sameInit.length>0) { var d1=sameInit[Math.floor(Math.random()*sameInit.length)]; options.push(d1); usedPy[d1.py]=true; }
+  // 同韵母+声调不同声母
+  var sameFT = groupSyl.filter(function(s){return s.final===target.final&&s.tone===target.tone&&s.initial!==target.initial&&!usedPy[s.py]});
+  if (sameFT.length>0) { var d2=sameFT[Math.floor(Math.random()*sameFT.length)]; options.push(d2); usedPy[d2.py]=true; }
+  // 随机补
+  var rest = groupSyl.filter(function(s){return !usedPy[s.py]});
+  while (options.length<4 && rest.length>0) { var ri=Math.floor(Math.random()*rest.length); options.push(rest[ri]); usedPy[rest[ri].py]=true; rest.splice(ri,1); }
+  while (options.length<4) options.push(groupSyl[Math.floor(Math.random()*groupSyl.length)]);
+  return {type:'pinyin',label:'🎧 听一听，选正确的拼音',target:target,options:shuffle(options),correctIndex:-1};
+}
+
+function createInitialQ(target, group) {
+  var correct = target.initial, initials = [correct];
+  var others = group.initials.filter(function(i){return i!==correct});
+  while (initials.length<4 && others.length>0) { var ri=Math.floor(Math.random()*others.length); initials.push(others[ri]); others.splice(ri,1); }
+  var conf = getConfusable(correct).filter(function(i){return initials.indexOf(i)<0});
+  while (initials.length<4 && conf.length>0) initials.push(conf.shift());
+  return {type:'initial',label:'🎧 听一听，是哪个声母？',target:target,options:shuffle(initials),correctAnswer:correct};
+}
+
+function createToneQ(target) {
+  var tone = target.tone;
+  if (tone===0||tone===5) tone=1;
+  return {type:'tone',label:'🎧 听一听，是第几声？',target:target,options:[1,2,3,4],correctAnswer:tone};
+}
+
+// =============================================
+// 测验流程
+// =============================================
+var testQuestions=[], testIndex=0, testType='daily', testAnswers=[];
+var answered=false, waitingRead=false, readAttempts=0, _activeRec=null;
+
+function startDailyTest() {
+  var p = getProfile(); if (!p||!p.pinyin) return;
+  var py = p.pinyin;
+  if (!debugMode && py.todayState && py.todayState.date===today() && py.todayState.done) { alert('今天的每日测验已经完成了！'); return; }
+  testType='daily'; startTest(dailyCount);
+}
+function startExam() { testType='exam'; startTest(examCount); }
+
+function startTest(count) {
+  var p = getProfile(); if (!p||!p.pinyin) return;
+  var py = p.pinyin, gi = py.currentGroup||0;
+  testQuestions = generateQuestions(gi, count, testType);
+  if (testQuestions.length===0) { alert('题库不足'); return; }
+  testIndex=0; testAnswers=[]; answered=false; waitingRead=false; readAttempts=0;
+  // 创建识别器（整个测验期间复用，不反复销毁）
+  _createReadRecognizer();
+  py.todayState = {date:today(),group:gi,testType:testType,questions:testQuestions,currentIndex:0,answers:[],done:false,score:0};
+  saveProfiles();
+  showPage('testPage');
+  document.getElementById('testTypeLabel').textContent = testType==='daily'?'每日测验':'阶段考试';
+  document.getElementById('testNextBtn').disabled = true;
+  document.getElementById('testNextBtn').className = 'test-next-btn';
+  document.getElementById('testNextBtn').textContent = '下一题 →';
+  document.getElementById('testNextBtn').onclick = nextQuestion;
+  document.getElementById('testFeedback').textContent = '';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  if (testIndex >= testQuestions.length) { finishTest(); return; }
+  var q = testQuestions[testIndex];
+  answered=false; waitingRead=false; readAttempts=0;
+  document.getElementById('testProgress').textContent = (testIndex+1)+'/'+testQuestions.length;
+  document.getElementById('testNextBtn').disabled = true;
+  document.getElementById('testNextBtn').className = 'test-next-btn';
+  document.getElementById('testFeedback').textContent = '';
+
+  var body = document.getElementById('testBody');
+  switch(q.type) {
+    case 'pinyin': renderPinyinQ(body,q); break;
+    case 'initial': renderInitialQ(body,q); break;
+    case 'tone': renderToneQ(body,q); break;
+    case 'read': renderReadQ(body,q); break;
+  }
+}
+
+function renderPinyinQ(body,q) {
+  body.innerHTML = '<div class="test-question-label">'+q.label+'</div><button class="audio-play-btn" id="audioBtn" onclick="playAudio(\''+q.target.py+'\')">🔊</button><div class="audio-hint">点击喇叭听发音</div><div class="options-grid" id="optionsGrid"></div>';
+  var grid = document.getElementById('optionsGrid'), shuffled = q.options;
+  q.correctIndex = shuffled.findIndex(function(o){return o.py===q.target.py});
+  shuffled.forEach(function(opt,i){
+    var btn = document.createElement('button'); btn.className='option-btn'; btn.textContent=opt.py;
+    btn.onclick = (function(idx){return function(){selectPinyin(idx)}})(i);
+    grid.appendChild(btn);
+  });
+  setTimeout(function(){playAudio(q.target.py)},400);
+}
+
+function selectPinyin(idx) {
+  if (answered) return; answered=true;
+  var q=testQuestions[testIndex], correct=idx===q.correctIndex;
+  document.querySelectorAll('#optionsGrid .option-btn').forEach(function(btn,i){
+    btn.classList.add('disabled');
+    if (i===q.correctIndex) btn.classList.add('correct');
+    else if (i===idx&&!correct) btn.classList.add('wrong');
+  });
+  if (testType==='daily') document.getElementById('testFeedback').textContent = correct?'✅ 选对了！':('❌ 正确答案是 '+q.target.py);
+  recordAnswer('pinyin',correct,q.target);
+  document.getElementById('testNextBtn').disabled=false;
+  document.getElementById('testNextBtn').className='test-next-btn success';
+}
+
+function renderInitialQ(body,q) {
+  body.innerHTML = '<div class="test-question-label">'+q.label+'</div><button class="audio-play-btn" id="audioBtn" onclick="playAudio(\''+q.target.py+'\')">🔊</button><div class="audio-hint">点击喇叭听发音</div><div class="initial-options" id="initialOptions"></div>';
+  var c = document.getElementById('initialOptions');
+  q.options.forEach(function(init){
+    var btn = document.createElement('button'); btn.className='initial-btn'; btn.textContent=init;
+    btn.onclick = (function(sel){return function(){selectInitial(sel)}})(init);
+    c.appendChild(btn);
+  });
+  setTimeout(function(){playAudio(q.target.py)},400);
+}
+
+function selectInitial(sel) {
+  if (answered) return; answered=true;
+  var q=testQuestions[testIndex], correct=sel===q.correctAnswer;
+  document.querySelectorAll('#initialOptions .initial-btn').forEach(function(btn){
+    btn.classList.add('disabled');
+    if (btn.textContent===q.correctAnswer) btn.classList.add('correct');
+    else if (btn.textContent===sel&&!correct) btn.classList.add('wrong');
+  });
+  if (testType==='daily') document.getElementById('testFeedback').textContent = correct?'✅ 选对了！':('❌ 正确答案是 '+q.correctAnswer);
+  recordAnswer('initial',correct,q.target);
+  document.getElementById('testNextBtn').disabled=false;
+  document.getElementById('testNextBtn').className='test-next-btn success';
+}
+
+function renderToneQ(body,q) {
+  body.innerHTML = '<div class="test-question-label">'+q.label+'</div><button class="audio-play-btn" id="audioBtn" onclick="playAudio(\''+q.target.py+'\')">🔊</button><div class="audio-hint">点击喇叭听发音</div><div class="tone-options" id="toneOptions"></div>';
+  var tones=[1,2,3,4], names=['一声','二声','三声','四声'], marks=['¯','ˊ','ˇ','ˋ'];
+  var c = document.getElementById('toneOptions');
+  tones.forEach(function(tone,i){
+    var btn = document.createElement('button'); btn.className='tone-btn';
+    btn.innerHTML = '<span class="tone-mark">'+marks[i]+'</span><span class="tone-label">'+names[i]+'</span>';
+    btn.onclick = (function(t){return function(){selectTone(t)}})(tone);
+    c.appendChild(btn);
+  });
+  setTimeout(function(){playAudio(q.target.py)},400);
+}
+
+function selectTone(sel) {
+  if (answered) return; answered=true;
+  var q=testQuestions[testIndex], correct=sel===q.correctAnswer;
+  document.querySelectorAll('#toneOptions .tone-btn').forEach(function(btn){
+    btn.classList.add('disabled');
+    var l=btn.querySelector('.tone-label'), tn=parseInt(l.textContent.replace(/[^0-9]/g,''));
+    if (tn===q.correctAnswer) btn.classList.add('correct');
+    else if (tn===sel&&!correct) btn.classList.add('wrong');
+  });
+  if (testType==='daily') {
+    var names=['','一声','二声','三声','四声'];
+    document.getElementById('testFeedback').textContent = correct?'✅ 选对了！':('❌ 正确答案是 '+names[q.correctAnswer]);
+  }
+  recordAnswer('tone',correct,q.target);
+  document.getElementById('testNextBtn').disabled=false;
+  document.getElementById('testNextBtn').className='test-next-btn success';
+}
+
+function renderReadQ(body,q) {
+  waitingRead=true; readAttempts=0;
+  body.innerHTML = '<div class="test-question-label">'+q.label+'</div><div class="read-pinyin-display">'+q.target.py+'</div><div class="read-area"><button class="read-mic-btn" id="readMicBtn" onclick="startReading()">🎤</button><div class="audio-hint">点击麦克风，大声读出来</div><div class="read-result" id="readResult"></div><span class="read-skip" id="readSkip" style="display:none" onclick="skipReading()">跳过 →</span></div>';
+  setTimeout(function(){if(waitingRead){var s=document.getElementById('readSkip');if(s)s.style.display='';}},5000);
+}
+
+// 创建朗读识别器（只创建，不启动——启动必须由用户点击触发）
+function _createReadRecognizer() {
+  var SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) return;
+  if (_activeRec) { try{_activeRec.onresult=null;_activeRec.onerror=null;_activeRec.abort()}catch(e){} _activeRec=null; }
+  _activeRec = new SR();
+  _activeRec.lang='zh-CN';
+  _activeRec.continuous=true;
+  _activeRec.interimResults=true;
+  _activeRec.maxAlternatives=8;
+}
+
+var _onReadResult = null;
+var _onReadError = null;
+
+function startReading() {
+  if (!waitingRead) return;
+  var SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) { document.getElementById('readResult').textContent='设备不支持语音识别'; document.getElementById('readResult').style.color='#e74c3c'; skipReading(); return; }
+
+  document.getElementById('readMicBtn').classList.add('listening');
+  document.getElementById('readResult').textContent='正在听...';
+  document.getElementById('readResult').style.color='';
+
+  var target = testQuestions[testIndex].target.py;
+
+  // 确保识别器存在
+  if (!_activeRec) _createReadRecognizer();
+  if (!_activeRec) { document.getElementById('readMicBtn').classList.remove('listening'); document.getElementById('readResult').textContent='无法创建识别器'; document.getElementById('readResult').style.color='#e74c3c'; return; }
+
+  // 清除之前的超时
+  if (_readTimeout) clearTimeout(_readTimeout);
+
+  // 绑定当前题目的回调
+  _activeRec.onresult = function(e) {
+    clearTimeout(_readTimeout);
+    var matched = false;
+    for (var i = e.resultIndex; i < e.results.length; i++) {
+      for (var j = 0; j < e.results[i].length; j++) {
+        if (pyMatch(target, e.results[i][j].transcript.trim())) { matched = true; break; }
+      }
+      if (matched) break;
+    }
+    if (matched) {
+      document.getElementById('readResult').textContent = '✅ 读对了！';
+      document.getElementById('readResult').style.color = '#2ecc71';
+      document.getElementById('readMicBtn').classList.remove('listening');
+      waitingRead = false;
+      readDone(true);
+    } else {
+      readAttempts++;
+      if (readAttempts >= 3) {
+        document.getElementById('readResult').textContent = '没听清，再试试或跳过';
+        document.getElementById('readResult').style.color = '#e74c3c';
+      } else {
+        document.getElementById('readResult').textContent = '再试一次 (' + readAttempts + '/3)';
+        document.getElementById('readResult').style.color = '#f9a825';
+      }
+    }
+  };
+
+  _activeRec.onerror = function(e) {
+    clearTimeout(_readTimeout);
+    document.getElementById('readMicBtn').classList.remove('listening');
+    var errMsg = '识别出错';
+    if (e && e.error) {
+      if (e.error === 'not-allowed') errMsg = '请允许使用麦克风';
+      else if (e.error === 'no-speech') errMsg = '没有听到声音，请大声读';
+      else if (e.error === 'audio-capture') errMsg = '麦克风不可用';
+      else if (e.error === 'network') errMsg = '网络错误';
+      else if (e.error === 'aborted') return;
+    }
+    document.getElementById('readResult').textContent = errMsg + '，请重试';
+    document.getElementById('readResult').style.color = '#e74c3c';
+  };
+
+  _activeRec.onend = function() {
+    document.getElementById('readMicBtn').classList.remove('listening');
+  };
+
+  // 启动识别——必须在用户点击事件中调用，iOS Safari 要求
+  try {
+    _activeRec.start();
+    _readTimeout = setTimeout(function() {
+      if (_activeRec) { try { _activeRec.abort(); } catch(e) {} }
+      document.getElementById('readMicBtn').classList.remove('listening');
+      if (waitingRead) {
+        document.getElementById('readResult').textContent = '超时了，再试一次';
+        document.getElementById('readResult').style.color = '#f9a825';
+      }
+    }, 5000);
+  } catch(e) {
+    document.getElementById('readMicBtn').classList.remove('listening');
+    document.getElementById('readResult').textContent = '无法启动麦克风';
+    document.getElementById('readResult').style.color = '#e74c3c';
+  }
+}
+var _readTimeout = null;
+
+function pyMatch(target, text) {
+  // target: 显示拼音如 "bā"；text: 识别结果如 "八"、"爸爸"、"ba"
+  if (!target||!text) return false;
+
+  // 第1层：目标拼音→汉字，直接查识别结果中是否包含
+  var targetChar = pyToChar(target);
+  if (targetChar && targetChar !== target && text.indexOf(targetChar) >= 0) return true;
+
+  // 第2层：提取识别结果中的汉字，查逆映射看是否同音
+  var chars = text.match(/[\u4e00-\u9fff]/g);
+  if (chars) {
+    // 规范化目标拼音为 ASCII key（bā→ba1）
+    var cleanTarget = target.replace(/[āáǎà]/g,'a').replace(/[ēéěè]/g,'e').replace(/[īíǐì]/g,'i').replace(/[ōóǒò]/g,'o').replace(/[ūúǔù]/g,'u').replace(/[ǖǘǚǜ]/g,'v').replace(/ü/g,'v');
+    // 去掉声调比较（ba1→ba）
+    var targetNoTone = cleanTarget.replace(/\d/g,'');
+
+    for (var i = 0; i < chars.length; i++) {
+      var chPy = CHAR_PY_MAP[chars[i]];
+      if (chPy) {
+        // 精确匹配：同拼音同声调
+        if (chPy === cleanTarget) return true;
+        // 去声调模糊匹配
+        if (chPy.replace(/\d/g,'') === targetNoTone) return true;
+      }
+    }
+  }
+
+  // 第3层：直接字符串包含（识别结果本身就可能含拼音字母）
+  var cleanFn = function(s){return s.replace(/[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/g,function(m){var mp={'ā':'a','á':'a','ǎ':'a','à':'a','ē':'e','é':'e','ě':'e','è':'e','ī':'i','í':'i','ǐ':'i','ì':'i','ō':'o','ó':'o','ǒ':'o','ò':'o','ū':'u','ú':'u','ǔ':'u','ù':'u','ǖ':'v','ǘ':'v','ǚ':'v','ǜ':'v'};return mp[m]||m}).toLowerCase()};
+  var t = cleanFn(target), r = cleanFn(text);
+  if (r.indexOf(t) >= 0) return true;
+
+  return false;
+}
+
+function skipReading() {
+  if (!waitingRead) return;
+  waitingRead=false;
+  recordAnswer('read',false,testQuestions[testIndex].target);
+  document.getElementById('readResult').textContent='已跳过朗读';
+  document.getElementById('readResult').style.color='#999';
+  readDone(false);
+}
+
+function readDone(correct) {
+  document.getElementById('testNextBtn').disabled=false;
+  document.getElementById('testNextBtn').className='test-next-btn success';
+}
+
+function playAudio(text) {
+  var btn = document.getElementById('audioBtn'); if(!btn) return;
+  // 如果正在播放，取消
+  if (btn.classList.contains('playing')) {
+    btn.classList.remove('playing');
+    if (_audioEl) { try{_audioEl.pause();_audioEl.currentTime=0}catch(e){} }
+    return;
+  }
+  btn.classList.add('playing');
+
+  // 优先使用 CDN 标准拼音音频
+  var url = pyToUrl(text);
+  if (_audioEl) { try{_audioEl.pause()}catch(e){} }
+  _audioEl = new Audio(url);
+  _audioEl.oncanplaythrough = function() { /* loaded */ };
+  _audioEl.onended = function() { btn.classList.remove('playing'); btn.classList.add('played'); };
+  _audioEl.onerror = function() {
+    // CDN 失败 → fallback 到 SpeechSynthesis
+    if (!window.speechSynthesis) { btn.classList.remove('playing'); return; }
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(pyToChar(text));
+    u.lang='zh-CN'; u.rate=0.65; u.pitch=1.05;
+    u.onend=function(){btn.classList.remove('playing');btn.classList.add('played')};
+    u.onerror=function(){btn.classList.remove('playing')};
+    window.speechSynthesis.speak(u);
+  };
+  _audioEl.play().catch(function(){
+    // 自动播放被阻止 → fallback
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(pyToChar(text));
+      u.lang='zh-CN'; u.rate=0.65; u.pitch=1.05;
+      u.onend=function(){btn.classList.remove('playing');btn.classList.add('played')};
+      u.onerror=function(){btn.classList.remove('playing')};
+      window.speechSynthesis.speak(u);
+    } else {
+      btn.classList.remove('playing');
+    }
+  });
+}
+var _audioEl = null;
+
+function recordAnswer(type, correct, syllable) {
+  testAnswers.push({type:type,correct:correct,syllable:syllable});
+  var p=getProfile(); if (!p||!p.pinyin) return;
+  var ws=p.pinyin.weakSounds||{}, init=syllable.initial;
+  p.pinyin.weakSounds = ws;
+  if (correct) { if (ws[init]) ws[init]=Math.max(0,ws[init]-1); }
+  else { ws[init]=(ws[init]||0)+1; }
+}
+
+function nextQuestion() {
+  testIndex++; answered=false; waitingRead=false;
+  document.getElementById('testNextBtn').disabled=true;
+  document.getElementById('testNextBtn').className='test-next-btn';
+  renderQuestion();
+}
+
+function confirmQuitTest() {
+  if (testAnswers.length>0 && !answered) { if (!confirm('测验还没完成，确定要退出吗？')) return; }
+  if (_activeRec) { try{_activeRec.abort()}catch(e){} _activeRec=null; }
+  if (_readTimeout) { clearTimeout(_readTimeout); _readTimeout=null; }
+  goToDashboard();
+}
+
+function finishTest() {
+  if (_activeRec) { try{_activeRec.abort()}catch(e){} _activeRec=null; }
+  if (_readTimeout) { clearTimeout(_readTimeout); _readTimeout=null; }
+  var p=getProfile(); if (!p||!p.pinyin) return;
+  var py=p.pinyin, gi=py.currentGroup||0;
+  var gs=py.groupStats||{};
+  if (!gs[String(gi)]) gs[String(gi)]={dailyDone:0,examDone:false,examScore:null,passed:false};
+  var stat=gs[String(gi)];
+
+  var weights=testType==='daily'?{pinyin:0.40,initial:0.25,tone:0.25,read:0.10}:{pinyin:0.35,initial:0.20,tone:0.20,read:0.25};
+  var ts={};
+  testAnswers.forEach(function(a){
+    if (!ts[a.type]) ts[a.type]={correct:0,total:0};
+    ts[a.type].total++; if (a.correct) ts[a.type].correct++;
+  });
+  var ws=0;
+  for (var type in weights) { if (ts[type]&&ts[type].total>0) ws+=(ts[type].correct/ts[type].total)*weights[type]*100; }
+  var finalScore=Math.round(ws), correctCount=testAnswers.filter(function(a){return a.correct}).length, totalCount=testAnswers.length;
+
+  if (testType==='daily') {
+    stat.dailyDone = (stat.dailyDone||0)+1;
+  } else {
+    stat.examDone=true; stat.examScore=finalScore; stat.passed=finalScore>=EXAM_PASS;
+    if (stat.passed && gi<PINYIN_GROUPS.length-1) {
+      py.currentGroup=gi+1;
+      if (!gs[String(gi+1)]) gs[String(gi+1)]={dailyDone:0,examDone:false,examScore:null,passed:false};
+    }
+  }
+  if (!py.dailyRecords) py.dailyRecords=[];
+  py.dailyRecords.push({date:today(),group:gi,testType:testType,score:finalScore,correct:correctCount,total:totalCount});
+  py.todayState.done=true; py.todayState.score=finalScore; py.groupStats=gs;
+  saveProfiles();
+  showSummary(finalScore, correctCount, totalCount, ts);
+}
+
+function showSummary(score, correct, total, ts) {
+  showPage('summaryPage');
+  document.getElementById('summaryDate').textContent = getDateStr(new Date());
+  document.getElementById('summaryScore').textContent = score;
+  document.getElementById('summaryCorrect').textContent = correct;
+  document.getElementById('summaryWrong').textContent = total-correct;
+  document.getElementById('summaryTotal').textContent = total;
+  document.getElementById('summaryTitle').textContent = testType==='exam'?'阶段考试完成！':'测验完成！';
+  var badge=document.getElementById('summaryBadge');
+  if (testType==='exam') { badge.style.display=''; badge.textContent=score>=EXAM_PASS?'✅ 通过':'❌ 未通过'; badge.className='result-badge'+(score>=EXAM_PASS?' pass':' fail'); }
+  else badge.style.display='none';
+
+  var tn={pinyin:'听音选拼音',initial:'听音辨声母',tone:'听音辨声调',read:'看拼音朗读'}, detail='';
+  for (var type in ts) { var pct=ts[type].total>0?Math.round(ts[type].correct/ts[type].total*100):0; detail+=(tn[type]||type)+'：'+ts[type].correct+'/'+ts[type].total+' ('+pct+'%)\n'; }
+  var p=getProfile();
+  if (p&&p.pinyin&&p.pinyin.weakSounds) { var wk=Object.entries(p.pinyin.weakSounds).filter(function(e){return e[1]>0}).sort(function(a,b){return b[1]-a[1]}); if (wk.length>0) detail+='\n需加强的声母：'+wk.slice(0,3).map(function(e){return e[0]}).join('、'); }
+  document.getElementById('summaryDetail').textContent = detail;
+}
+
+function goToDashboard() {
+  if (_activeRec) { try{_activeRec.abort()}catch(e){} _activeRec=null; }
+  if (_readTimeout) { clearTimeout(_readTimeout); _readTimeout=null; }
+  enterDashboard();
+}
+
+// =============================================
+// 家长面板
+// =============================================
+function getParentPwd() { var p=localStorage.getItem('parentPwd'); if(!p){localStorage.setItem('parentPwd','1234');return'1234'} return p; }
+function toggleParentPanel() { document.getElementById('parentPwdOverlay').classList.add('visible'); document.getElementById('parentPwdInput').value=''; document.getElementById('parentPwdError').textContent=''; document.getElementById('parentPwdInput').focus(); }
+function hideParentPwd() { document.getElementById('parentPwdOverlay').classList.remove('visible'); }
+function verifyParentPwd() { if(document.getElementById('parentPwdInput').value===getParentPwd()){hideParentPwd();document.getElementById('parentOverlay').classList.add('visible');renderParentPanel()}else{document.getElementById('parentPwdError').textContent='密码错误';document.getElementById('parentPwdInput').value='';document.getElementById('parentPwdInput').focus()} }
+function hideParentPanel() { document.getElementById('parentOverlay').classList.remove('visible'); }
+
+function renderParentPanel() {
+  var p=getProfile(); if(!p){hideParentPanel();return}
+  if(!p.pinyin) p.pinyin={currentGroup:0,groupStats:{},dailyRecords:[],todayState:null,weakSounds:{}};
+  var py=p.pinyin, total=py.dailyRecords?py.dailyRecords.length:0;
+  var avg=total>0?Math.round(py.dailyRecords.reduce(function(s,r){return s+(r.score||0)},0)/total):0;
+  var passed=Object.values(py.groupStats||{}).filter(function(s){return s.passed}).length;
+  var dbg=document.getElementById('debugToggle');
+  if (dbg) { dbg.textContent=debugMode?'🔧 调试模式：开':'🔧 调试模式：关'; dbg.className='debug-btn'+(debugMode?' on':''); }
+  var gs2=document.getElementById('groupSelector'); if(gs2)gs2.style.display=debugMode?'block':'none';
+  if(debugMode){
+    var sel=document.getElementById('groupSelect');
+    if(sel)sel.innerHTML=PINYIN_GROUPS.map(function(g,i){return '<option value="'+i+'"'+(i===py.currentGroup?' selected':'')+'>'+g.label+' '+g.name+'</option>'}).join('');
+  }
+  document.getElementById('parentUserInfo').innerHTML='<div class="pu-avatar" style="background:'+p.color+'">'+p.initial+'</div><div><div class="pu-name">'+p.name+'（'+p.age+'岁）</div><div class="pu-stats">累计测验 '+total+' 次 · 平均 '+avg+' 分 · 通过 '+passed+'/'+PINYIN_GROUPS.length+' 组</div></div>';
+  var gs=py.groupStats||{};
+  document.getElementById('groupReportGrid').innerHTML = PINYIN_GROUPS.map(function(group,idx){
+    var s=gs[String(idx)], bg, txt;
+    if (!s||s.dailyDone===0) { bg='#e0e0e0'; txt=group.name.split(' ')[0]; }
+    else if (s.passed) { bg='#2ecc71'; txt='✓'; }
+    else if (s.examDone&&!s.passed) { bg='#e74c3c'; txt=s.examScore||'✗'; }
+    else { bg='#f9a825'; txt=s.dailyDone||'…'; }
+    return '<div class="group-report-item" style="background:'+bg+'" onclick="editGroup('+idx+')">'+txt+'<span class="gr-score">'+(s&&s.examScore?s.examScore:'')+'</span></div>';
+  }).join('');
+  var ws=py.weakSounds||{}, we=Object.entries(ws).filter(function(e){return e[1]>0}).sort(function(a,b){return b[1]-a[1]});
+  var wr=document.getElementById('weakReport');
+  if (we.length>0) { wr.style.display=''; wr.innerHTML='⚠️ 薄弱声母：'+we.map(function(e){return e[0]+'(错'+e[1]+'次)'}).join('、'); }
+  else wr.style.display='none';
+}
+
+function editGroup(idx) {
+  var p=getProfile(); if(!p||!p.pinyin) return;
+  var py=p.pinyin, gs=py.groupStats||{};
+  var act=prompt('「'+PINYIN_GROUPS[idx].name+'」组操作：\n1: 标记为通过\n2: 标记为未通过\n3: 重置该组\n4: 切换到此组\n其他: 取消');
+  if (!act) return;
+  if (act==='1') { if(!gs[String(idx)]) gs[String(idx)]={}; gs[String(idx)].passed=true; gs[String(idx)].examDone=true; gs[String(idx)].examScore=100; if(idx<PINYIN_GROUPS.length-1&&py.currentGroup<=idx) py.currentGroup=idx+1; }
+  else if (act==='2') { if(!gs[String(idx)]) gs[String(idx)]={}; gs[String(idx)].passed=false; gs[String(idx)].examDone=true; gs[String(idx)].examScore=50; }
+  else if (act==='3') { delete gs[String(idx)]; if(py.currentGroup>idx) py.currentGroup=idx; }
+  else if (act==='4') { py.currentGroup=idx; }
+  else return;
+  py.groupStats=gs; saveProfiles(); updateDashboard(); renderGroupTags(); renderParentPanel();
+}
+
+function toggleDebugMode() {
+  debugMode=!debugMode;
+  updateDashboard();
+  renderParentPanel();
+}
+
+function switchGroup(val) {
+  var p=getProfile(); if(!p||!p.pinyin) return;
+  p.pinyin.currentGroup=parseInt(val);
+  saveProfiles(); updateDashboard(); renderGroupTags();
+}
+
+// =============================================
+// 日历（简化版）
+// =============================================
+var calYear, calMonthIdx;
+function toggleCalendar() {
+  loadProfiles();
+  var ov=document.getElementById('calendarOverlay');
+  if (ov.classList.contains('visible')) { ov.classList.remove('visible'); return; }
+  ov.classList.add('visible');
+  var d=new Date(); calYear=d.getFullYear(); calMonthIdx=d.getMonth();
+  renderCalendar();
+}
+function calMonth(delta) { calMonthIdx+=delta; if(calMonthIdx<0){calMonthIdx=11;calYear--}if(calMonthIdx>11){calMonthIdx=0;calYear++}renderCalendar(); }
+function pad2(n){return(n<10?'0':'')+n}
+function renderCalendar() {
+  var p=getProfile();
+  document.getElementById('calMonthText').textContent=calYear+'年'+(calMonthIdx+1)+'月';
+  var first=new Date(calYear,calMonthIdx,1), last=new Date(calYear,calMonthIdx+1,0), startDay=first.getDay(), days=last.getDate();
+  var records={};
+  if (p&&p.pinyin&&p.pinyin.dailyRecords) { p.pinyin.dailyRecords.forEach(function(r){if(r.date)records[r.date]=r}); }
+  var html='';
+  for (var i=0;i<startDay;i++) html+='<div class="cal-day other-month"></div>';
+  for (var d=1;d<=days;d++) {
+    var ds=calYear+'-'+pad2(calMonthIdx+1)+'-'+pad2(d), rec=records[ds], isToday=ds===today(), cls='cal-day';
+    if (isToday) cls+=' today';
+    if (rec) cls+=rec.score>=80?' has-record good':(rec.score>=60?' has-record fair':' has-record poor');
+    var oc=rec?'showCalDetail(\''+ds+'\',this)':'';
+    html+='<div class="'+cls+'" onclick="'+oc+'" data-date="'+ds+'">'+d+(rec?' ●':'')+'</div>';
+  }
+  document.getElementById('calDays').innerHTML=html;
+  document.getElementById('calDayDetail').classList.remove('visible');
+}
+function showCalDetail(ds, el) {
+  var p=getProfile();
+  document.querySelectorAll('.cal-day').forEach(function(d){d.style.background=''});
+  if (el) el.style.background='#f0f2ff';
+  var det=document.getElementById('calDayDetail'); det.classList.add('visible');
+  document.getElementById('calDetailDate').textContent=ds;
+  var rec=null;
+  if (p&&p.pinyin&&p.pinyin.dailyRecords) rec=p.pinyin.dailyRecords.find(function(r){return r.date===ds});
+  var ct=document.getElementById('calDetailContent');
+  if (rec) {
+    var group=PINYIN_GROUPS[rec.group]||{name:'未知'};
+    ct.innerHTML='<div class="detail-item">'+(rec.testType==='exam'?'🏆 阶段考试':'📝 每日测验')+'</div><div class="detail-item">声母组: '+group.name+'</div><div class="detail-item">得分: '+rec.score+' 分</div><div class="detail-item">正确: '+rec.correct+'/'+rec.total+'</div>';
+  } else ct.innerHTML='<div class="cal-empty">这天没有测验记录</div>';
+}
+
+// =============================================
+// 启动
+// =============================================
+loadProfiles();
+if (window.speechSynthesis) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = function(){}; }
+if (currentUser && getProfile()) { enterDashboard(); }
+else { showPage('welcomePage'); }
+// 注册 Service Worker（PWA 离线支持）
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+</script>
+</body>
+</html>

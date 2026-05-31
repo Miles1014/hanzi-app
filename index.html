@@ -1,0 +1,2889 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>每日汉字打卡</title>
+<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.0/dist/hanzi-writer.min.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="每日汉字打卡">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4f8;color:#333;min-height:100vh;overflow:hidden}
+button{cursor:pointer;font-family:inherit;border:none;outline:none}
+input{font-family:inherit;outline:none}
+
+/* 页面切换 */
+.page{display:none;width:100vw;height:100vh;position:fixed;top:0;left:0}
+.page.visible{display:flex;flex-direction:column}
+
+/* ===== 欢迎页 ===== */
+#welcomePage{background:linear-gradient(135deg,#ff9a9e 0%,#fad0c4 50%,#fbc2eb 100%);align-items:center;justify-content:center;text-align:center;padding:40px 20px}
+#welcomePage h1{font-size:3em;color:#fff;text-shadow:0 3px 15px rgba(0,0,0,0.15);margin-bottom:6px}
+#welcomePage p{font-size:1.1em;color:rgba(255,255,255,0.85);margin-bottom:30px}
+.welcome-btn{background:#fff;color:#e67e9a;padding:14px 48px;border-radius:50px;font-size:1.2em;font-weight:bold;box-shadow:0 4px 20px rgba(0,0,0,0.1);transition:transform .2s}
+.welcome-btn:hover{transform:translateY(-3px)scale(1.02)}
+.welcome-bg{font-size:6em;opacity:.08;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;user-select:none;letter-spacing:.15em;white-space:nowrap}
+
+/* ===== 选择小朋友 ===== */
+#profilePage{background:linear-gradient(135deg,#a18cd1 0%,#fbc2eb 100%);align-items:center;justify-content:center;padding:40px 20px}
+#profilePage h2{font-size:1.8em;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,0.15);margin-bottom:20px}
+.profile-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:420px}
+.profile-card{width:110px;padding:14px 10px;border-radius:20px;background:rgba(255,255,255,0.2);backdrop-filter:blur(4px);text-align:center;cursor:pointer;transition:all .25s;border:2px solid transparent}
+.profile-card:hover{background:rgba(255,255,255,0.35);transform:translateY(-4px)}
+.profile-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:1.5em;font-weight:bold;color:#fff;border:3px solid rgba(255,255,255,0.5);position:relative}
+.profile-del{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:rgba(231,76,60,0.85);color:#fff;font-size:.55em;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;line-height:1;border:2px solid rgba(255,255,255,0.6)}
+.profile-del:hover{transform:scale(1.2)}
+.profile-name{font-size:1em;font-weight:bold;color:#fff}
+.profile-stats{font-size:.75em;color:rgba(255,255,255,0.75);margin-top:2px}
+.add-profile-btn{width:110px;padding:14px 10px;border-radius:20px;background:rgba(255,255,255,0.12);backdrop-filter:blur(4px);text-align:center;cursor:pointer;transition:all .25s;border:2px dashed rgba(255,255,255,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.add-profile-btn:hover{background:rgba(255,255,255,0.25);transform:translateY(-4px)}
+.add-profile-btn .plus-icon{font-size:2em;color:rgba(255,255,255,0.8);line-height:1}
+.add-profile-btn .add-label{font-size:.85em;color:rgba(255,255,255,0.7)}
+
+/* ===== 添加小朋友 ===== */
+#addProfilePage{background:linear-gradient(135deg,#a18cd1 0%,#fbc2eb 100%);align-items:center;justify-content:center;padding:40px 20px}
+#addProfilePage h2{font-size:1.8em;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,0.15);margin-bottom:16px}
+#addProfilePage input{padding:12px 18px;border:none;border-radius:12px;font-size:1.05em;width:260px;text-align:center;margin-bottom:6px}
+#addProfilePage .input-hint{font-size:.8em;color:rgba(255,255,255,0.65);margin-bottom:16px}
+.age-selector{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;justify-content:center}
+.age-btn{padding:8px 18px;border-radius:20px;background:rgba(255,255,255,0.15);color:#fff;font-size:.95em;font-weight:bold;transition:all .2s;border:2px solid transparent}
+.age-btn:hover{background:rgba(255,255,255,0.25)}
+.age-btn.selected{background:#fff;color:#a18cd1;border-color:#fff}
+.btn-group{display:flex;gap:12px}
+.btn-primary{background:#fff;color:#a18cd1;padding:10px 32px;border-radius:12px;font-size:1em;font-weight:bold;transition:all .2s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,0.15)}
+.btn-secondary{background:transparent;color:#fff;padding:10px 32px;border-radius:12px;font-size:1em;border:2px solid rgba(255,255,255,0.5);transition:all .2s}
+.btn-secondary:hover{background:rgba(255,255,255,0.15)}
+
+/* ===== 主界面(首页) ===== */
+#dashboardPage{background:linear-gradient(180deg,#e8f0fe 0%,#fdf6f0 100%);align-items:center;padding:20px}
+.dash-header{width:100%;max-width:500px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-shrink:0}
+.dash-user{display:flex;align-items:center;gap:10px}
+.dash-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1em;font-weight:bold;color:#fff;flex-shrink:0}
+.dash-user-info{font-size:.85em}
+.dash-user-info .name{font-weight:bold;color:#333;font-size:1.1em}
+.dash-user-info .age{color:#999}
+.dash-cal-btn{width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;font-size:1.1em;transition:all .2s;border:none}
+.dash-cal-btn:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.12)}
+.dash-date{text-align:center;margin-bottom:20px;flex-shrink:0}
+.dash-date .date-str{font-size:1.1em;font-weight:bold;color:#555}
+.dash-date .date-sub{font-size:.8em;color:#999;margin-top:2px}
+
+/* 任务卡片 */
+.task-cards{width:100%;max-width:420px;display:flex;flex-direction:column;gap:14px;flex:1;justify-content:center;padding:10px 0}
+.task-card{background:#fff;border-radius:24px;padding:20px 24px;box-shadow:0 4px 20px rgba(0,0,0,0.06);cursor:pointer;transition:all .25s;border:3px solid transparent;position:relative;overflow:hidden}
+.task-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,0.1)}
+.task-card:active{transform:scale(.98)}
+.task-card .card-icon{font-size:2.2em;margin-bottom:4px}
+.task-card .card-title{font-size:1.2em;font-weight:bold;color:#333;margin-bottom:2px}
+.task-card .card-desc{font-size:.85em;color:#999}
+.task-card .card-progress{height:6px;background:#e8e8e8;border-radius:3px;margin-top:10px;overflow:hidden}
+.task-card .card-progress-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.task-card .card-status{font-size:.8em;color:#999;margin-top:6px;text-align:right}
+.task-card.disabled{opacity:.5;cursor:default;pointer-events:none}
+.task-card.learn-card{border-color:#a18cd1}
+.task-card.learn-card .card-progress-fill{background:linear-gradient(90deg,#a18cd1,#fbc2eb)}
+.task-card.quiz-card{border-color:#f9a825}
+.task-card.quiz-card .card-progress-fill{background:linear-gradient(90deg,#f9a825,#ffcc02)}
+.task-card.quiz-card.locked{opacity:.6;pointer-events:none}
+.task-card .lock-badge{position:absolute;top:12px;right:14px;font-size:.8em;color:#ccc}
+
+/* ===== 学习页 ===== */
+#learningPage{background:#fff}
+.learn-header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;flex-shrink:0;border-bottom:1px solid #f0f0f0}
+.learn-back{width:36px;height:36px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:1.1em;transition:background .2s}
+.learn-back:hover{background:#e8e8e8}
+.learn-progress{font-size:.85em;color:#999;font-weight:bold}
+.learn-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 20px;gap:8px;overflow:hidden}
+.learn-char-area{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.learn-char{font-size:5em;font-weight:bold;color:#333;line-height:1}
+.learn-speaker{width:44px;height:44px;border-radius:50%;background:#eef0ff;display:flex;align-items:center;justify-content:center;font-size:1.4em;cursor:pointer;transition:all .2s;border:none;flex-shrink:0}
+.learn-speaker:hover{background:#dde0ff;transform:scale(1.1)}
+.learn-speaker.playing{background:#e8f8f0;animation:pulse .6s ease infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.learn-step-label{font-size:.85em;color:#aaa;flex-shrink:0}
+.learn-step-label b{color:#667eea}
+.learn-canvas{width:200px;height:200px;border:2px solid #e8e8e8;border-radius:16px;overflow:hidden;flex-shrink:0}
+.learn-canvas svg{display:block}
+.learn-btn-area{display:flex;gap:12px;flex-shrink:0;padding-bottom:10px}
+.learn-btn{padding:10px 32px;border-radius:14px;font-size:1em;font-weight:bold;transition:all .2s}
+.learn-btn.primary{background:#a18cd1;color:#fff}
+.learn-btn.primary:hover{background:#8e7bc2;transform:translateY(-2px)}
+.learn-btn.primary:disabled{opacity:.4;cursor:default;transform:none}
+.learn-btn.success{background:#2ecc71;color:#fff}
+.learn-btn.success:hover{background:#27ae60}
+.learn-btn.secondary{background:#f5f5f5;color:#666}
+.learn-btn.secondary:hover{background:#e8e8e8}
+.learn-status{font-size:.85em;color:#aaa;text-align:center;flex-shrink:0;min-height:20px}
+.learn-left,.learn-right{display:flex;flex-direction:column;align-items:center;gap:8px}
+.learn-left{flex-shrink:0}
+.learn-right{flex:1}
+
+/* ===== 测验页 ===== */
+#quizPage{background:linear-gradient(180deg,#fdf6f0 0%,#fff8e1 100%)}
+.quiz-header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;flex-shrink:0}
+.quiz-header h3{font-size:1em;color:#555}
+.quiz-progress{font-size:.85em;color:#999;font-weight:bold}
+.quiz-body{flex:1;display:flex;flex-direction:column;min-height:0}
+.quiz-main{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 20px;gap:18px;min-height:0}
+.quiz-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:4px}
+.quiz-right{display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.quiz-bottom{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 20px 32px;flex-shrink:0;margin-top:auto}
+.quiz-hint{font-size:.9em;color:#999;flex-shrink:0}
+.quiz-char-disp{font-size:3em;font-weight:bold;color:#555;flex-shrink:0;opacity:0;transition:opacity .3s}
+.quiz-char-disp.show{opacity:1}
+.quiz-canvas{width:220px;height:220px;border:2px solid #e0e0e0;border-radius:16px;overflow:hidden;flex-shrink:0;background:#fff}
+.quiz-canvas svg{display:block}
+.quiz-score{font-size:1.5em;font-weight:bold;color:#f9a825;flex-shrink:0}
+.quiz-btn-area{display:flex;gap:12px;flex-shrink:0}
+.quiz-btn{padding:10px 32px;border-radius:14px;font-size:1em;font-weight:bold;transition:all .2s}
+.quiz-btn.primary{background:#f9a825;color:#fff}
+.quiz-btn.primary:hover{background:#e8960f;transform:translateY(-2px)}
+.quiz-btn.primary:disabled{opacity:.4;cursor:default;transform:none}
+.quiz-btn.success{background:#2ecc71;color:#fff}
+.quiz-btn.success:hover{background:#27ae60}
+.quiz-msg{font-size:.85em;color:#888;text-align:center;flex-shrink:0;min-height:20px}
+
+/* ===== 总结页 ===== */
+#summaryPage{background:linear-gradient(135deg,#a8edea 0%,#fed6e3 100%);align-items:center;justify-content:center;padding:40px 20px;text-align:center}
+#summaryPage h2{font-size:2.2em;color:#fff;margin-bottom:8px;text-shadow:0 2px 10px rgba(0,0,0,0.1)}
+.summary-date{color:rgba(255,255,255,0.8);font-size:.95em;margin-bottom:20px}
+.summary-circle{width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;backdrop-filter:blur(4px)}
+.summary-circle .score{font-size:2.2em;font-weight:bold;color:#fff}
+.summary-circle .score-unit{font-size:.8em;color:rgba(255,255,255,0.8)}
+.summary-stats{display:flex;gap:20px;justify-content:center;margin-bottom:20px}
+.summary-stat{text-align:center;background:rgba(255,255,255,0.2);border-radius:16px;padding:12px 20px;backdrop-filter:blur(4px)}
+.summary-stat .num{font-size:1.3em;font-weight:bold;color:#fff}
+.summary-stat .lbl{font-size:.75em;color:rgba(255,255,255,0.75)}
+.summary-weak{color:rgba(255,255,255,0.8);font-size:.9em;margin-bottom:20px}
+.summary-weak b{color:#fff}
+.summary-btns{display:flex;gap:12px}
+.summary-btn{padding:10px 32px;border-radius:14px;font-size:1em;font-weight:bold;transition:all .2s}
+.summary-btn.primary{background:#fff;color:#333}
+.summary-btn.primary:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,0.1)}
+
+/* ===== 家长密码验证 ===== */
+#parentPwdOverlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:200;display:none;align-items:center;justify-content:center}
+#parentPwdOverlay.visible{display:flex}
+.parent-pwd-box{background:#fff;border-radius:20px;padding:28px 24px;width:300px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.pwd-header{font-size:1.2em;font-weight:bold;color:#555;margin-bottom:6px}
+.pwd-hint{font-size:.85em;color:#999;margin-bottom:16px}
+.pwd-input{width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:10px;font-size:1em;text-align:center;box-sizing:border-box;transition:border-color .2s}
+.pwd-input:focus{border-color:#a18cd1;outline:none}
+.pwd-error{font-size:.8em;color:#e74c3c;min-height:1.2em;margin-top:4px}
+.pwd-btns{display:flex;gap:10px;margin-top:14px;justify-content:center}
+.pwd-btn{padding:8px 24px;border-radius:10px;font-size:.9em;font-weight:bold;border:none;cursor:pointer;transition:all .2s}
+.pwd-btn.cancel{background:#f0f0f0;color:#666}
+.pwd-btn.cancel:hover{background:#e0e0e0}
+.pwd-btn.ok{background:linear-gradient(135deg,#a18cd1,#fbc2eb);color:#fff}
+.pwd-btn.ok:hover{transform:translateY(-1px)}
+.pwd-change-btn{font-size:.8em;color:#bbb;cursor:pointer;background:none;border:none;text-decoration:underline}
+.pwd-change-btn:hover{color:#999}
+
+/* ===== 日历弹窗 ===== */
+#calendarOverlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center}
+#calendarOverlay.visible{display:flex}
+.calendar-box{background:#fff;border-radius:24px;padding:20px;width:340px;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.cal-header h3{font-size:1.1em;color:#333}
+.cal-close{width:32px;height:32px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:.9em;cursor:pointer;transition:background .2s}
+.cal-close:hover{background:#e0e0e0}
+.cal-month-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cal-month-nav .month-text{font-size:1em;font-weight:bold;color:#555}
+.cal-month-nav .nav-btn{width:30px;height:30px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s;border:none}
+.cal-month-nav .nav-btn:hover{background:#e0e0e0}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:.75em;color:#999;margin-bottom:6px}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85em;color:#555;flex-direction:column;gap:2px;cursor:pointer;transition:all .15s;position:relative}
+.cal-day:hover{background:#f5f5f5}
+.cal-day.other-month{color:#ddd}
+.cal-day.today{font-weight:bold;color:#a18cd1}
+.cal-day.has-record::after{content:'';width:8px;height:8px;border-radius:50%;position:absolute;bottom:2px;left:50%;transform:translateX(-50%)}
+.cal-day.has-record.good::after{background:#2ecc71}
+.cal-day.has-record.fair::after{background:#f9a825}
+.cal-day.has-record.poor::after{background:#e74c3c}
+.cal-day-detail{margin-top:12px;padding:12px;border-radius:12px;background:#f8f9ff;display:none}
+.cal-day-detail.visible{display:block}
+.cal-day-detail .detail-date{font-size:.85em;font-weight:bold;color:#555;margin-bottom:6px}
+.cal-day-detail .detail-item{font-size:.8em;color:#888;padding:2px 0}
+.cal-empty{text-align:center;color:#bbb;font-size:.8em;padding:20px 0}
+
+/* ===== 家长面板 ===== */
+#parentOverlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center}
+#parentOverlay.visible{display:flex}
+.parent-box{background:#fff;border-radius:24px;padding:20px;width:380px;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.parent-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.parent-header h3{font-size:1.1em;color:#333}
+.parent-close{width:32px;height:32px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:.9em;cursor:pointer;transition:background .2s;border:none}
+.parent-close:hover{background:#e0e0e0}
+.parent-user{margin-bottom:14px;padding:12px;border-radius:12px;background:#f8f9ff;display:flex;align-items:center;gap:10px}
+.parent-user .pu-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1em;font-weight:bold;color:#fff;flex-shrink:0}
+.parent-user .pu-name{font-weight:bold;color:#333;font-size:.95em}
+.parent-user .pu-stats{font-size:.75em;color:#999}
+.parent-legend{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.parent-legend .lg-item{display:flex;align-items:center;gap:4px;font-size:.75em;color:#888}
+.parent-legend .lg-dot{width:12px;height:12px;border-radius:4px}
+.parent-chars{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.parent-char{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.9em;font-weight:bold;color:#fff;transition:transform .15s}
+.parent-char .pc-score{font-size:.5em;font-weight:normal;opacity:.85}
+
+/* ===== 词语和例句区域 ===== */
+.learn-word-area{display:flex;align-items:center;gap:8px;margin-top:4px;flex-shrink:0}
+.learn-word{font-size:1.5em;font-weight:bold;color:#667eea;background:#f0f2ff;padding:4px 14px;border-radius:20px}
+.learn-sentence-area{display:flex;align-items:flex-start;gap:8px;margin-top:2px;flex-shrink:0;max-width:420px}
+.learn-sentence{font-size:.95em;color:#666;background:#f9f9f9;padding:6px 14px;border-radius:12px;line-height:1.5;flex:1}
+.learn-speaker.small{width:32px;height:32px;font-size:1em;flex-shrink:0}
+.learn-speaker.played{background:#d4edda!important;border:2px solid #2ecc71}
+.listen-hint{font-size:.75em;color:#bbb;text-align:center;flex-shrink:0;margin-top:0}
+
+@media(max-width:500px){
+.learn-char{font-size:4em}
+.learn-canvas{width:170px;height:170px}
+.quiz-canvas{width:190px;height:190px}
+.learn-sentence{font-size:.85em}
+.learn-word{font-size:1.2em}
+}
+/* ===== 朗读测验 ===== */
+.quiz-read-area{text-align:center;margin-top:6px;flex-shrink:0}
+.quiz-read-hint{font-size:.85em;color:#888;margin-bottom:4px}
+.quiz-mic-btn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);color:#fff;font-size:1.6em;display:inline-flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;border:none;cursor:pointer}
+.quiz-mic-btn:active{transform:scale(.92)}
+.quiz-mic-btn.listening{animation:mic-pulse .6s infinite alternate;box-shadow:0 0 20px rgba(161,140,209,0.5)}
+@keyframes mic-pulse{from{transform:scale(1)}to{transform:scale(1.12)}}
+.quiz-play-btn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);color:#fff;font-size:1.6em;display:inline-flex;align-items:center;justify-content:center;transition:transform .2s;border:none;cursor:pointer;box-shadow:0 2px 10px rgba(161,140,209,0.3)}
+.quiz-play-btn:active{transform:scale(.92)}
+.quiz-play-btn.playing{animation:play-pulse .6s infinite alternate}
+@keyframes play-pulse{from{transform:scale(1)}to{transform:scale(1.12)}}
+.quiz-done-btn{padding:10px 20px;border-radius:14px;font-size:.95em;font-weight:bold;background:#2ecc71;color:#fff;border:none;cursor:pointer;transition:transform .2s}
+.quiz-done-btn:active{transform:scale(.95)}
+.quiz-read-skip{font-size:.75em;color:#bbb;cursor:pointer;text-decoration:underline;margin-top:2px;background:none;border:none;padding:2px 8px}
+.quiz-read-skip:hover{color:#999}
+/* ===== 调试按钮 ===== */
+.debug-btn{padding:6px 18px;border-radius:20px;font-size:.8em;cursor:pointer;border:none;background:#f0f0f0;color:#888;transition:all .2s}
+.debug-btn.on{background:#ff9800;color:#fff}
+.debug-btn:hover{opacity:.85}
+
+/* ===== iPad 横屏布局 (≥900px) ===== */
+@media(min-width:900px){
+  /* 全局 */
+  .page{padding:10px 16px}
+  /* 首页：卡片横排 */
+  .task-cards{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:16px;max-width:900px}
+  .task-card{width:280px}
+  /* 学习页：左右分栏 */
+  #learningPage .learn-body{flex-direction:row;align-items:flex-start;justify-content:center;gap:20px;padding:10px}
+  .learn-left{align-items:center;width:360px}
+  .learn-right{align-items:center;flex:1}
+  .learn-char{font-size:4.5em}
+  .learn-canvas{width:280px;height:280px}
+  .learn-canvas svg{width:280px;height:280px}
+  .learn-right .learn-canvas{width:320px;height:320px}
+  .learn-right .learn-canvas svg{width:320px;height:320px}
+  .learn-word{font-size:1.3em}
+  .learn-sentence{font-size:.9em}
+  /* 测验页：左右结构 + 大按钮 */
+  .quiz-header{padding:4px 12px}
+  .quiz-main{flex-direction:row;align-items:center;justify-content:center;gap:28px;padding:0 12px}
+  .quiz-left{align-items:center;width:auto;min-width:140px}
+  .quiz-right{flex:1;max-width:360px}
+  .quiz-body{gap:0;min-height:0}
+  .quiz-bottom{gap:2px;padding:0 12px 28px;margin-top:auto}
+  .quiz-canvas{width:300px;height:300px}
+  .quiz-canvas svg{width:300px;height:300px}
+  .quiz-char-disp{font-size:4.5em}
+  .quiz-hint{font-size:.75em}
+  .quiz-score{font-size:1.2em}
+  .quiz-msg{font-size:.75em;min-height:16px}
+  /* 大按钮 */
+  .quiz-mic-btn{width:80px;height:80px;font-size:2.2em}
+  .quiz-read-hint{font-size:.95em}
+  .quiz-btn{padding:12px 44px;font-size:1.2em;border-radius:16px}
+  .quiz-read-skip{font-size:.95em;padding:8px 18px}
+  .quiz-btn-area{gap:14px}
+  /* 总结页：宽布局 */
+  #summaryPage{padding:30px}
+  .summary-stats{gap:30px}
+}
+</style>
+</head>
+<body>
+<div style="position:fixed;top:2px;right:8px;font-size:11px;color:#ccc;z-index:9999">v250524.2</div>
+
+<!-- ===== 欢迎页 ===== -->
+<div id="welcomePage" class="page visible">
+  <div class="welcome-bg">一二三十人大小</div>
+  <h1>汉字乐园</h1>
+  <p>每天学写汉字，和小伙伴一起进步</p>
+  <button class="welcome-btn" onclick="showProfilePage()">开始学习</button>
+  <div style="margin-top:30px;font-size:.75em;color:rgba(255,255,255,0.4);cursor:pointer" onclick="if(confirm('重置所有数据？')){localStorage.clear();location.reload()}">数据异常？点此重置</div>
+</div>
+
+<!-- ===== 选择小朋友 ===== -->
+<div id="profilePage" class="page">
+  <h2>选择小朋友</h2>
+  <div class="profile-grid" id="profileGrid"></div>
+  <div class="btn-group" style="margin-top:20px">
+    <button class="btn-primary" onclick="exportData()">📤 导出数据</button>
+    <button class="btn-secondary" onclick="document.getElementById('importInput').click()">📥 导入数据</button>
+    <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<!-- ===== 添加小朋友 ===== -->
+<div id="addProfilePage" class="page">
+  <h2>添加新小朋友</h2>
+  <input type="text" id="newProfileName" placeholder="输入名字" maxlength="8" onkeydown="if(event.key==='Enter')addNewProfile()">
+  <div class="input-hint">几岁啦？</div>
+  <div class="age-selector" id="ageSelector"></div>
+  <div class="btn-group">
+    <button class="btn-primary" onclick="addNewProfile()">确认添加</button>
+    <button class="btn-secondary" onclick="showProfilePage()">返回</button>
+  </div>
+</div>
+
+<!-- ===== 首页(今日概览) ===== -->
+<div id="dashboardPage" class="page">
+  <div class="dash-header">
+    <div class="dash-user" onclick="switchUser()" title="点击切换小朋友" style="cursor:pointer">
+      <div class="dash-avatar" id="dashAvatar">M</div>
+      <div class="dash-user-info">
+        <div class="name" id="dashName">小朋友</div>
+        <div class="age" id="dashAge">6岁 切换</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="dash-cal-btn" onclick="toggleParentPanel()" title="家长控制">👤</button>
+      <button class="dash-cal-btn" onclick="toggleCalendar()" title="学习日历">📅</button>
+    </div>
+  </div>
+  <div class="dash-date">
+    <div class="date-str" id="dateStr">5月17日 星期一</div>
+    <div class="date-sub">坚持学习，每天进步！</div>
+  </div>
+  <div class="task-cards">
+    <div class="task-card learn-card" id="learnCard" onclick="startLearning()">
+      <div class="card-icon">📖</div>
+      <div class="card-title">今日学习</div>
+      <div class="card-desc" id="learnDesc">今天有 5 个字要学</div>
+      <div class="card-progress"><div class="card-progress-fill" id="learnProgress" style="width:0%"></div></div>
+      <div class="card-status" id="learnStatus">继续学习</div>
+    </div>
+    <div class="task-card quiz-card" id="quizCard">
+      <div class="card-icon">📝</div>
+      <div class="card-title">今日小测验</div>
+      <div class="card-desc" id="quizDesc">全部学完后可开始测验</div>
+      <div class="lock-badge" id="quizLock">🔒</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 学习页 ===== -->
+<div id="learningPage" class="page">
+  <div class="learn-header">
+    <button class="learn-back" onclick="goToDashboard()">←</button>
+    <span class="learn-progress" id="learnProgressText">1/5</span>
+  </div>
+  <div class="learn-body">
+    <div class="learn-left">
+      <div class="learn-step-label" id="learnStepLabel"><b>学新字</b></div>
+      <div class="learn-char-area">
+        <span class="learn-char" id="learnChar">一</span>
+        <button class="learn-speaker" id="learnSpeaker" onclick="speakCurrent()">🔊</button>
+      </div>
+      <div class="learn-word-area">
+        <span class="learn-word" id="learnWord">词语</span>
+        <button class="learn-speaker small" id="learnWordSpeaker" onclick="speakWord()">🔊</button>
+      </div>
+      <div class="learn-sentence-area">
+        <span class="learn-sentence" id="learnSentence">例句</span>
+        <button class="learn-speaker small" id="learnSentenceSpeaker" onclick="speakSentence()">🔊</button>
+      </div>
+      <div class="listen-hint" id="learnListenHint">👆 点击🔊听词语和句子，听完才能完成</div>
+      <div class="learn-canvas" id="learnDemoContainer"></div>
+    </div>
+    <div class="learn-right">
+      <div class="learn-canvas" id="learnPracticeContainer"></div>
+      <div class="learn-status" id="learnStatusText">点击"播放动画"看看怎么写</div>
+      <div class="learn-btn-area">
+        <button class="learn-btn secondary" id="learnPlayBtn" onclick="playLearnAnim()">▶ 播放动画</button>
+        <button class="learn-btn primary" id="learnNextBtn" onclick="nextLearnChar()" disabled>完成 ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 测验页 ===== -->
+<div id="quizPage" class="page">
+  <div class="quiz-header">
+    <h3>📝 今日小测验</h3>
+    <span class="quiz-progress" id="quizProgress">1/5</span>
+  </div>
+  <div class="quiz-body">
+    <div class="quiz-main">
+      <div class="quiz-left">
+        <div class="quiz-hint">照着轮廓写出笔画顺序</div>
+        <div class="quiz-char-disp" id="quizCharDisp">一</div>
+        <div class="quiz-score" id="quizScore" style="display:none"></div>
+        <div class="quiz-msg" id="quizMsg">准备好了吗？</div>
+      </div>
+      <div class="quiz-right">
+        <div class="quiz-canvas" id="quizContainer"></div>
+      </div>
+    </div>
+    <div class="quiz-bottom">
+      <div class="quiz-read-area" id="quizReadArea" style="display:none">
+        <div class="quiz-read-hint" id="quizReadHint">🎤 读出这个字吧</div>
+        <button class="quiz-mic-btn" id="quizMicBtn" onclick="startQuizReading()">🎤</button>
+        <div class="quiz-read-result" id="quizReadResult"></div>
+        <button class="quiz-read-skip" id="quizReadSkip" onclick="skipQuizReading()" style="display:none">跳过朗读 →</button>
+      </div>
+      <div class="quiz-btn-area">
+        <button class="quiz-btn primary" id="quizNextBtn" onclick="nextQuizChar()">开始</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 总结页 ===== -->
+<div id="summaryPage" class="page">
+  <h2>完成！</h2>
+  <div class="summary-date" id="summaryDate">5月17日</div>
+  <div class="summary-circle"><div><span class="score" id="summaryScore">85</span><span class="score-unit">分</span></div></div>
+  <div class="summary-stats">
+    <div class="summary-stat"><div class="num" id="summaryTotal">5</div><div class="lbl">学写字数</div></div>
+    <div class="summary-stat"><div class="num" id="summaryMastered">4</div><div class="lbl">掌握</div></div>
+    <div class="summary-stat"><div class="num" id="summaryWeak">1</div><div class="lbl">需复习</div></div>
+  </div>
+  <div class="summary-weak" id="summaryWeakText">明天需复习的字: <b>火</b></div>
+  <div class="summary-btns">
+    <button class="summary-btn primary" onclick="goToDashboard()">返回首页</button>
+  </div>
+</div>
+
+<!-- ===== 日历弹窗 ===== -->
+<div id="calendarOverlay">
+  <div class="calendar-box">
+    <div class="cal-header">
+      <h3>学习日历</h3>
+      <button class="cal-close" onclick="toggleCalendar()">✕</button>
+    </div>
+    <div class="cal-month-nav">
+      <button class="nav-btn" onclick="calMonth(-1)">‹</button>
+      <span class="month-text" id="calMonthText">2026年5月</span>
+      <button class="nav-btn" onclick="calMonth(1)">›</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+    </div>
+    <div class="cal-days" id="calDays"></div>
+    <div class="cal-day-detail" id="calDayDetail">
+      <div class="detail-date" id="calDetailDate"></div>
+      <div id="calDetailContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 家长密码验证 ===== -->
+<div id="parentPwdOverlay">
+  <div class="parent-pwd-box">
+    <div class="pwd-header">👤 家长验证</div>
+    <div class="pwd-hint">请输入家长密码</div>
+    <input class="pwd-input" id="parentPwdInput" type="password" maxlength="20" placeholder="输入密码" autocomplete="off">
+    <div class="pwd-error" id="parentPwdError"></div>
+    <div class="pwd-btns">
+      <button class="pwd-btn cancel" onclick="hideParentPwd()">取消</button>
+      <button class="pwd-btn ok" onclick="verifyParentPwd()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 家长控制面板 ===== -->
+<div id="parentOverlay">
+  <div class="parent-box">
+    <div class="parent-header">
+      <h3>学习报告</h3>
+      <button class="parent-close" onclick="hideParentPanel()">✕</button>
+    </div>
+    <div style="text-align:center;margin:0 0 10px">
+      <button class="debug-btn" id="debugToggle" onclick="toggleDebugMode()">🔧 调试模式：关</button>
+    </div>
+    <div class="parent-user" id="parentUserInfo"></div>
+    <div style="text-align:center;margin:8px 0">
+      <button class="pwd-change-btn" onclick="showChangePwd()">更改密码</button>
+    </div>
+    <div class="parent-legend">
+      <div class="lg-item"><div class="lg-dot" style="background:#2ecc71"></div>掌握(≥80)</div>
+      <div class="lg-item"><div class="lg-dot" style="background:#f9a825"></div>学习中(60-79)</div>
+      <div class="lg-item"><div class="lg-dot" style="background:#e74c3c"></div>需复习(&lt;60)</div>
+      <div class="lg-item"><div class="lg-dot" style="background:#e0e0e0"></div>未学</div>
+    </div>
+    <div class="parent-chars" id="parentChars"></div>
+  </div>
+</div>
+
+<!-- ===== 更改密码弹窗 ===== -->
+<div id="changePwdOverlay" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:320px;text-align:center">
+    <h3 style="margin-bottom:12px;color:#555">更改家长密码</h3>
+    <input class="pwd-input" id="pwdOld" type="password" maxlength="20" placeholder="原密码" style="margin-bottom:8px">
+    <input class="pwd-input" id="pwdNew" type="password" maxlength="20" placeholder="新密码" style="margin-bottom:8px">
+    <input class="pwd-input" id="pwdNew2" type="password" maxlength="20" placeholder="确认新密码" style="margin-bottom:8px">
+    <div class="pwd-error" id="changePwdError"></div>
+    <div class="pwd-btns">
+      <button class="pwd-btn cancel" onclick="hideChangePwd()">取消</button>
+      <button class="pwd-btn ok" onclick="doChangePwd()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// 数据
+// =============================================
+// 所有汉字（洪恩识字1275字，按原教材顺序）
+const ALL_CHARS = '一二三人个大山上下小雨天车开门火口月羊只有牛水中头风田土里在日白马手王出子儿女刀木鸟伞鱼气瓜飞虫米云电石了来去玉回多少问早巴父工不力干几男坐打四五六的闪花朵果比午面高包分文平我连元丁厂目见禾兔是把笑着看会自己好画爱心也可家爸妈这奶爷们书串球圆形长方角正灯块冰那弓买哪乐想谢抱竹要立耳红色吃穿香身它发衣他她毛朋哥友弟兄眉鼻光星阳亮明今走兴空两哭牙肚尾脸你黑半呀吗七八九十很又太宝贝和关园生公叶苗林草先岛嘴眼睛脚翅腿膀羽体没认识颜黄绿蓝粉青紫彩食物尝闻鲜味苦甜什么起运动踢赛足快慢跑步唱歌跳舞号吹讲故事怎帮找欢担急闷害怕惊哈老师同学桌校椅教室课做给操伸举拉拍抓拥扔寒冷温暖凉热湿净到都办渴喝饿睡饭觉累醒雾房间帘窗台户视床被处让对姐妹姨阿叔伯姑亲餐盆碗筷袋盖巾杯成用像原菜萝豆卜苹桃杏笋扫地拖洒服洗晒收全呢还谁商场街楼理店鞋市病医院护伤士纱布针住喂放鸡鸭夫农猫狗鼠群汽行交装机甲宇船化当该科程员航司军银客壳救板油加修轮始离遇别海洋浪流波潮雷乌底虾丑斑宫带美柱矿完挖就岩沙鸥滩瓶珠金骨帆游冲划钩钓篮网最得梦森植树春泥夏秋冬季熊猴鹿虎狐狮狸狼现总跟柳芽蚯蝴蚓蝶燕蜜蜂民种翻浇施肥除杀如再荷蝌蚪蛙蜻露蜓蝉声音晨朝夕落晚傍霞追能送过节铃烟纸礼蛋娃糕滴泉溪洼河江湖清神奇求棵根枯啄松历期昨新表时数写久响听叫叹欠喊吸呼说话坡注意辆停道直定幸影样边外远左右前后蜘蛛蚊蚂丝蚁蛇壁怪队进铁站票入扶乘座位城向南北图以东西邓为困感卫悄象应器逃吵因迎知却投忙思名片国作业息更舍告留诉赶塔未万千领错结百然忽从愿约忘答尖越摇往龙夜坏低吐每争破代精团但围吓斗改互齐重丽吧接准参换灭休鸣背按拿报秀迷量升陆弯软李艘睁相古屋官攻观首史众劳主汗庆铜墙诗砍造祝捉杨安藏真烧匹散捕眨眠转京苏景壮望张雁许诚实堆雪兰梅淡念初村稻秧牧贴喜梢岁野压扑啦格拔选练骄傲共第仔细夸掉旁笔束脱及功舰招岸冻倒沉候且另捡即静题法难所深些淋积令本尔才摆浮推闭变条舟胖失棉替妙语言透聪仿佛班辨常非介论脑摘旗飘广坪无居澡梳各伙伴排貌谷搭母至世霜肉颗采玩取算照纯耍趣懂捧寸合习记阴情必顾归件孩渐专泪整请惜尊界桥句短读轰复童双轻泼躺柔赞龄虚垂展勾速度铅灰已亿巨检蚜经驶绝引亚忠吾环技保术敌寻消志于夺终凤凰禅隐使纺织灵披仍池吞而际管规府莲议宽级之列战命枪突咬丢夹质式助漂泊漫刚假糟钢将俩哇贫饱饥族祖孙密炉冈牢容易死特其希弹哨并芬芳栽独拐弱治阵寿宜股枫柏何坛杜鹃茂井刨腰蹲迈由信恩探须计需缠稀哄指概粒微册钟敬割宣申席架搬建梁泞岭趴砸骗锋迹冒沟勇敢荡滚跃涌借尺稠啊解杆蹦闹靠宁与提嘻优砖辉瓦示琴周份您显躲艳巧摸薄隔秤刘华吴迟怦鼓尽弄牵挂便盼曲乎央次胡利顺稳粗戏熟纷烁补哗娘止丰克棋称刻导缸断折脆斤革单挑唤帜托卖钉伟尤创区层丹州激郊斜抽嫌懒顶徐尘慌切永碰够盏线醉印灾含荣汪宿福抬竿洁艺晴朗浅品盛纹产陈赢胜良沿厚丛富涛扎扁英雄贺峡扬川奔碧部劲甩拦降胆决踪刺汤茶粽察扇猛萤评贵钱孔掌虽刷皂遍暑旅晶杉桦裙脖臂镜据鬼反戴详猜梧桐疆桂麦桑塘雀幅锦泡姓氏邻性龟瓢炸甘舌毁淹守曹傻玲善扛窝粮翠拨咕咚炮掰端绳偏鞭萍严幼义支迁孤凝锻炼词爬酷棍通具耐鹰翔辛'.split('');
+// 拼音对照表（用于语音识别模糊匹配）
+var PINYIN={"一":"yi1","丁":"ding1","七":"qi1","万":"wan4","三":"san1","上":"shang4","下":"xia4","不":"bu4","与":"yu3","丑":"chou3","专":"zhuan1","且":"qie3","世":"shi4","业":"ye4","丛":"cong2","东":"dong1","丝":"si1","丢":"diu1","两":"liang3","严":"yan2","个":"ge4","中":"zhong1","丰":"feng1","串":"chuan4","丹":"dan1","为":"wei4","主":"zhu3","丽":"li4","举":"ju3","久":"jiu3","么":"me","义":"yi4","之":"zhi1","乌":"wu1","乎":"hu1","乐":"le4","乘":"cheng2","九":"jiu3","也":"ye3","习":"xi2","书":"shu1","买":"mai3","了":"le","争":"zheng1","事":"shi4","二":"er4","于":"yu2","云":"yun2","互":"hu4","五":"wu3","井":"jing3","亚":"ya4","些":"xie1","交":"jiao1","产":"chan3","京":"jing1","亮":"liang4","亲":"qin1","人":"ren2","亿":"yi4","什":"shen2","今":"jin1","介":"jie4","仍":"reng2","从":"cong2","仔":"zai3","他":"ta1","代":"dai4","令":"ling4","以":"yi3","们":"men","件":"jian4","份":"fen4","仿":"fang3","休":"xiu1","众":"zhong4","优":"you1","伙":"huo3","会":"hui4","伞":"san3","伟":"wei3","伤":"shang1","伯":"bo2","伴":"ban4","伸":"shen1","但":"dan4","位":"wei4","低":"di1","住":"zhu4","体":"ti3","何":"he2","佛":"fu2","作":"zuo4","你":"ni3","使":"shi3","便":"bian4","保":"bao3","信":"xin4","俩":"lia3","修":"xiu1","倒":"dao4","候":"hou4","借":"jie4","假":"jia3","偏":"pian1","做":"zuo4","停":"ting2","傍":"bang4","傲":"ao4","傻":"sha3","像":"xiang4","儿":"er2","元":"yuan2","兄":"xiong1","先":"xian1","光":"guang1","克":"ke4","兔":"tu4","入":"ru4","全":"quan2","八":"ba1","公":"gong1","六":"liu4","兰":"lan2","共":"gong4","关":"guan1","兴":"xing1","其":"qi2","具":"ju4","冈":"gang1","册":"ce4","再":"zai4","冒":"mao4","写":"xie3","军":"jun1","农":"nong2","冬":"dong1","冰":"bing1","冲":"chong1","决":"jue2","冷":"leng3","冻":"dong4","净":"jing4","准":"zhun3","凉":"liang2","凝":"ning2","几":"ji3","凤":"feng4","凰":"huang2","出":"chu1","刀":"dao1","分":"fen1","切":"qie4","划":"hua4","列":"lie4","刘":"liu2","刚":"gang1","创":"chuang4","初":"chu1","刨":"pao2","利":"li4","别":"bie2","到":"dao4","刷":"shua1","刺":"ci4","刻":"ke4","前":"qian2","割":"ge1","力":"li4","办":"ban4","功":"gong1","加":"jia1","动":"dong4","助":"zhu4","劲":"jin4","劳":"lao2","勇":"yong3","勾":"gou1","包":"bao1","北":"bei3","匠":"jiang4","区":"qu1","医":"yi1","十":"shi2","千":"qian1","午":"wu3","半":"ban4","华":"hua2","南":"nan2","卜":"bu3","卡":"ka3","卫":"wei4","印":"yin4","危":"wei1","即":"ji2","卵":"luan3","卷":"juan4","厂":"chang3","厅":"ting1","历":"li4","压":"ya1","原":"yuan2","厨":"chu2","去":"qu4","县":"xian4","参":"can1","又":"you4","叉":"cha1","及":"ji2","友":"you3","双":"shuang1","反":"fan3","发":"fa1","取":"qu3","受":"shou4","变":"bian4","口":"kou3","古":"gu3","句":"ju4","另":"ling4","只":"zhi3","叫":"jiao4","召":"zhao4","可":"ke3","台":"tai2","史":"shi3","右":"you4","号":"hao4","吃":"chi1","各":"ge4","合":"he2","吉":"ji2","同":"tong2","名":"ming2","后":"hou4","吐":"tu3","向":"xiang4","吓":"xia4","吗":"ma","呀":"ya","告":"gao4","呢":"ne","周":"zhou1","味":"wei4","命":"ming4","和":"he2","咕":"gu1","咱":"zan2","响":"xiang3","哪":"na3","哭":"ku1","唐":"tang2","售":"shou4","唱":"chang4","商":"shang1","啊":"a","啦":"la","喊":"han3","喝":"he1","喂":"wei4","喀":"ka1","善":"shan4","嗓":"sang3","嘀":"di1","嘴":"zui3","喊":"han3","四":"si4","回":"hui2","因":"yin1","团":"tuan2","围":"wei2","困":"kun4","园":"yuan2","图":"tu2","圆":"yuan2","圈":"quan1","土":"tu3","圣":"sheng4","地":"di4","场":"chang3","圾":"ji1","坏":"huai4","坐":"zuo4","坡":"po1","城":"cheng2","埋":"mai2","堆":"dui1","堂":"tang2","堡":"bao3","塔":"ta3","墓":"mu4","墓":"mu4","境":"jing4","墨":"mo4","壁":"bi4","士":"shi4","声":"sheng1","壳":"qiao4","壶":"hu2","壮":"zhuang4","多":"duo1","夜":"ye4","大":"da4","天":"tian1","太":"tai4","头":"tou2","央":"yang1","失":"shi1","奔":"ben1","奖":"jiang3","套":"tao4","女":"nv3","奶":"nai3","她":"ta1","好":"hao3","妈":"ma1","姐":"jie3","姨":"yi2","娃":"wa2","娘":"niang2","婚":"hun1","嫂":"sao3","子":"zi3","孔":"kong3","字":"zi4","孙":"sun1","存":"cun2","孝":"xiao4","季":"ji4","学":"xue2","孩":"hai2","宁":"ning2","守":"shou3","安":"an1","完":"wan2","宝":"bao3","实":"shi2","客":"ke4","室":"shi4","宫":"gong1","家":"jia1","容":"rong2","密":"mi4","富":"fu4","寒":"han2","察":"cha2","寸":"cun4","封":"feng1","专":"zhuan1","将":"jiang1","小":"xiao3","尖":"jian1","尚":"shang4","就":"jiu4","尸":"shi1","尺":"chi3","尼":"ni2","尾":"wei3","尿":"niao4","屁":"pi4","层":"ceng2","居":"ju1","屋":"wu1","屎":"shi3","展":"zhan3","山":"shan1","屿":"yu3","岁":"sui4","岗":"gang3","岩":"yan2","岭":"ling3","岸":"an4","峰":"feng1","岛":"dao3","峡":"xia2","川":"chuan1","州":"zhou1","工":"gong1","左":"zuo3","巧":"qiao3","巨":"ju4","己":"ji3","已":"yi3","巴":"ba1","币":"bi4","市":"shi4","布":"bu4","帆":"fan1","希":"xi1","帮":"bang1","带":"dai4","常":"chang2","帽":"mao4","幅":"fu2","干":"gan1","平":"ping2","年":"nian2","并":"bing4","幸":"xing4","幼":"you4","几":"ji3","广":"guang3","床":"chuang2","应":"ying1","底":"di3","废":"fei4","座":"zuo4","厅":"ting1","建":"jian4","开":"kai1","弄":"nong4","弓":"gong1","引":"yin3","弟":"di4","张":"zhang1","弯":"wan1","弹":"dan4","强":"qiang2","归":"gui1","当":"dang1","录":"lu4","形":"xing2","彩":"cai3","影":"ying3","很":"hen3","得":"de2","德":"de2","心":"xin1","必":"bi4","忘":"wang4","忙":"mang2","忠":"zhong1","快":"kuai4","念":"nian4","忽":"hu1","怎":"zen3","思":"si1","急":"ji2","性":"xing4","怨":"yuan4","总":"zong3","息":"xi1","您":"nin2","悲":"bei1","情":"qing2","惜":"xi1","惊":"jing1","想":"xiang3","感":"gan3","愿":"yuan4","慢":"man4","懂":"dong3","懒":"lan3","成":"cheng2","我":"wo3","战":"zhan4","戏":"xi4","房":"fang2","所":"suo3","扇":"shan4","手":"shou3","才":"cai2","打":"da3","托":"tuo1","抓":"zhua1","护":"hu4","报":"bao4","抱":"bao4","拉":"la1","拍":"pai1","拔":"ba2","招":"zhao1","挂":"gua4","指":"zhi3","捧":"peng3","接":"jie1","推":"tui1","描":"miao2","提":"ti2","握":"wo4","摆":"bai3","掉":"diao4","换":"huan4","摘":"zhai1","撕":"si1","播":"bo1","擦":"ca1","支":"zhi1","收":"shou1","攻":"gong1","放":"fang4","故":"gu4","教":"jiao1","救":"jiu4","敢":"gan3","散":"san4","敬":"jing4","数":"shu3","整":"zheng3","敌":"di2","文":"wen2","斗":"dou4","新":"xin1","断":"duan4","方":"fang1","旅":"lv3","旁":"pang2","旗":"qi2","无":"wu2","日":"ri4","旧":"jiu4","早":"zao3","时":"shi2","明":"ming2","星":"xing1","春":"chun1","昨":"zuo2","是":"shi4","显":"xian3","晒":"shai4","晓":"xiao3","晨":"chen2","景":"jing3","晴":"qing2","晶":"jing1","智":"zhi4","暗":"an4","暮":"mu4","历":"li4","最":"zui4","会":"hui4","月":"yue4","有":"you3","朋":"peng2","服":"fu2","朗":"lang3","朝":"zhao1","期":"qi1","木":"mu4","本":"ben3","术":"shu4","机":"ji1","杀":"sha1","杂":"za2","李":"li3","条":"tiao2","杏":"xing4","材":"cai2","村":"cun1","杆":"gan3","来":"lai2","杨":"yang2","果":"guo3","枝":"zhi1","林":"lin2","枣":"zao3","枪":"qiang1","枯":"ku1","树":"shu4","柳":"liu3","柴":"chai2","桃":"tao2","桐":"tong2","桑":"sang1","梁":"liang2","梅":"mei2","梳":"shu1","梧":"wu2","棍":"gun4","棉":"mian2","棒":"bang4","棚":"peng2","森":"sen1","棵":"ke1","楼":"lou2","概":"gai4","榴":"liu2","模":"mo2","樟":"zhang1","橡":"xiang4","桥":"qiao2","樱":"ying1","浆":"jiang1","橙":"cheng2","毛":"mao2","毫":"hao2","民":"min2","气":"qi4","氧":"yang3","池":"chi2","汗":"han4","求":"qiu2","汇":"hui4","汉":"han4","江":"jiang1","汤":"tang1","汽":"qi4","沥":"li4","沙":"sha1","沟":"gou1","沥":"li4","没":"mei2","河":"he2","油":"you2","治":"zhi4","沾":"zhan1","泉":"quan2","法":"fa3","泡":"pao4","波":"bo1","泥":"ni2","注":"zhu4","洋":"yang2","洒":"sa3","洗":"xi3","活":"huo2","派":"pai4","流":"liu2","浪":"lang4","浮":"fu2","浴":"yu4","海":"hai3","消":"xiao1","浅":"qian3","淋":"lin2","渔":"yu2","净":"jing4","湖":"hu2","湿":"shi1","温":"wen1","游":"you2","滴":"di1","漂":"piao1","漫":"man4","湖":"hu2","滩":"tan1","漏":"lou4","潮":"chao2","澡":"zao3","激":"ji1","灌":"guan4","火":"huo3","灭":"mie4","灯":"deng1","灾":"zai1","炉":"lu2","烂":"lan4","烧":"shao1","热":"re4","烟":"yan1","照":"zhao4","熟":"shu2","燃":"ran2","爱":"ai4","牙":"ya2","物":"wu4","特":"te4","猜":"cai1","猫":"mao1","猴":"hou2","狗":"gou3","狐":"hu2","狮":"shi1","狼":"lang2","狸":"li2","猎":"lie4","猪":"zhu1","猫":"mao1","王":"wang2","班":"ban1","球":"qiu2","理":"li3","琴":"qin2","甜":"tian2","生":"sheng1","瓜":"gua1","田":"tian2","男":"nan2","留":"liu2","疑":"yi2","电":"dian4","画":"hua4","病":"bing4","痛":"tong4","瘦":"shou4","登":"deng1","白":"bai2","的":"de","百":"bai3","皮":"pi2","盆":"pen2","盏":"zhan3","目":"mu4","看":"kan4","真":"zhen1","眨":"zha3","睡":"shui4","着":"zhuo2","眼":"yan3","睛":"jing1","瞧":"qiao2","知":"zhi1","矮":"ai3","石":"shi2","矿":"kuang4","砍":"kan3","砸":"za2","破":"po4","碗":"wan3","碰":"peng4","碟":"die2","礼":"li3","社":"she4","祝":"zhu4","神":"shen2","票":"piao4","禁":"jin4","福":"fu2","离":"li2","秋":"qiu1","种":"zhong3","科":"ke1","积":"ji1","秤":"cheng4","税":"shui4","程":"cheng2","稍":"shao1","稻":"dao4","稳":"wen3","空":"kong1","突":"tu1","穿":"chuan1","窗":"chuang1","窝":"wo1","立":"li4","童":"tong2","端":"duan1","竹":"zhu2","笋":"sun3","笔":"bi3","笛":"di2","笨":"ben4","笼":"long2","等":"deng3","答":"da2","筷":"kuai4","算":"suan4","管":"guan3","箱":"xiang1","篇":"pian1","篮":"lan2","米":"mi3","粉":"fen3","粒":"li4","精":"jing1","糖":"tang2","糟":"zao1","系":"xi4","纪":"ji4","红":"hong2","纹":"wen2","纸":"zhi3","纺":"fang3","织":"zhi1","线":"xian4","组":"zu3","细":"xi4","结":"jie2","绘":"hui4","统":"tong3","绿":"lv4","维":"wei2","缤":"bin1","缩":"suo1","绑":"bang3","绸":"chou2","缠":"chan2","壮":"zhuang4","美":"mei3","群":"qun2","义":"yi4","习":"xi2","羽":"yu3","翅":"chi4","翠":"cui4","老":"lao3","考":"kao3","者":"zhe3","耳":"er3","聪":"cong1","肉":"rou4","肚":"du4","肛":"gang1","肝":"gan1","肠":"chang2","背":"bei4","胡":"hu2","脑":"nao3","脚":"jiao3","脸":"lian3","腰":"yao1","腿":"tui3","膝":"xi1","臂":"bi4","自":"zi4","至":"zhi4","舍":"she3","舒":"shu1","舞":"wu3","舟":"zhou1","航":"hang2","艘":"sou1","良":"liang2","色":"se4","花":"hua1","芬":"fen1","芽":"ya2","苹":"ping2","苦":"ku3","英":"ying1","草":"cao3","茫":"mang2","荷":"he2","菜":"cai4","葡":"pu2","葱":"cong1","落":"luo4","蓝":"lan2","藏":"cang2","艺":"yi4","苏":"su1","若":"ruo4","英":"ying1","茂":"mao4","莲":"lian2","获":"huo4","菇":"gu1","萝":"luo2","蒸":"zheng1","蒙":"meng2","蔚":"wei4","蕾":"lei3","范":"fan4","药":"yao4","荷":"he2","藤":"teng2","虎":"hu3","虚":"xu1","虫":"chong2","蚜":"ya2","蚯":"qiu1","蛇":"she2","蛋":"dan4","蛙":"wa1","蜻":"qing1","蝴":"hu2","蝶":"die2","蝗":"huang2","蚊":"wen2","鱼":"ming2","蝉":"chan2","蜜":"mi4","蜓":"ting2","蝇":"ying2","蜘":"zhi1","蛛":"zhu1","蜡":"la4","蝌":"ke1","蝌":"ke1","蝎":"xie1","蝴":"hu2","蝇":"ying2","蟆":"ma2","蟹":"xie4","蚁":"yi3","虹":"hong2","蚊":"wen2","蛇":"she2","融":"rong2","螳":"tang2","螃":"pang2","蟹":"xie4","衣":"yi1","补":"bu3","表":"biao3","袋":"dai4","裙":"qun2","西":"xi1","视":"shi4","觉":"jue2","角":"jiao3","解":"jie3","言":"yan2","记":"ji4","许":"xu3","论":"lun4","识":"shi2","诉":"su4","话":"hua4","详":"xiang2","语":"yu3","读":"du2","课":"ke4","谁":"shei2","调":"diao4","讲":"jiang3","让":"rang4","认":"ren4","讨":"tao3","许":"xu3","诚":"cheng2","说":"shuo1","请":"qing3","谢":"xie4","课":"ke4","豆":"dou4","象":"xiang4","貌":"mao4","贝":"bei4","货":"huo4","贼":"zei2","质":"zhi4","买":"mai3","费":"fei4","赛":"sai4","赞":"zan4","跟":"gen1","踢":"ti1","蹲":"dun1","身":"shen1","转":"zhuan3","车":"che1","软":"ruan3","轮":"lun2","轻":"qing1","载":"zai4","辆":"liang4","输":"shu1","辫":"bian4","边":"bian1","过":"guo4","运":"yun4","近":"jin4","迎":"ying2","还":"hai2","这":"zhe4","进":"jin4","远":"yuan3","连":"lian2","迟":"chi2","追":"zhui1","退":"tui4","送":"song4","适":"shi4","逃":"tao2","透":"tou4","造":"zao4","逢":"feng2","游":"you2","道":"dao4","邀":"yao1","那":"na4","邮":"you2","邻":"lin2","部":"bu4","都":"dou1","郊":"jiao1","酉":"you3","酒":"jiu3","醋":"cu4","醇":"chun2","醉":"zui4","醒":"xing3","金":"jin1","钉":"ding1","针":"zhen1","钓":"diao4","钟":"zhong1","钢":"gang1","铁":"tie3","铜":"tong2","银":"yin2","锄":"chu2","锁":"suo3","锋":"feng1","键":"jian4","铅":"qian1","镜":"jing4","闪":"shan3","问":"wen4","闲":"xian2","间":"jian1","阁":"ge2","阅":"yue4","隔":"ge2","门":"men2","闪":"shan3","闭":"bi4","阔":"kuo4","队":"dui4","阵":"zhen4","阳":"yang2","阴":"yin1","陀":"tuo2","除":"chu2","院":"yuan4","难":"nan2","雨":"yu3","雪":"xue3","雷":"lei2","霞":"xia2","霜":"shuang1","露":"lu4","青":"qing1","静":"jing4","非":"fei1","面":"mian4","革":"ge2","音":"yin1","顶":"ding3","项":"xiang4","领":"ling3","颗":"ke1","颜":"yan2","题":"ti2","风":"feng1","飘":"piao1","飞":"fei1","食":"shi2","饭":"fan4","饮":"yin3","饱":"bao3","饼":"bing3","餐":"can1","饿":"e4","饺":"jiao3","馆":"guan3","香":"xiang1","马":"ma3","骑":"qi2","驼":"tuo2","高":"gao1","鱼":"yu2","鲜":"xian1","鸟":"niao3","鸡":"ji1","鸭":"ya1","凤":"feng4","鸥":"ou1","鸽":"ge1","鹅":"e2","鹰":"ying1","鹿":"lu4","麒":"qi2","麟":"lin2","麦":"mai4","麻":"ma2","黄":"huang2","黑":"hei1","龙":"long2","龟":"gui1","齿":"chi3","龄":"ling2","鼠":"shu3","鼻":"bi2"};
+
+// 学习顺序（保持原教材顺序）
+const CHAR_SORTED = ALL_CHARS;
+
+const todayChars = ['一','二','三','人','个','大','山','上','下','小'];
+const CANVAS_SIZE = 200;
+function canvasSize(base){ var w=window.innerWidth||screen.width; return w>=900?base:base===200?200:base===220?220:base; }
+function demoCanvasSize(){ return canvasSize(280); }
+function practiceCanvasSize(){ return canvasSize(320); }
+function quizCanvasSize(){ return canvasSize(300); }
+const PROFILE_COLORS = ['#a18cd1','#e74c3c','#2ecc71','#f9a825','#9b59b6','#1abc9c','#e67e22','#3498db'];
+var debugMode=false; // 调试模式：取消学习和汉字限制
+const AGE_OPTIONS = [4,5,6,7,8,9,10,11,12];
+
+// =============================================
+// 词语和例句数据
+// =============================================
+const CHAR_WORDS = {
+  '一':{w:'一个',s:'我有一个好朋友。'},
+  '二':{w:'二月',s:'二月春暖花开。'},
+  '三':{w:'三个',s:'桌上有三个苹果。'},
+  '人':{w:'人们',s:'人们在公园里散步。'},
+  '个':{w:'个人',s:'每个人都有自己的梦想。'},
+  '大':{w:'大家',s:'大家一起做游戏。'},
+  '山':{w:'大山',s:'山上有许多树木。'},
+  '上':{w:'上面',s:'书在桌子上面。'},
+  '下':{w:'下雨',s:'今天外面在下雨。'},
+  '小':{w:'小鸟',s:'小鸟在树上唱歌。'},
+  '雨':{w:'雨滴',s:'雨滴落在窗台上。'},
+  '天':{w:'天空',s:'天空中有白云。'},
+  '车':{w:'车子',s:'爸爸开着车子去上班。'},
+  '门':{w:'大门',s:'请打开大门。'},
+  '开':{w:'开心',s:'我们今天很开心。'},
+  '火':{w:'火花',s:'烟花在空中变成火花。'},
+  '口':{w:'门口',s:'小狗在门口等我。'},
+  '月':{w:'月亮',s:'月亮又圆又亮。'},
+  '羊':{w:'小羊',s:'小羊在草地上吃草。'},
+  '只':{w:'只有',s:'教室里只有我一个人。'},
+  '有':{w:'没有',s:'我没有忘记带作业。'},
+  '牛':{w:'牛奶',s:'我每天早上喝牛奶。'},
+  '水':{w:'水果',s:'多吃水果对身体好。'},
+  '中':{w:'中午',s:'中午我们去食堂吃饭。'},
+  '头':{w:'头发',s:'妈妈的头发又黑又长。'},
+  '风':{w:'风筝',s:'春天我们去放风筝。'},
+  '田':{w:'田地',s:'农民伯伯在田地里干活。'},
+  '土':{w:'泥土',s:'小树苗需要泥土才能长大。'},
+  '里':{w:'家里',s:'我在家里写作业。'},
+  '在':{w:'现在',s:'现在开始上课了。'},
+  '日':{w:'生日',s:'今天是妈妈的生日。'},
+  '白':{w:'白色',s:'雪花的颜色是白色的。'},
+  '马':{w:'马上',s:'我马上就到学校了。'},
+  '手':{w:'小手',s:'我的小手真能干。'},
+  '王':{w:'国王',s:'国王住在城堡里。'},
+  '出':{w:'出去',s:'我们出去做操吧。'},
+  '子':{w:'孩子',s:'孩子们在操场上玩耍。'},
+  '儿':{w:'儿子',s:'阿姨的儿子很聪明。'},
+  '女':{w:'女生',s:'班上有十五个女生。'},
+  '刀':{w:'小刀',s:'小刀很锋利要注意安全。'},
+  '木':{w:'树木',s:'树木可以净化空气。'},
+  '鸟':{w:'小鸟',s:'小鸟在枝头唱歌。'},
+  '伞':{w:'雨伞',s:'下雨了，记得带雨伞。'},
+  '鱼':{w:'金鱼',s:'鱼缸里有三条金鱼。'},
+  '气':{w:'天气',s:'今天天气真好。'},
+  '瓜':{w:'西瓜',s:'夏天我最爱吃西瓜。'},
+  '飞':{w:'飞机',s:'飞机在天空飞翔。'},
+  '虫':{w:'虫子',s:'树叶上有一只小虫子。'},
+  '米':{w:'大米',s:'大米是用稻谷碾出来的。'},
+  '云':{w:'白云',s:'蓝天上飘着朵朵白云。'},
+  '电':{w:'电话',s:'妈妈在接电话。'},
+  '石':{w:'石头',s:'河边有许多漂亮的石头。'},
+  '了':{w:'好了',s:'作业写好了。'},
+  '来':{w:'回来',s:'爸爸下班回来了。'},
+  '去':{w:'回去',s:'放学了，我们回家去。'},
+  '玉':{w:'玉米',s:'奶奶种的玉米很甜。'},
+  '回':{w:'回家',s:'我们放学回家。'},
+  '多':{w:'多少',s:'你有多少本书？'},
+  '少':{w:'多少',s:'你吃了多少饭？'},
+  '问':{w:'问题',s:'我有一个问题想问老师。'},
+  '早':{w:'早上',s:'早上好，新的一天开始啦。'},
+  '巴':{w:'尾巴',s:'小白兔的尾巴短短的。'},
+  '父':{w:'父亲',s:'父亲节我给爸爸送了礼物。'},
+  '工':{w:'工人',s:'工人们正在修路。'},
+  '不':{w:'不行',s:'这种做法不行。'},
+  '力':{w:'力气',s:'我的力气很大。'},
+  '干':{w:'才干',s:'他很有才干。'},
+  '几':{w:'几个',s:'教室里还有几个人？'},
+  '男':{w:'男生',s:'操场上有男生在打球。'},
+  '坐':{w:'坐下',s:'请大家坐下。'},
+  '打':{w:'打球',s:'我们去操场打球。'},
+  '四':{w:'四方',s:'教室是四四方方的。'},
+  '五':{w:'五颜',s:'花园里开满了五颜六色的花。'},
+  '六':{w:'六一',s:'六一儿童节很快乐。'},
+  '的':{w:'目的',s:'我们学习要有目地。'},
+  '闪':{w:'闪光',s:'星星在天空中闪光。'},
+  '花':{w:'花朵',s:'花园里的花朵真美丽。'},
+  '果':{w:'水果',s:'多吃水果对身体好。'},
+  '比':{w:'比赛',s:'明天有跑步比赛。'},
+  '午':{w:'中午',s:'中午我们去食堂吃饭。'},
+  '面':{w:'面包',s:'早餐我吃了面包。'},
+  '高':{w:'高兴',s:'我今天很高兴。'},
+  '包':{w:'书包',s:'我背着书包上学去。'},
+  '分':{w:'分开',s:'请把垃圾分开投放。'},
+  '文':{w:'语文',s:'我最喜欢上语文课。'},
+  '平':{w:'平安',s:'祝你一路平安。'},
+  '我':{w:'我们',s:'我们一起做游戏。'},
+  '连':{w:'连忙',s:'听到铃声我连忙跑进教室。'},
+  '元':{w:'一元',s:'一支铅笔一元钱。'},
+  '丁':{w:'园丁',s:'老师是辛勤的园丁。'},
+  '厂':{w:'工厂',s:'工厂里机器隆隆响。'},
+  '目':{w:'目光',s:'老师的目光很温柔。'},
+  '见':{w:'看见',s:'我看见了一只蝴蝶。'},
+  '禾':{w:'禾苗',s:'禾苗在阳光下茁壮成长。'},
+  '兔':{w:'兔子',s:'小白兔爱吃萝卜。'},
+  '是':{w:'是的',s:'这本书是我的。'},
+  '把':{w:'把手',s:'请握住把手。'},
+  '笑':{w:'笑脸',s:'她的笑脸像花儿一样。'},
+  '着':{w:'看着',s:'我看着老师在写字。'},
+  '会':{w:'学会',s:'我学会了骑自行车。'},
+  '自':{w:'自己',s:'我自己会穿衣服。'},
+  '已':{w:'已经',s:'我已经写完作业了。'},
+  '好':{w:'好的',s:'好的，我马上就来。'},
+  '画':{w:'画画',s:'我喜欢画画。'},
+  '爱':{w:'爱心',s:'我们要有爱心。'},
+  '心':{w:'开心',s:'我今天很开心。'},
+  '也':{w:'也是',s:'他也是我的好朋友。'},
+  '可':{w:'可是',s:'我想去玩，可是还要写作业。'},
+  '家':{w:'回家',s:'放学了我们一起回家。'},
+  '爸':{w:'爸爸',s:'爸爸带我去公园玩。'},
+  '妈':{w:'妈妈',s:'妈妈做的饭真好吃。'},
+  '这':{w:'这个',s:'这个苹果很甜。'},
+  '奶':{w:'奶奶',s:'奶奶给我讲故事。'},
+  '爷':{w:'爷爷',s:'爷爷每天早上去散步。'},
+  '们':{w:'我们',s:'我们是好朋友。'},
+  '书':{w:'书本',s:'书本是我们的好朋友。'},
+  '串':{w:'一串',s:'我有一串冰糖葫芦。'},
+  '球':{w:'皮球',s:'小朋友在拍皮球。'},
+  '圆':{w:'圆形',s:'太阳是圆形的。'},
+  '形':{w:'形状',s:'积木有各种形状。'},
+  '长':{w:'长大',s:'我长大了想当医生。'},
+  '方':{w:'方向',s:'我们要分清方向。'},
+  '角':{w:'角落',s:'扫帚放在角落里。'},
+  '正':{w:'正好',s:'这双鞋我穿正好。'},
+  '灯':{w:'灯光',s:'教室里的灯光很明亮。'},
+  '块':{w:'一块',s:'我有一块橡皮。'},
+  '冰':{w:'冰箱',s:'冰淇淋放在冰箱里。'},
+  '那':{w:'那是',s:'那是我的书包。'},
+  '弓':{w:'弓箭',s:'古代人用弓箭打猎。'},
+  '买':{w:'买菜',s:'妈妈去市场买菜。'},
+  '哪':{w:'哪里',s:'你的家在哪里？'},
+  '乐':{w:'快乐',s:'祝你生日快乐。'},
+  '想':{w:'想念',s:'我很想念爷爷奶奶。'},
+  '谢':{w:'谢谢',s:'谢谢你的帮助。'},
+  '抱':{w:'拥抱',s:'妈妈给了我一个大拥抱。'},
+  '竹':{w:'竹子',s:'大熊猫爱吃竹子。'},
+  '要':{w:'不要',s:'不要在马路上跑。'},
+  '立':{w:'站立',s:'请大家站起来。'},
+  '耳':{w:'耳朵',s:'兔子的耳朵很长。'},
+  '红':{w:'红色',s:'国旗是红色的。'},
+  '色':{w:'颜色',s:'彩虹有七种颜色。'},
+  '吃':{w:'吃饭',s:'我们按时吃饭。'},
+  '穿':{w:'穿衣',s:'早上我自己穿衣服。'},
+  '香':{w:'香味',s:'花儿散发出香味。'},
+  '身':{w:'身体',s:'我们要锻炼身体。'},
+  '它':{w:'它们',s:'它们是我们的好朋友。'},
+  '发':{w:'发现',s:'我发现了一只小蚂蚁。'},
+  '衣':{w:'衣服',s:'我把衣服叠整齐。'},
+  '她':{w:'她们',s:'她们在跳皮筋。'},
+  '他':{w:'他们',s:'他们在踢足球。'},
+  '毛':{w:'毛巾',s:'我用毛巾洗脸。'},
+  '朋':{w:'朋友',s:'他是我的好朋友。'},
+  '哥':{w:'哥哥',s:'哥哥帮我辅导功课。'},
+  '友':{w:'友好',s:'我们要友好相处。'},
+  '弟':{w:'弟弟',s:'弟弟在玩积木。'},
+  '兄':{w:'兄弟',s:'我们是好兄弟。'},
+  '眉':{w:'眉毛',s:'她的眉毛弯弯的。'},
+  '鼻':{w:'鼻子',s:'大象的鼻子长长的。'},
+  '光':{w:'阳光',s:'阳光照在窗台上。'},
+  '星':{w:'星星',s:'晚上天空有星星。'},
+  '阳':{w:'太阳',s:'太阳从东方升起。'},
+  '明':{w:'明天',s:'明天我们去春游。'},
+  '今':{w:'今天',s:'今天是星期天。'},
+  '走':{w:'走路',s:'走路的时候要注意安全。'},
+  '兴':{w:'高兴',s:'妈妈很高兴。'},
+  '空':{w:'空气',s:'公园里空气很新鲜。'},
+  '两':{w:'两个',s:'我有两个好朋友。'},
+  '哭':{w:'哭泣',s:'小明在哭泣。'},
+  '牙':{w:'牙齿',s:'早晚都要刷牙。'},
+  '肚':{w:'肚子',s:'吃饱了肚子不饿。'},
+  '尾':{w:'尾巴',s:'蝴蝶有美丽的尾巴。'},
+  '脸':{w:'洗脸',s:'早上起床要洗脸。'},
+  '你':{w:'你好',s:'你好，见到你真高兴。'},
+  '黑':{w:'黑色',s:'黑夜过后就是白天。'},
+  '半':{w:'半天',s:'我等了半天了。'},
+  '呀':{w:'好呀',s:'好呀，我们一起去！'},
+  '吗':{w:'好吗',s:'我们一起玩好吗？'},
+  '七':{w:'七星',s:'北斗七星像一把勺子。'},
+  '八':{w:'八方',s:'四面八方都是人。'},
+  '九':{w:'九月',s:'九月开学了。'},
+  '十':{w:'十分',s:'我十分想念你。'},
+  '很':{w:'很多',s:'教室里有很多人。'},
+  '又':{w:'又是',s:'今天又是美好的一天。'},
+  '太':{w:'太阳',s:'太阳落山了。'},
+  '宝':{w:'宝贝',s:'你是妈妈的宝贝。'},
+  '贝':{w:'贝壳',s:'海边有漂亮的贝壳。'},
+  '和':{w:'和平',s:'我们要维护和平。'},
+  '关':{w:'关心',s:'老师很关心我们。'},
+  '园':{w:'花园',s:'花园里开满了花。'},
+  '生':{w:'生活',s:'我们的生活真美好。'},
+  '公':{w:'公园',s:'我们去公园玩。'},
+  '叶':{w:'树叶',s:'秋天树叶变黄了。'},
+  '苗':{w:'禾苗',s:'禾苗在田里生长。'},
+  '林':{w:'树林',s:'树林里有很多鸟。'},
+  '草':{w:'小草',s:'春天小草发芽了。'},
+  '先':{w:'首先',s:'首先我要完成作业。'},
+  '岛':{w:'小岛',s:'海中央有一个小岛。'},
+  '嘴':{w:'嘴巴',s:'嘴巴要用来吃饭和说话。'},
+  '眼':{w:'眼睛',s:'我们要爱护眼睛。'},
+  '睛':{w:'眼睛',s:'她的眼睛很明亮。'},
+  '脚':{w:'双脚',s:'走路要用双脚。'},
+  '翅':{w:'翅膀',s:'蝴蝶有美丽的翅膀。'},
+  '膀':{w:'翅膀',s:'小鸟张开翅膀飞翔。'},
+  '腿':{w:'大腿',s:'跑步需要有力的腿。'},
+  '羽':{w:'羽毛',s:'孔雀的羽毛真漂亮。'},
+  '体':{w:'身体',s:'锻炼身体很重要。'},
+  '没':{w:'没有',s:'天上没有云朵。'},
+  '认':{w:'认识',s:'我认识这个字。'},
+  '识':{w:'知识',s:'知识就是力量。'},
+  '颜':{w:'颜色',s:'彩虹有很多颜色。'},
+  '黄':{w:'黄色',s:'香蕉是黄色的。'},
+  '绿':{w:'绿色',s:'草地是绿色的。'},
+  '蓝':{w:'蓝天',s:'蓝天白云真好看。'},
+  '粉':{w:'粉色',s:'粉色的花很漂亮。'},
+  '青':{w:'青蛙',s:'青蛙在池塘里叫。'},
+  '紫':{w:'紫色',s:'紫色的葡萄很甜。'},
+  '彩':{w:'彩虹',s:'雨后的彩虹真美。'},
+  '食':{w:'食物',s:'我们要珍惜食物。'},
+  '物':{w:'动物',s:'动物是我们的朋友。'},
+  '尝':{w:'品尝',s:'请品尝这个苹果。'},
+  '闻':{w:'新闻',s:'爸爸在看新闻。'},
+  '鲜':{w:'鲜花',s:'妈妈收到一束鲜花。'},
+  '味':{w:'味道',s:'这个菜味道真好。'},
+  '苦':{w:'苦瓜',s:'苦瓜虽然苦但有益健康。'},
+  '甜':{w:'甜瓜',s:'夏天的甜瓜很甜。'},
+  '什':{w:'什么',s:'你叫什么名字？'},
+  '么':{w:'什么',s:'你想要什么？'},
+  '起':{w:'一起',s:'我们一起上学吧。'},
+  '运':{w:'运动',s:'运动有益健康。'},
+  '动':{w:'动物',s:'动物园里有许多动物。'},
+  '踢':{w:'踢球',s:'男生喜欢踢球。'},
+  '赛':{w:'比赛',s:'明天有跳绳比赛。'},
+  '足':{w:'足球',s:'我们学校有足球队。'},
+  '快':{w:'快乐',s:'祝你每天快乐。'},
+  '慢':{w:'慢跑',s:'爷爷喜欢慢跑。'},
+  '跑':{w:'跑步',s:'爸爸每天早上跑步。'},
+  '步':{w:'跑步',s:'每天跑步有益健康。'},
+  '唱':{w:'唱歌',s:'姐姐喜欢唱歌。'},
+  '跳':{w:'跳舞',s:'妹妹在学跳舞。'},
+  '歌':{w:'歌曲',s:'这首歌很好听。'},
+  '舞':{w:'跳舞',s:'她在舞台上跳舞。'},
+  '号':{w:'口号',s:'我们要喊出口号。'},
+  '吹':{w:'吹气',s:'请对着镜子吹气。'},
+  '讲':{w:'讲话',s:'上课要认真听讲。'},
+  '故':{w:'故事',s:'我喜欢听故事。'},
+  '事':{w:'事情',s:'今天有一件开心的事情。'},
+  '怎':{w:'怎么',s:'这个字怎么写？'},
+  '帮':{w:'帮忙',s:'同学之间要互相帮忙。'},
+  '找':{w:'找到',s:'我找到了我的铅笔。'},
+  '欢':{w:'喜欢',s:'我喜欢画画。'},
+  '担':{w:'担心',s:'不要担心，我会帮你的。'},
+  '急':{w:'着急',s:'不要着急慢慢来。'},
+  '闷':{w:'闷热',s:'夏天天气很闷热。'},
+  '害':{w:'害怕',s:'我不害怕黑暗。'},
+  '怕':{w:'害怕',s:'遇到困难不要害怕。'},
+  '惊':{w:'惊讶',s:'他惊讶地张大了嘴。'},
+  '哈':{w:'哈哈',s:'哈哈，这个故事真好笑。'},
+  '老':{w:'老师',s:'老师教我们读书写字。'},
+  '师':{w:'老师',s:'老师辛苦了！'},
+  '同':{w:'同学',s:'同学们一起做操。'},
+  '学':{w:'学习',s:'我们要努力学习。'},
+  '桌':{w:'桌子',s:'桌子上有一本书。'},
+  '校':{w:'学校',s:'我爱我的学校。'},
+  '椅':{w:'椅子',s:'请坐在椅子上。'},
+  '教':{w:'教室',s:'教室很宽敞明亮。'},
+  '室':{w:'教室',s:'我们在教室里上课。'},
+  '课':{w:'上课',s:'上课铃响了。'},
+  '做':{w:'做事',s:'做事要认真。'},
+  '给':{w:'送给',s:'我送给妈妈一束花。'},
+  '操':{w:'做操',s:'早上我们要做操。'},
+  '伸':{w:'伸手',s:'请把手伸出来。'},
+  '举':{w:'举手',s:'回答问题要举手。'},
+  '拉':{w:'拉手',s:'大家手拉手围成圈。'},
+  '拍':{w:'拍手',s:'请为他的表演拍手。'},
+  '抓':{w:'抓住',s:'抓住绳子不要松手。'},
+  '拥':{w:'拥抱',s:'妈妈给了我一个大拥抱。'},
+  '扔':{w:'扔掉',s:'垃圾不能随便扔。'},
+  '寒':{w:'寒冷',s:'冬天天气很寒冷。'},
+  '冷':{w:'冷水',s:'我不喝冷水。'},
+  '温':{w:'温暖',s:'妈妈的怀抱真温暖。'},
+  '暖':{w:'温暖',s:'阳光照在身上很温暖。'},
+  '热':{w:'热水',s:'冬天喝热水暖身。'},
+  '凉':{w:'凉快',s:'秋天真凉快。'},
+  '湿':{w:'湿润',s:'雨后空气很湿润。'},
+  '净':{w:'干净',s:'我把教室打扫干净。'},
+  '到':{w:'到达',s:'我们到达了公园。'},
+  '都':{w:'都是',s:'我们都是一年级学生。'},
+  '办':{w:'办法',s:'我有一个好办法。'},
+  '渴':{w:'口渴',s:'我运动完很口渴。'},
+  '喝':{w:'喝水',s:'多喝水对身体好。'},
+  '饿':{w:'饥饿',s:'中午了我很饿。'},
+  '睡':{w:'睡觉',s:'早睡早起身体好。'},
+  '饭':{w:'吃饭',s:'吃饭前要洗手。'},
+  '觉':{w:'睡觉',s:'我每天晚上九点睡觉。'},
+  '累':{w:'劳累',s:'妈妈工作了一天很累。'},
+  '醒':{w:'醒来',s:'早上我六点醒来。'},
+  '雾':{w:'大雾',s:'今天早上有大雾。'},
+  '房':{w:'房间',s:'我的房间很干净。'},
+  '间':{w:'时间',s:'要珍惜时间。'},
+  '帘':{w:'窗帘',s:'请拉开窗帘。'},
+  '窗':{w:'窗户',s:'请打开窗户通风。'},
+  '台':{w:'阳台',s:'阳台上种着花。'},
+  '户':{w:'窗户',s:'窗户外面有棵大树。'},
+  '视':{w:'电视',s:'不要看电视太久。'},
+  '床':{w:'起床',s:'我早上六点起床。'},
+  '被':{w:'被子',s:'起床后叠好被子。'},
+  '处':{w:'到处',s:'春天到处是鲜花。'},
+  '让':{w:'让开',s:'请让开一点。'},
+  '对':{w:'对错',s:'我们要分清楚对错。'},
+  '姐':{w:'姐姐',s:'姐姐带我上学。'},
+  '妹':{w:'妹妹',s:'妹妹在学走路。'},
+  '姨':{w:'阿姨',s:'阿姨是我们的好邻居。'},
+  '阿':{w:'阿姨',s:'阿姨给我买了糖果。'},
+  '叔':{w:'叔叔',s:'叔叔开车带我们去玩。'},
+  '伯':{w:'伯伯',s:'伯伯在院子里种菜。'},
+  '姑':{w:'姑姑',s:'姑姑从北京回来了。'},
+  '亲':{w:'亲人',s:'亲人是我们最亲近的人。'},
+  '餐':{w:'餐厅',s:'我们在餐厅吃午饭。'},
+  '盆':{w:'脸盆',s:'脸盆里装着水。'},
+  '碗':{w:'碗筷',s:'吃完饭要收拾碗筷。'},
+  '筷':{w:'筷子',s:'我用筷子吃饭。'},
+  '袋':{w:'口袋',s:'口袋里有一块糖。'},
+  '盖':{w:'盖子',s:'请把盖子盖好。'},
+  '巾':{w:'毛巾',s:'用毛巾擦擦手。'},
+  '杯':{w:'杯子',s:'我的杯子是蓝色的。'},
+  '成':{w:'成为',s:'我长大想成为老师。'},
+  '用':{w:'有用',s:'知识很有用。'},
+  '像':{w:'好像',s:'她好像我的姐姐。'},
+  '原':{w:'原来',s:'原来是你呀！'},
+  '菜':{w:'蔬菜',s:'多吃蔬菜身体好。'},
+  '萝':{w:'萝卜',s:'小白兔爱吃萝卜。'},
+  '卜':{w:'萝卜',s:'萝卜很有营养。'},
+  '豆':{w:'豆子',s:'黄豆可以做豆浆。'},
+  '苹':{w:'苹果',s:'苹果又大又红。'},
+  '桃':{w:'桃子',s:'夏天我爱吃桃子。'},
+  '杏':{w:'杏子',s:'杏子是黄色的。'},
+  '笋':{w:'竹笋',s:'春天竹笋破土而出。'},
+  '扫':{w:'打扫',s:'我们打扫教室。'},
+  '地':{w:'大地',s:'春天大地万物复苏。'},
+  '拖':{w:'拖把',s:'用拖把拖地。'},
+  '洒':{w:'洒水',s:'值日生要洒水。'},
+  '服':{w:'衣服',s:'自己穿衣服。'},
+  '洗':{w:'洗手',s:'饭前要洗手。'},
+  '晒':{w:'晒太阳',s:'冬天晒太阳很暖和。'},
+  '收':{w:'收拾',s:'自己收拾书包。'},
+  '全':{w:'全部',s:'作业全部完成了。'},
+  '呢':{w:'你呢',s:'我写完了，你呢？'},
+  '还':{w:'还有',s:'我还有一道题没做。'},
+  '谁':{w:'谁的',s:'这是谁的书包？'},
+  '商':{w:'商场',s:'妈妈带我去商场。'},
+  '场':{w:'球场',s:'球场上有好多人在打球。'},
+  '街':{w:'大街',s:'大街上有许多人。'},
+  '楼':{w:'高楼',s:'城市里有很多高楼。'},
+  '理':{w:'道理',s:'我们要讲道理。'},
+  '店':{w:'商店',s:'商店里有各种各样的商品。'},
+  '鞋':{w:'鞋子',s:'穿上鞋子去上学。'},
+  '市':{w:'城市',s:'这个城市很美丽。'},
+  '病':{w:'生病',s:'生病了要多喝水。'},
+  '医':{w:'医生',s:'医生治好了我的病。'},
+  '院':{w:'医院',s:'医院里有医生和护士。'},
+  '护':{w:'爱护',s:'我们要爱护公物。'},
+  '士':{w:'护士',s:'护士阿姨很温柔。'},
+  '纱':{w:'纱布',s:'用纱布包扎伤口。'},
+  '布':{w:'布料',s:'这块布料很柔软。'},
+  '针':{w:'打针',s:'打针有一点点疼。'},
+  '住':{w:'记住',s:'请记住这个字。'},
+  '喂':{w:'喂养',s:'我喂养了一只小鸟。'},
+  '放':{w:'放学',s:'放学了，我们排队回家。'},
+  '鸡':{w:'小鸡',s:'小鸡叽叽喳喳叫。'},
+  '鸭':{w:'鸭子',s:'小鸭子在池塘里游泳。'},
+  '夫':{w:'农夫',s:'农夫在田里耕作。'},
+  '农':{w:'农村',s:'农村的空气很新鲜。'},
+  '猫':{w:'小猫',s:'小猫在玩毛线球。'},
+  '狗':{w:'小狗',s:'小狗是我的好朋友。'},
+  '鼠':{w:'老鼠',s:'小老鼠很机灵。'},
+  '群':{w:'人群',s:'广场上有一群人。'},
+  '汽':{w:'汽车',s:'爸爸开车汽车上班。'},
+  '行':{w:'行走',s:'过马路要走斑马线。'},
+  '交':{w:'交通',s:'过马路要注意交通安全。'},
+  '装':{w:'装扮',s:'教室装扮得很漂亮。'},
+  '机':{w:'飞机',s:'飞机在天空飞行。'},
+  '甲':{w:'指甲',s:'指甲要经常剪。'},
+  '宇':{w:'宇宙',s:'宇宙很大很神奇。'},
+  '船':{w:'小船',s:'湖面上漂着一只小船。'},
+  '化':{w:'变化',s:'天气变化很快。'},
+  '当':{w:'当时',s:'当时我还在睡觉。'},
+  '该':{w:'应该',s:'我们应该好好学习。'},
+  '科':{w:'科学',s:'科学课很有趣。'},
+  '程':{w:'路程',s:'去学校的路程不远。'},
+  '员':{w:'队员',s:'我们球队有五名队员。'},
+  '航':{w:'航行',s:'轮船在海上航行。'},
+  '司':{w:'司机',s:'司机叔叔开车很稳。'},
+  '军':{w:'军人',s:'军人保卫国家。'},
+  '银':{w:'银行',s:'银行里有很多钱。'},
+  '客':{w:'客人',s:'家里来客人了。'},
+  '壳':{w:'贝壳',s:'我在海边捡到贝壳。'},
+  '救':{w:'救命',s:'遇到危险要喊救命。'},
+  '板':{w:'黑板',s:'老师在黑板上写字。'},
+  '油':{w:'加油',s:'运动会上大家加油！'},
+  '加':{w:'加法',s:'数学课上我们学加法。'},
+  '修':{w:'修理',s:'爸爸在修理自行车。'},
+  '轮':{w:'车轮',s:'汽车有四个车轮。'},
+  '始':{w:'开始',s:'比赛开始了。'},
+  '离':{w:'离开',s:'火车离开了车站。'},
+  '遇':{w:'遇到',s:'我在路上遇到了同学。'},
+  '别':{w:'分别',s:'我们分别时很不舍。'},
+  '海':{w:'大海',s:'大海真广阔。'},
+  '洋':{w:'海洋',s:'海洋里有丰富的鱼类。'},
+  '浪':{w:'浪花',s:'浪花拍打着沙滩。'},
+  '流':{w:'河流',s:'河流流向远方。'},
+  '波':{w:'波浪',s:'湖面上泛着波浪。'},
+  '潮':{w:'潮水',s:'潮水一涨一落。'},
+  '雷':{w:'雷声',s:'打雷了，快进屋。'},
+  '乌':{w:'乌云',s:'天上布满了乌云。'},
+  '底':{w:'海底',s:'海底世界很奇妙。'},
+  '虾':{w:'小虾',s:'小虾在水里游来游去。'},
+  '丑':{w:'小丑',s:'小丑表演真有趣。'},
+  '斑':{w:'斑马',s:'斑马身上有黑白条纹。'},
+  '宫':{w:'宫殿',s:'公主住在宫殿里。'},
+  '带':{w:'带领',s:'老师带领我们做游戏。'},
+  '美':{w:'美丽',s:'花园里的花很美丽。'},
+  '柱':{w:'柱子',s:'柱子支撑着房子。'},
+  '矿':{w:'矿石',s:'这块矿石很坚硬。'},
+  '完':{w:'完成',s:'我终于完成了作业。'},
+  '挖':{w:'挖土',s:'工人在挖土。'},
+  '就':{w:'就是',s:'他就是我的好朋友。'},
+  '岩':{w:'岩石',s:'这座山有很多岩石。'},
+  '沙':{w:'沙子',s:'沙滩上有许多沙子。'},
+  '鸥':{w:'海鸥',s:'海鸥在海面上飞翔。'},
+  '滩':{w:'沙滩',s:'我们在沙滩上玩耍。'},
+  '瓶':{w:'瓶子',s:'瓶子里装满了水。'},
+  '珠':{w:'珍珠',s:'蚌壳里有珍珠。'},
+  '金':{w:'金色',s:'秋天稻田是金色的。'},
+  '骨':{w:'骨头',s:'小狗爱啃骨头。'},
+  '帆':{w:'帆船',s:'帆船在海上航行。'},
+  '游':{w:'游泳',s:'夏天我们去游泳。'},
+  '冲':{w:'冲浪',s:'叔叔在海上冲浪。'},
+  '划':{w:'划船',s:'我们去公园划船。'},
+  '钩':{w:'鱼钩',s:'钓鱼需要鱼钩。'},
+  '钓':{w:'钓鱼',s:'爷爷去河边钓鱼。'},
+  '篮':{w:'篮球',s:'哥哥在打篮球。'},
+  '网':{w:'网络',s:'网络让我们连接世界。'},
+  '最':{w:'最好',s:'你是我最好的朋友。'},
+  '得':{w:'得到',s:'我得到了一个礼物。'},
+  '梦':{w:'梦想',s:'每个人都有梦想。'},
+  '森':{w:'森林',s:'森林里有许多动物。'},
+  '植':{w:'植物',s:'植物需要我们爱护。'},
+  '树':{w:'树木',s:'树木可以净化空气。'},
+  '春':{w:'春天',s:'春天花儿开了。'},
+  '泥':{w:'泥土',s:'泥土里有种子。'},
+  '夏':{w:'夏天',s:'夏天可以吃西瓜。'},
+  '秋':{w:'秋天',s:'秋天树叶变黄了。'},
+  '冬':{w:'冬天',s:'冬天可以堆雪人。'},
+  '季':{w:'季节',s:'一年有四个季节。'},
+  '熊':{w:'熊猫',s:'大熊猫爱吃竹子。'},
+  '猴':{w:'猴子',s:'猴子在树上跳来跳去。'},
+  '鹿':{w:'小鹿',s:'小鹿在草地上奔跑。'},
+  '虎':{w:'老虎',s:'老虎是森林之王。'},
+  '狐':{w:'狐狸',s:'狐狸很聪明。'},
+  '狮':{w:'狮子',s:'狮子在草原上奔跑。'},
+  '狸':{w:'狐狸',s:'狐狸的尾巴很大。'},
+  '狼':{w:'大灰狼',s:'大灰狼来了。'},
+  '现':{w:'现在',s:'现在开始上课。'},
+  '总':{w:'总是',s:'他总是帮助别人。'},
+  '跟':{w:'跟着',s:'请跟着老师读。'},
+  '柳':{w:'柳树',s:'柳树的枝条像辫子。'},
+  '芽':{w:'发芽',s:'春天种子发芽了。'},
+  '蚯':{w:'蚯蚓',s:'蚯蚓在泥土里松土。'},
+  '蝴':{w:'蝴蝶',s:'蝴蝶在花丛中飞舞。'},
+  '蝶':{w:'蝴蝶',s:'蝴蝶有美丽的翅膀。'},
+  '燕':{w:'燕子',s:'燕子从南方飞回来了。'},
+  '蜜':{w:'蜜蜂',s:'蜜蜂在采蜜。'},
+  '蜂':{w:'蜜蜂',s:'小蜜蜂很勤劳。'},
+  '民':{w:'人民',s:'人民的生活越来越好。'},
+  '种':{w:'种树',s:'春天我们去种树。'},
+  '翻':{w:'翻书',s:'请翻到第五页。'},
+  '浇':{w:'浇水',s:'每天给花浇水。'},
+  '施':{w:'施肥',s:'庄稼需要施肥。'},
+  '肥':{w:'肥料',s:'肥料让庄稼长得更好。'},
+  '除':{w:'除法',s:'数学课学了除法。'},
+  '杀':{w:'杀害',s:'不能杀害小动物。'},
+  '如':{w:'如果',s:'如果明天下雨就不去。'},
+  '再':{w:'再见',s:'我们明天再见。'},
+  '荷':{w:'荷花',s:'池塘里的荷花真美。'},
+  '蝌':{w:'蝌蚪',s:'小蝌蚪找妈妈。'},
+  '蚪':{w:'蝌蚪',s:'蝌蚪长大了变成青蛙。'},
+  '蛙':{w:'青蛙',s:'青蛙是益虫。'},
+  '蜻':{w:'蜻蜓',s:'蜻蜓在池塘边飞。'},
+  '露':{w:'露水',s:'清晨草上有露水。'},
+  '蜓':{w:'蜻蜓',s:'蜻蜓的翅膀是透明的。'},
+  '蝉':{w:'蝉鸣',s:'夏天知了蝉鸣。'},
+  '声':{w:'声音',s:'她的声音真好听。'},
+  '音':{w:'音乐',s:'我喜欢听音乐。'},
+  '晨':{w:'早晨',s:'早晨空气很新鲜。'},
+  '朝':{w:'朝阳',s:'朝阳从东方升起。'},
+  '夕':{w:'夕阳',s:'夕阳真美。'},
+  '落':{w:'落后',s:'不要落后要加油。'},
+  '傍':{w:'傍晚',s:'傍晚我们回家。'},
+  '晚':{w:'晚上',s:'晚上我读故事书。'},
+  '霞':{w:'晚霞',s:'晚霞染红了天空。'},
+  '追':{w:'追跑',s:'不要在走廊追跑。'},
+  '能':{w:'能力',s:'我们要提高能力。'},
+  '送':{w:'送别',s:'我去车站送别朋友。'},
+  '过':{w:'过去',s:'过去的日子不会回来。'},
+  '节':{w:'节日',s:'节日里大家很开心。'},
+  '铃':{w:'铃声',s:'上课铃声响了。'},
+  '烟':{w:'烟花',s:'烟花在空中绽放。'},
+  '纸':{w:'纸张',s:'节约纸张保护森林。'},
+  '礼':{w:'礼物',s:'我收到了生日礼物。'},
+  '蛋':{w:'鸡蛋',s:'鸡蛋很有营养。'},
+  '娃':{w:'娃娃',s:'布娃娃很可爱。'},
+  '糕':{w:'蛋糕',s:'妈妈做的蛋糕真好吃。'},
+  '滴':{w:'水滴',s:'水滴石穿。'},
+  '泉':{w:'泉水',s:'泉水很清澈。'},
+  '溪':{w:'小溪',s:'小溪流过大山。'},
+  '洼':{w:'水洼',s:'雨后地上有水洼。'},
+  '河':{w:'河流',s:'河水缓缓流淌。'},
+  '江':{w:'长江',s:'长江很长。'},
+  '湖':{w:'湖水',s:'湖水很清澈。'},
+  '清':{w:'清晨',s:'清晨去公园散步。'},
+  '神':{w:'神奇',s:'大自然很神奇。'},
+  '奇':{w:'奇怪',s:'这个现象很奇怪。'},
+  '求':{w:'请求',s:'我请求老师帮助。'},
+  '棵':{w:'一棵树',s:'我家门口有一棵树。'},
+  '根':{w:'树根',s:'树根深深扎在土里。'},
+  '枯':{w:'枯叶',s:'秋天枯叶飘落。'},
+  '啄':{w:'啄木鸟',s:'啄木鸟帮大树治病。'},
+  '松':{w:'松树',s:'松树四季常青。'},
+  '历':{w:'历史',s:'我们要学习历史。'},
+  '期':{w:'期待',s:'我期待明天的春游。'},
+  '昨':{w:'昨天',s:'昨天我去公园了。'},
+  '新':{w:'新年',s:'新年快乐！'},
+  '表':{w:'表达',s:'要学会表达自己的想法。'},
+  '时':{w:'时间',s:'时间过得真快。'},
+  '数':{w:'数字',s:'我认识很多数字。'},
+  '写':{w:'写字',s:'我们学习写字。'},
+  '久':{w:'好久',s:'好久不见了。'},
+  '响':{w:'响亮',s:'回答问题要响亮。'},
+  '听':{w:'听话',s:'我们要听老师的话。'},
+  '叫':{w:'叫声',s:'公鸡的叫声很响亮。'},
+  '叹':{w:'叹气',s:'不要叹气要加油。'},
+  '欠':{w:'哈欠',s:'打哈欠说明困了。'},
+  '喊':{w:'喊叫',s:'不要在走廊大喊大叫。'},
+  '吸':{w:'呼吸',s:'深呼吸可以放松。'},
+  '呼':{w:'呼吸',s:'我们要呼吸新鲜空气。'},
+  '说':{w:'说话',s:'上课不能随便说话。'},
+  '话':{w:'说话',s:'说话要有礼貌。'},
+  '坡':{w:'山坡',s:'山坡上开满了花。'},
+  '注':{w:'注意',s:'过马路要注意安全。'},
+  '意':{w:'注意',s:'请注意听讲。'},
+  '辆':{w:'车辆',s:'马路上车辆很多。'},
+  '停':{w:'停止',s:'下雨了比赛停止。'},
+  '道':{w:'道路',s:'道路两旁种着树。'},
+  '直':{w:'直线',s:'请在纸上画一条直线。'},
+  '定':{w:'一定',s:'我一定努力学习。'},
+  '幸':{w:'幸福',s:'我们的生活很幸福。'},
+  '影':{w:'影子',s:'阳光下有我的影子。'},
+  '样':{w:'一样',s:'我们穿一样的校服。'},
+  '边':{w:'旁边',s:'教室旁边有厕所。'},
+  '外':{w:'外面',s:'外面在下雨。'},
+  '远':{w:'远方',s:'爸爸去远方工作。'},
+  '左':{w:'左右',s:'左右要分清。'},
+  '右':{w:'右手',s:'我用右手写字。'},
+  '前':{w:'前面',s:'教室前面有黑板。'},
+  '后':{w:'后面',s:'教室后面有黑板报。'},
+  '蜘':{w:'蜘蛛',s:'蜘蛛在墙角织网。'},
+  '蛛':{w:'蜘蛛',s:'蜘蛛网很漂亮。'},
+  '蚊':{w:'蚊子',s:'夏天蚊子很多。'},
+  '蚂':{w:'蚂蚁',s:'蚂蚁搬家要下雨。'},
+  '蚁':{w:'蚂蚁',s:'蚂蚁很勤劳。'},
+  '丝':{w:'丝瓜',s:'丝瓜可以炒菜吃。'},
+  '蛇':{w:'小蛇',s:'小蛇在地上爬行。'},
+  '壁':{w:'墙壁',s:'墙壁是白色的。'},
+  '怪':{w:'奇怪',s:'这个声音很奇怪。'},
+  '队':{w:'队伍',s:'大家排好队伍。'},
+  '进':{w:'进入',s:'请进入教室。'},
+  '铁':{w:'钢铁',s:'钢铁很坚硬。'},
+  '站':{w:'站立',s:'请大家站好。'},
+  '票':{w:'门票',s:'进公园需要门票。'},
+  '入':{w:'进入',s:'请有序进入。'},
+  '扶':{w:'扶手',s:'上楼梯要扶着扶手。'},
+  '乘':{w:'乘车',s:'我们乘公交车上学。'},
+  '座':{w:'座位',s:'请找到自己的座位。'},
+  '位':{w:'座位',s:'请回到座位坐好。'},
+  '城':{w:'城市',s:'这个城市很繁华。'},
+  '向':{w:'方向',s:'请走这个方向。'},
+  '南':{w:'南方',s:'南方冬天不冷。'},
+  '北':{w:'北方',s:'北方冬天会下雪。'},
+  '图':{w:'图画',s:'这本图画书很好看。'},
+  '以':{w:'可以',s:'我可以出去玩吗？'},
+  '东':{w:'东方',s:'太阳从东方升起。'},
+  '西':{w:'西瓜',s:'夏天我爱吃西瓜。'},
+  '邓':{w:'姓邓',s:'我们班有人姓邓。'},
+  '为':{w:'因为',s:'因为下雨所以不去。'},
+  '困':{w:'困难',s:'有困难找老师。'},
+  '感':{w:'感觉',s:'我感觉很开心。'},
+  '卫':{w:'卫生',s:'我们要讲卫生。'},
+  '悄':{w:'悄悄',s:'我悄悄地走进教室。'},
+  '象':{w:'大象',s:'大象的鼻子很长。'},
+  '应':{w:'应该',s:'我们应该互相帮助。'},
+  '器':{w:'机器',s:'机器在工厂里工作。'},
+  '逃':{w:'逃跑',s:'遇到危险要逃跑。'},
+  '吵':{w:'吵闹',s:'不要在教室里吵闹。'},
+  '因':{w:'因为',s:'因为我努力所以进步了。'},
+  '迎':{w:'欢迎',s:'欢迎新同学。'},
+  '知':{w:'知道',s:'我知道这个答案。'},
+  '却':{w:'退却',s:'遇到困难不能退却。'},
+  '投':{w:'投篮',s:'哥哥在练习投篮。'},
+  '忙':{w:'帮忙',s:'同学之间互相帮忙。'},
+  '思':{w:'思考',s:'遇到问题要思考。'},
+  '名':{w:'名字',s:'你叫什么名字？'},
+  '片':{w:'一片',s:'一片树叶飘落了。'},
+  '国':{w:'国家',s:'我们的国家很强大。'},
+  '作':{w:'作业',s:'按时完成作业。'},
+  '业':{w:'作业',s:'作业要认真完成。'},
+  '息':{w:'休息',s:'课间要休息一下。'},
+  '更':{w:'更加',s:'我们要更加努力。'},
+  '舍':{w:'宿舍',s:'宿舍很整洁。'},
+  '告':{w:'告诉',s:'我告诉你一个好消息。'},
+  '留':{w:'留下',s:'请在纸上留下名字。'},
+  '诉':{w:'告诉',s:'妈妈告诉我要诚实。'},
+  '赶':{w:'赶快',s:'赶快完成作业。'},
+  '塔':{w:'灯塔',s:'灯塔指引船只方向。'},
+  '未':{w:'未来',s:'未来充满希望。'},
+  '万':{w:'万一',s:'出门带伞，万一下雨。'},
+  '千':{w:'千万',s:'过马路千万要小心。'},
+  '领':{w:'带领',s:'老师带领我们参观。'},
+  '错':{w:'错误',s:'犯错不要紧，改正就好。'},
+  '结':{w:'结果',s:'努力就会有结果。'},
+  '百':{w:'一百',s:'我认识一百个数。'},
+  '然':{w:'然后',s:'先做完作业然后玩。'},
+  '忽':{w:'忽然',s:'天空忽然下起了雨。'},
+  '从':{w:'从前',s:'从前有座山。'},
+  '愿':{w:'愿意',s:'我愿意帮助别人。'},
+  '约':{w:'约定',s:'我们约定一起学习。'},
+  '忘':{w:'忘记',s:'不要忘记带文具。'},
+  '答':{w:'回答',s:'请回答老师的问题。'},
+  '尖':{w:'笔尖',s:'笔尖很细。'},
+  '越':{w:'越来越好',s:'我们的学习越来越好。'},
+  '摇':{w:'摇晃',s:'小船在水上摇晃。'},
+  '往':{w:'来往',s:'马路上来往车辆很多。'},
+  '龙':{w:'龙舟',s:'端午节赛龙舟。'},
+  '夜':{w:'夜晚',s:'夜晚星星闪烁。'},
+  '坏':{w:'破坏',s:'不能破坏公物。'},
+  '低':{w:'低头',s:'低头看书久了脖子疼。'},
+  '吐':{w:'吞吐',s:'车站很多人进出。'},
+  '每':{w:'每天',s:'每天都要刷牙。'},
+  '争':{w:'争取',s:'我们要争取进步。'},
+  '破':{w:'打破',s:'这个纪录被打破了。'},
+  '代':{w:'时代',s:'我们的时代在进步。'},
+  '精':{w:'精神',s:'早上的精神很好。'},
+  '团':{w:'团结',s:'团结就是力量。'},
+  '但':{w:'但是',s:'我想去但是没时间。'},
+  '围':{w:'包围',s:'同学们围成一个圈。'},
+  '吓':{w:'吓人',s:'这个游戏不吓人。'},
+  '斗':{w:'战斗',s:'勇敢地战斗。'},
+  '改':{w:'改正',s:'有错误要及时改正。'},
+  '互':{w:'互相',s:'同学之间要互相帮助。'},
+  '齐':{w:'整齐',s:'我们的队伍很整齐。'},
+  '重':{w:'重要',s:'学习很重要。'},
+  '丽':{w:'美丽',s:'花儿多么美丽。'},
+  '吧':{w:'好吧',s:'好吧，我同意了。'},
+  '接':{w:'接水',s:'我去接一杯水。'},
+  '准':{w:'准备',s:'准备开始上课。'},
+  '参':{w:'参加',s:'我参加了运动会。'},
+  '换':{w:'交换',s:'我们交换礼物吧。'},
+  '灭':{w:'消灭',s:'消灭害虫。'},
+  '休':{w:'休息',s:'课间休息十分钟。'},
+  '鸣':{w:'鸣叫',s:'公鸡喔喔鸣叫。'},
+  '背':{w:'背包',s:'我背着背包去上学。'},
+  '按':{w:'按时',s:'按时到校不迟到。'},
+  '拿':{w:'拿书',s:'请拿出语文书。'},
+  '报':{w:'报纸',s:'爸爸在看报纸。'},
+  '秀':{w:'优秀',s:'他表现很优秀。'},
+  '迷':{w:'着迷',s:'这本书让我着迷。'},
+  '量':{w:'量一量',s:'我们用尺子量一量。'},
+  '升':{w:'升起',s:'国旗缓缓升起。'},
+  '陆':{w:'陆地',s:'轮船靠岸了。'},
+  '弯':{w:'弯曲',s:'小路弯弯曲曲。'},
+  '软':{w:'柔软',s:'沙发很柔软。'},
+  '李':{w:'李子',s:'李子树开了花。'},
+  '艘':{w:'一艘船',s:'一艘大船在海上航行。'},
+  '睁':{w:'睁眼',s:'早上睁眼天亮了。'},
+  '相':{w:'互相',s:'我们互相学习。'},
+  '古':{w:'古代',s:'古代人用毛笔写字。'},
+  '屋':{w:'屋子',s:'屋子很温暖。'},
+  '官':{w:'官员',s:'官员要为人民服务。'},
+  '攻':{w:'进攻',s:'勇敢地进攻。'},
+  '观':{w:'观察',s:'观察蚂蚁搬家很有趣。'},
+  '首':{w:'首先',s:'首先完成作业。'},
+  '史':{w:'历史',s:'历史课很有趣。'},
+  '众':{w:'观众',s:'观众在鼓掌。'},
+  '劳':{w:'劳动',s:'劳动最光荣。'},
+  '主':{w:'主要',s:'主要任务是学习。'},
+  '汗':{w:'汗水',s:'运动后流了很多汗水。'},
+  '庆':{w:'庆祝',s:'我们庆祝节日。'},
+  '铜':{w:'铜钱',s:'古代用铜钱买东西。'},
+  '墙':{w:'墙壁',s:'墙壁上贴满了画。'},
+  '诗':{w:'诗人',s:'诗人写了很多好诗。'},
+  '砍':{w:'砍树',s:'不能乱砍树。'},
+  '造':{w:'创造',s:'我们在创造未来。'},
+  '祝':{w:'祝福',s:'祝福大家新年快乐。'},
+  '捉':{w:'捉迷藏',s:'小朋友们捉迷藏。'},
+  '杨':{w:'杨树',s:'杨树长得很高。'},
+  '安':{w:'安全',s:'过马路要注意安全。'},
+  '藏':{w:'藏起来',s:'他把礼物藏起来。'},
+  '真':{w:'认真',s:'认真写字很重要。'},
+  '烧':{w:'烧水',s:'用壶烧水。'},
+  '匹':{w:'马匹',s:'一匹马在奔跑。'},
+  '散':{w:'散开',s:'大家散开做操。'},
+  '捕':{w:'捕捉',s:'小猫在捕捉蝴蝶。'},
+  '眨':{w:'眨眼',s:'不要一直眨眼。'},
+  '眠':{w:'睡眠',s:'充足的睡眠很重要。'},
+  '转':{w:'转圈',s:'小朋友在转圈。'},
+  '京':{w:'北京',s:'北京是我们的首都。'},
+  '苏':{w:'苏醒',s:'春天万物苏醒。'},
+  '景':{w:'风景',s:'这里的风景真美。'},
+  '壮':{w:'强壮',s:'锻炼让我们强壮。'},
+  '望':{w:'希望',s:'我希望交到朋友。'},
+  '张':{w:'张望',s:'不要在教室里张望。'},
+  '雁':{w:'大雁',s:'大雁往南飞。'},
+  '许':{w:'许多',s:'我有许多好朋友。'},
+  '诚':{w:'诚实',s:'诚实是好品德。'},
+  '实':{w:'果实',s:'秋天果实累累。'},
+  '堆':{w:'土堆',s:'蚂蚁在土堆上爬。'},
+  '雪':{w:'雪花',s:'雪花飘飘扬扬。'},
+  '兰':{w:'兰花',s:'兰花很优雅。'},
+  '梅':{w:'梅花',s:'梅花在冬天开放。'},
+  '淡':{w:'淡水',s:'我们要节约淡水。'},
+  '念':{w:'想念',s:'我想念远方的朋友。'},
+  '初':{w:'当初',s:'我记得当初的样子。'},
+  '村':{w:'村庄',s:'村庄很宁静。'},
+  '稻':{w:'稻谷',s:'稻谷成熟了。'},
+  '秧':{w:'秧苗',s:'秧苗在田里生长。'},
+  '牧':{w:'放牧',s:'牧童在放牛。'},
+  '贴':{w:'贴纸',s:'我喜欢收集贴纸。'},
+  '喜':{w:'喜爱',s:'我喜爱小动物。'},
+  '梢':{w:'树梢',s:'小鸟在树梢唱歌。'},
+  '岁':{w:'岁数',s:'你今年几岁？'},
+  '野':{w:'田野',s:'田野里稻谷金黄。'},
+  '压':{w:'压力',s:'学习有压力但要坚持。'},
+  '扑':{w:'扑灭',s:'消防员扑灭了大火。'},
+  '啦':{w:'好啦',s:'好啦，我们走吧。'},
+  '格':{w:'格子',s:'写字要写在格子里。'},
+  '拔':{w:'拔河',s:'操场上在举行拔河比赛。'},
+  '选':{w:'选择',s:'认真选择答案。'},
+  '练':{w:'练习',s:'多练习才能进步。'},
+  '骄':{w:'骄傲',s:'骄傲使人落后。'},
+  '傲':{w:'骄傲',s:'取得好成绩不要骄傲。'},
+  '共':{w:'一共',s:'一共有多少个？'},
+  '第':{w:'第一',s:'我考了第一名。'},
+  '仔':{w:'仔细',s:'做题要仔细。'},
+  '细':{w:'细心',s:'细心的孩子更优秀。'},
+  '夸':{w:'夸奖',s:'老师夸奖了我。'},
+  '掉':{w:'掉队',s:'不要掉队了。'},
+  '旁':{w:'旁边',s:'我坐在窗旁边。'},
+  '笔':{w:'铅笔',s:'铅笔写完了要削。'},
+  '束':{w:'一束',s:'一束鲜花真美丽。'},
+  '脱':{w:'脱衣',s:'进屋要脱外套。'},
+  '及':{w:'及时',s:'作业要及时完成。'},
+  '功':{w:'成功',s:'成功需要努力。'},
+  '舰':{w:'军舰',s:'军舰保卫海疆。'},
+  '招':{w:'招手',s:'她向我招手。'},
+  '岸':{w:'海岸',s:'海岸边有沙滩。'},
+  '冻':{w:'冰冻',s:'冬天河水冰冻了。'},
+  '倒':{w:'倒水',s:'请倒一杯水。'},
+  '沉':{w:'下沉',s:'石头在水中下沉。'},
+  '候':{w:'时候',s:'上课的时候要认真听讲。'},
+  '且':{w:'并且',s:'他聪明并且努力。'},
+  '另':{w:'另外',s:'另外还有一个方法。'},
+  '捡':{w:'捡起',s:'把垃圾捡起来。'},
+  '即':{w:'立即',s:'请立即回到座位。'},
+  '静':{w:'安静',s:'请保持安静。'},
+  '题':{w:'题目',s:'这道题你会做吗？'},
+  '法':{w:'办法',s:'我有好办法。'},
+  '难':{w:'困难',s:'有困难不放弃。'},
+  '所':{w:'所以',s:'因为下雨所以迟到了。'},
+  '深':{w:'深浅',s:'水深要注意安全。'},
+  '些':{w:'一些',s:'我买了一些水果。'},
+  '淋':{w:'淋雨',s:'下雨了不要淋雨。'},
+  '积':{w:'积累',s:'知识需要积累。'},
+  '令':{w:'口令',s:'听口令做动作。'},
+  '本':{w:'书本',s:'书本是我们的朋友。'},
+  '尔':{w:'偶尔',s:'我偶尔会去图书馆。'},
+  '才':{w:'才能',s:'努力才能成功。'},
+  '摆':{w:'摆放',s:'把书摆放整齐。'},
+  '浮':{w:'浮水',s:'木头可以在水上浮。'},
+  '推':{w:'推车',s:'请帮我推车。'},
+  '闭':{w:'关闭',s:'请关闭窗户。'},
+  '变':{w:'变化',s:'天气变化无常。'},
+  '条':{w:'条件',s:'成功有条件。'},
+  '舟':{w:'龙舟',s:'端午节划龙舟。'},
+  '胖':{w:'胖瘦',s:'健康就好不论胖瘦。'},
+  '失':{w:'失去',s:'要珍惜不要失去。'},
+  '棉':{w:'棉花',s:'棉被很暖和。'},
+  '替':{w:'代替',s:'我代替他值日。'},
+  '妙':{w:'美妙',s:'音乐真美妙。'},
+  '语':{w:'语文',s:'我喜欢上语文课。'},
+  '言':{w:'语言',s:'我们要学好语言。'},
+  '透':{w:'透明',s:'玻璃是透明的。'},
+  '聪':{w:'聪明',s:'聪明的孩子爱学习。'},
+  '仿':{w:'仿佛',s:'他的笑容仿佛阳光。'},
+  '佛':{w:'仿佛',s:'花儿仿佛在对我笑。'},
+  '班':{w:'班级',s:'我们的班级很团结。'},
+  '辨':{w:'分辨',s:'要学会分辨对错。'},
+  '常':{w:'经常',s:'我经常去图书馆。'},
+  '非':{w:'非常',s:'今天非常开心。'},
+  '介':{w:'介绍',s:'我来介绍一下。'},
+  '论':{w:'讨论',s:'请各小组讨论。'},
+  '脑':{w:'电脑',s:'电脑很有用。'},
+  '摘':{w:'摘花',s:'不要摘花。'},
+  '旗':{w:'国旗',s:'国旗在空中飘扬。'},
+  '飘':{w:'飘落',s:'树叶飘落下来。'},
+  '广':{w:'广场',s:'广场上有很多人。'},
+  '坪':{w:'草坪',s:'不要踩草坪。'},
+  '无':{w:'无数',s:'天上有无数星星。'},
+  '居':{w:'居民',s:'居民们很友善。'},
+  '澡':{w:'洗澡',s:'洗澡时注意安全。'},
+  '梳':{w:'梳头',s:'每天早上要梳头。'},
+  '各':{w:'各种',s:'商店里有各种商品。'},
+  '伙':{w:'伙伴',s:'我和伙伴一起玩。'},
+  '伴':{w:'伙伴',s:'小伙伴一起长大。'},
+  '排':{w:'排队',s:'请排队买票。'},
+  '貌':{w:'礼貌',s:'要懂礼貌。'},
+  '谷':{w:'谷子',s:'谷子成熟了。'},
+  '搭':{w:'搭车',s:'我们搭车去学校。'},
+  '母':{w:'母亲',s:'母亲节给妈妈送花。'},
+  '至':{w:'至少',s:'至少完成作业再玩。'},
+  '世':{w:'世界',s:'世界很奇妙。'},
+  '霜':{w:'霜降',s:'秋天会下霜。'},
+  '肉':{w:'猪肉',s:'猪肉有营养。'},
+  '颗':{w:'一颗',s:'一颗星星闪亮。'},
+  '采':{w:'采花',s:'去花园采花。'},
+  '玩':{w:'玩耍',s:'下课了大家去玩耍。'},
+  '取':{w:'取得',s:'取得了好成绩。'},
+  '算':{w:'算术',s:'算术题要认真做。'},
+  '照':{w:'照顾',s:'照顾弟弟很辛苦。'},
+  '纯':{w:'纯洁',s:'雪花很纯洁。'},
+  '耍':{w:'玩耍',s:'在院子里玩耍。'},
+  '趣':{w:'有趣',s:'这本书很有趣。'},
+  '懂':{w:'懂事',s:'他是个懂事的孩子。'},
+  '捧':{w:'捧花',s:'她捧着一束花。'},
+  '寸':{w:'尺寸',s:'量一下尺寸。'},
+  '合':{w:'合作',s:'合作很重要。'},
+  '习':{w:'学习',s:'好好学习天天向上。'},
+  '记':{w:'记住',s:'请记住这个道理。'},
+  '阴':{w:'阴天',s:'今天是阴天。'},
+  '情':{w:'心情',s:'今天心情很好。'},
+  '必':{w:'必须',s:'作业必须完成。'},
+  '顾':{w:'照顾',s:'照顾小动物要有耐心。'},
+  '归':{w:'回家',s:'放学归家。'},
+  '件':{w:'一件',s:'一件小事也能温暖人心。'},
+  '孩':{w:'孩子',s:'孩子们在玩耍。'},
+  '渐':{w:'渐渐',s:'天渐渐黑了。'},
+  '专':{w:'专心',s:'上课要专心听讲。'},
+  '泪':{w:'眼泪',s:'他流下了眼泪。'},
+  '整':{w:'整齐',s:'桌椅摆整齐。'},
+  '请':{w:'请客',s:'今天我请客。'},
+  '惜':{w:'珍惜',s:'珍惜时间。'},
+  '尊':{w:'尊重',s:'尊重老师。'},
+  '界':{w:'世界',s:'世界真大。'},
+  '桥':{w:'石桥',s:'小河上有一座石桥。'},
+  '句':{w:'句子',s:'把句子写通顺。'},
+  '短':{w:'长短',s:'铅笔有长短。'},
+  '读':{w:'读书',s:'我爱读书。'},
+  '轰':{w:'轰炸',s:'轰的一声雷响了。'},
+  '复':{w:'复习',s:'每天都要复习。'},
+  '童':{w:'儿童',s:'儿童节真快乐。'},
+  '双':{w:'双手',s:'双手能创造奇迹。'},
+  '轻':{w:'轻重',s:'这个书包很轻。'},
+  '泼':{w:'活泼',s:'小明很活泼。'},
+  '躺':{w:'躺下',s:'累了就躺下休息。'},
+  '柔':{w:'温柔',s:'妈妈很温柔。'},
+  '赞':{w:'称赞',s:'老师称赞了我。'},
+  '龄':{w:'年龄',s:'你的年龄多大了？'},
+  '虚':{w:'虚心',s:'虚心使人进步。'},
+  '垂':{w:'垂直',s:'请画一条垂直线。'},
+  '展':{w:'展开',s:'展开展示自己。'},
+  '勾':{w:'勾画',s:'用笔勾画轮廓。'},
+  '速':{w:'速度',s:'速度要快。'},
+  '度':{w:'温度',s:'今天温度很高。'},
+  '铅':{w:'铅笔',s:'用铅笔写作业。'},
+  '灰':{w:'灰色',s:'天空灰蒙蒙的。'},
+  '亿':{w:'亿万',s:'亿万人民齐欢庆。'},
+  '巨':{w:'巨大',s:'大象体型巨大。'},
+  '检':{w:'检查',s:'写完要检查。'},
+  '蚜':{w:'蚜虫',s:'蚜虫是害虫。'},
+  '经':{w:'经过',s:'经过努力我进步了。'},
+  '驶':{w:'行驶',s:'汽车在路上行驶。'},
+  '绝':{w:'绝对',s:'绝对安全第一。'},
+  '引':{w:'引路',s:'我来引路。'},
+  '亚':{w:'亚军',s:'他得了亚军。'},
+  '忠':{w:'忠实',s:'小狗很忠实。'},
+  '吾':{w:'吾国',s:'吾爱吾国。'},
+  '环':{w:'环境',s:'保护环境人人有责。'},
+  '技':{w:'技术',s:'技术改变生活。'},
+  '保':{w:'保护',s:'保护小动物。'},
+  '术':{w:'美术',s:'美术课我喜欢。'},
+  '敌':{w:'敌人',s:'勇敢面对敌人。'},
+  '寻':{w:'寻找',s:'寻找春天的足迹。'},
+  '消':{w:'消灭',s:'消灭病虫害。'},
+  '志':{w:'志向',s:'从小立大志。'},
+  '于':{w:'于是',s:'于是他就去了。'},
+  '夺':{w:'夺取',s:'夺取冠军。'},
+  '终':{w:'终于',s:'终于完成了。'},
+  '凤':{w:'凤凰',s:'凤凰很美丽。'},
+  '凰':{w:'凤凰',s:'凤凰是神话中的鸟。'},
+  '禅':{w:'禅让',s:'古代有禅让制度。'},
+  '隐':{w:'隐藏',s:'小兔子隐藏在草丛中。'},
+  '使':{w:'使用',s:'正确使用文具。'},
+  '纺':{w:'纺织',s:'纺织工人很辛苦。'},
+  '织':{w:'组织',s:'组织大家做活动。'},
+  '灵':{w:'灵活',s:'脑筋要灵活。'},
+  '披':{w:'披衣',s:'披上衣服出门。'},
+  '仍':{w:'仍然',s:'他仍然坚持学习。'},
+  '池':{w:'池塘',s:'池塘里有荷花。'},
+  '吞':{w:'吞咽',s:'吃饭要细嚼慢咽。'},
+  '而':{w:'而且',s:'他聪明而且努力。'},
+  '际':{w:'国际',s:'国际交流很重要。'},
+  '管':{w:'管理',s:'管理好班级。'},
+  '规':{w:'规则',s:'要遵守规则。'},
+  '府':{w:'政府',s:'政府为人民服务。'},
+  '莲':{w:'莲花',s:'莲花出淤泥不染。'},
+  '议':{w:'议论',s:'不要背后议论人。'},
+  '宽':{w:'宽敞',s:'教室很宽敞。'},
+  '级':{w:'班级',s:'我们班级很团结。'},
+  '之':{w:'之后',s:'放学之后回家。'},
+  '列':{w:'队列',s:'队列要整齐。'},
+  '战':{w:'战斗',s:'勇敢战斗。'},
+  '命':{w:'生命',s:'珍惜生命。'},
+  '枪':{w:'手枪',s:'玩具枪不能对着人。'},
+  '突':{w:'突然',s:'突然下雨了。'},
+  '咬':{w:'咬住',s:'小狗咬住了骨头。'},
+  '丢':{w:'丢掉',s:'丢掉坏习惯。'},
+  '夹':{w:'夹子',s:'用夹子夹住文件。'},
+  '质':{w:'质量',s:'作业要注重质量。'},
+  '式':{w:'方式',s:'学习要讲究方式方法。'},
+  '助':{w:'帮助',s:'帮助别人快乐自己。'},
+  '漂':{w:'漂亮',s:'花儿开得真漂亮。'},
+  '泊':{w:'停泊',s:'船停泊在港口。'},
+  '漫':{w:'漫长',s:'漫长的等待。'},
+  '刚':{w:'刚刚',s:'刚刚下课。'},
+  '假':{w:'放假',s:'放假了真开心。'},
+  '糟':{w:'糟糕',s:'糟糕，迟到了。'},
+  '钢':{w:'钢铁',s:'钢铁是怎样炼成的。'},
+  '将':{w:'将来',s:'将来我想当老师。'},
+  '俩':{w:'兄弟俩',s:'他们俩是好朋友。'},
+  '哇':{w:'哇哇',s:'宝宝哇哇大哭。'},
+  '贫':{w:'贫苦',s:'帮助贫苦的人。'},
+  '饱':{w:'吃饱',s:'吃饱了才有力气。'},
+  '饥':{w:'饥饿',s:'饥饿时要吃饭。'},
+  '族':{w:'家族',s:'家族聚会真热闹。'},
+  '祖':{w:'祖国',s:'祖国在我心中。'},
+  '孙':{w:'孙子',s:'奶奶很疼孙子。'},
+  '密':{w:'秘密',s:'我有一个小秘密。'},
+  '炉':{w:'火炉',s:'冬天围在火炉边。'},
+  '冈':{w:'山冈',s:'山冈上有一棵松树。'},
+  '牢':{w:'牢记',s:'牢记老师的教导。'},
+  '容':{w:'容易',s:'这道题很容易。'},
+  '易':{w:'容易',s:'说起来容易做起来难。'},
+  '死':{w:'死亡',s:'要珍惜生命。'},
+  '特':{w:'特别',s:'今天特别开心。'},
+  '其':{w:'其它',s:'其它题目也会做。'},
+  '希':{w:'希望',s:'希望明天是好天气。'},
+  '弹':{w:'弹琴',s:'姐姐在弹琴。'},
+  '哨':{w:'哨子',s:'体育老师吹哨子。'},
+  '并':{w:'并且',s:'他聪明并且勤奋。'},
+  '芬':{w:'芬芳',s:'花儿芬芳迷人。'},
+  '芳':{w:'芳香',s:'玫瑰芳香扑鼻。'},
+  '栽':{w:'栽树',s:'春天栽树。'},
+  '独':{w:'独立',s:'我们要学会独立。'},
+  '拐':{w:'拐弯',s:'前方拐弯要慢行。'},
+  '弱':{w:'弱小',s:'保护弱小的动物。'},
+  '治':{w:'治疗',s:'医生治疗病人。'},
+  '阵':{w:'阵地',s:'坚守阵地。'},
+  '寿':{w:'长寿',s:'祝爷爷奶奶长寿。'},
+  '宜':{w:'便宜',s:'这个苹果很便宜。'},
+  '股':{w:'屁股',s:'坐好了别动。'},
+  '枫':{w:'枫叶',s:'秋天的枫叶红了。'},
+  '柏':{w:'柏树',s:'柏树四季常青。'},
+  '何':{w:'如何',s:'这件事该如何处理？'},
+  '坛':{w:'花坛',s:'花坛里开满了花。'},
+  '杜':{w:'杜鹃',s:'杜鹃花真美丽。'},
+  '鹃':{w:'杜鹃',s:'杜鹃鸟在歌唱。'},
+  '茂':{w:'茂盛',s:'树木长得茂盛。'},
+  '井':{w:'水井',s:'水井很深。'},
+  '刨':{w:'刨土',s:'小鸡在刨土找虫。'},
+  '腰':{w:'弯腰',s:'弯腰捡起垃圾。'},
+  '蹲':{w:'蹲下',s:'蹲下来看看小蚂蚁。'},
+  '迈':{w:'迈步',s:'迈开步子向前走。'},
+  '由':{w:'自由',s:'自由快乐地成长。'},
+  '信':{w:'信心',s:'有信心就能成功。'},
+  '恩':{w:'恩情',s:'牢记父母的恩情。'},
+  '探':{w:'探索',s:'探索大自然的奥秘。'},
+  '须':{w:'必须',s:'必须完成作业。'},
+  '计':{w:'计划',s:'学习要有计划。'},
+  '需':{w:'需要',s:'我们需要努力学习。'},
+  '缠':{w:'缠绕',s:'藤蔓缠绕着大树。'},
+  '稀':{w:'稀少',s:'这种动物很稀少。'},
+  '哄':{w:'哄笑',s:'他的话引起哄笑。'},
+  '指':{w:'指导',s:'老师指导我们学习。'},
+  '概':{w:'大概',s:'大概有二十个人。'},
+  '粒':{w:'颗粒',s:'每一粒粮食都来知不易。'},
+  '微':{w:'微笑',s:'老师微笑着点点头。'},
+  '册':{w:'手册',s:'学生手册要保管好。'},
+  '钟':{w:'时钟',s:'时钟滴答响。'},
+  '敬':{w:'尊敬',s:'尊敬长辈。'},
+  '割':{w:'割草',s:'农民在割草。'},
+  '宣':{w:'宣传',s:'宣传交通安全。'},
+  '申':{w:'申请',s:'申请加入少先队。'},
+  '席':{w:'出席',s:'请准时出席。'},
+  '架':{w:'书架',s:'书架上有好多书。'},
+  '搬':{w:'搬动',s:'一起搬桌子。'},
+  '建':{w:'建设',s:'建设美丽祖国。'},
+  '梁':{w:'房梁',s:'房梁很结实。'},
+  '泞':{w:'泥泞',s:'雨后小路泥泞。'},
+  '岭':{w:'山岭',s:'翻过山岭就看到家了。'},
+  '趴':{w:'趴下',s:'请趴下做俯卧撑。'},
+  '砸':{w:'砸碎',s:'石头砸碎了玻璃。'},
+  '骗':{w:'骗人',s:'骗人是不对的。'},
+  '锋':{w:'锋利',s:'小刀很锋利。'},
+  '迹':{w:'痕迹',s:'雪地上有脚印痕迹。'},
+  '冒':{w:'冒险',s:'不要冒险。'},
+  '沟':{w:'水沟',s:'水沟里有小鱼。'},
+  '勇':{w:'勇敢',s:'做一个勇敢的孩子。'},
+  '敢':{w:'勇敢',s:'勇敢面对困难。'},
+  '荡':{w:'飘荡',s:'红旗在空中飘荡。'},
+  '滚':{w:'滚动',s:'球在地上滚动。'},
+  '跃':{w:'跳跃',s:'青蛙在跳跃。'},
+  '涌':{w:'涌现',s:'好事不断涌现。'},
+  '借':{w:'借书',s:'我去图书馆借书。'},
+  '尺':{w:'尺子',s:'用尺子量长度。'},
+  '稠':{w:'稠密',s:'树林很稠密。'},
+  '啊':{w:'好啊',s:'啊，这朵花真美！'},
+  '解':{w:'解决',s:'遇到问题要解决。'},
+  '杆':{w:'旗杆',s:'旗杆上红旗飘扬。'},
+  '蹦':{w:'蹦跳',s:'小兔在草地上蹦跳。'},
+  '闹':{w:'热闹',s:'节日真热闹。'},
+  '靠':{w:'靠近',s:'请靠近一点。'},
+  '宁':{w:'宁静',s:'夜晚很宁静。'},
+  '与':{w:'参与',s:'积极参与活动。'},
+  '提':{w:'提问',s:'有问题要提问。'},
+  '嘻':{w:'笑嘻嘻',s:'他笑嘻嘻地跑过来。'},
+  '优':{w:'优秀',s:'表现很优秀。'},
+  '砖':{w:'砖头',s:'砖头用来盖房子。'},
+  '辉':{w:'辉煌',s:'取得辉煌的成绩。'},
+  '瓦':{w:'瓦片',s:'屋顶铺着瓦片。'},
+  '示':{w:'表示',s:'举手表示同意。'},
+  '琴':{w:'钢琴',s:'钢琴的声音真好听。'},
+  '周':{w:'周围',s:'周围很安静。'},
+  '份':{w:'一份',s:'一份耕耘一份收获。'},
+  '您':{w:'您好',s:'您好，请问找谁？'},
+  '显':{w:'明显',s:'进步很明显。'},
+  '躲':{w:'躲藏',s:'小猫躲在桌子下。'},
+  '艳':{w:'鲜艳',s:'红花鲜艳夺目。'},
+  '巧':{w:'巧妙',s:'这个方法很巧妙。'},
+  '摸':{w:'抚摸',s:'轻轻抚摸小猫。'},
+  '薄':{w:'薄弱',s:'薄弱环节要加强。'},
+  '隔':{w:'隔离',s:'生病了要隔离。'},
+  '秤':{w:'秤杆',s:'老式秤有秤杆。'},
+  '刘':{w:'姓刘',s:'我们班主任姓刘。'},
+  '华':{w:'中华',s:'中华文化博大精深。'},
+  '吴':{w:'姓吴',s:'吴老师教我们数学。'},
+  '迟':{w:'迟到',s:'上学不要迟到。'},
+  '怦':{w:'怦怦',s:'心跳怦怦跳。'},
+  '鼓':{w:'鼓励',s:'妈妈鼓励我。'},
+  '尽':{w:'尽力',s:'尽力做到最好。'},
+  '弄':{w:'弄丢',s:'不要弄丢东西。'},
+  '牵':{w:'牵挂',s:'妈妈牵挂着我。'},
+  '挂':{w:'挂念',s:'挂念远方的亲人。'},
+  '便':{w:'方便',s:'学校旁边有便利店。'},
+  '盼':{w:'盼望',s:'盼望假期来临。'},
+  '曲':{w:'歌曲',s:'这首歌真好听。'},
+  '乎':{w:'几乎',s:'我几乎每天都跑步。'},
+  '央':{w:'中央',s:'广场中央有喷泉。'},
+  '次':{w:'一次',s:'一次考试不代表全部。'},
+  '胡':{w:'胡说',s:'不要胡说八道。'},
+  '利':{w:'胜利',s:'坚持就能胜利。'},
+  '顺':{w:'顺利',s:'考试顺利通过。'},
+  '稳':{w:'稳定',s:'成绩要稳定。'},
+  '粗':{w:'粗细',s:'这棵树很粗。'},
+  '戏':{w:'游戏',s:'课间做游戏。'},
+  '熟':{w:'熟悉',s:'我熟悉这里的一切。'},
+  '纷':{w:'纷纷',s:'雪花纷纷飘落。'},
+  '烁':{w:'闪烁',s:'星星在闪烁。'},
+  '补':{w:'补充',s:'我来补充一下。'},
+  '哗':{w:'哗哗',s:'雨水哗哗地下。'},
+  '娘':{w:'姑娘',s:'这位姑娘很善良。'},
+  '止':{w:'停止',s:'雨终于停止了。'},
+  '丰':{w:'丰收',s:'秋天是丰收的季节。'},
+  '克':{w:'克服',s:'克服困难。'},
+  '棋':{w:'下棋',s:'爷爷喜欢下棋。'},
+  '称':{w:'称赞',s:'老师称赞了我。'},
+  '刻':{w:'刻苦',s:'刻苦学习。'},
+  '导':{w:'领导',s:'领导我们向前进。'},
+  '缸':{w:'水缸',s:'水缸里装满了水。'},
+  '断':{w:'断开',s:'绳子断开了。'},
+  '折':{w:'折断',s:'树枝被折断了。'},
+  '脆':{w:'干脆',s:'回答要干脆。'},
+  '斤':{w:'斤两',s:'一斤苹果多少钱？'},
+  '革':{w:'革命',s:'革命先烈永垂不朽。'},
+  '单':{w:'简单',s:'这道题很简单。'},
+  '挑':{w:'挑选',s:'认真挑选礼物。'},
+  '唤':{w:'呼唤',s:'妈妈在呼唤我。'},
+  '帜':{w:'旗帜',s:'旗帜在空中飘扬。'},
+  '托':{w:'拜托',s:'拜托你了。'},
+  '卖':{w:'买卖',s:'做买卖要诚信。'},
+  '钉':{w:'钉子',s:'钉子很坚固。'},
+  '伟':{w:'伟大',s:'祖国真伟大。'},
+  '尤':{w:'尤其',s:'我爱运动，尤其是跑步。'},
+  '创':{w:'创造',s:'创造美好未来。'},
+  '区':{w:'区别',s:'这两个字有区别。'},
+  '层':{w:'层次',s:'楼层很高。'},
+  '丹':{w:'丹顶鹤',s:'丹顶鹤很优雅。'},
+  '州':{w:'广州',s:'广州是一个大城市。'},
+  '激':{w:'激动',s:'听到消息很激动。'},
+  '郊':{w:'郊外',s:'我们去郊外踏青。'},
+  '斜':{w:'斜坡',s:'小心斜坡。'},
+  '抽':{w:'抽签',s:'我们来抽签分组。'},
+  '嫌':{w:'嫌弃',s:'不要嫌弃别人。'},
+  '懒':{w:'懒惰',s:'懒惰会退步。'},
+  '顶':{w:'山顶',s:'爬上山顶看风景。'},
+  '徐':{w:'徐徐',s:'红旗徐徐升起。'},
+  '尘':{w:'灰尘',s:'打扫灰尘。'},
+  '慌':{w:'慌张',s:'遇到事不要慌张。'},
+  '切':{w:'一切',s:'一切都会好起来。'},
+  '永':{w:'永远',s:'我们永远是朋友。'},
+  '碰':{w:'碰撞',s:'小心不要碰撞。'},
+  '盏':{w:'一盏',s:'一盏灯照亮了房间。'},
+  '线':{w:'直线',s:'画一条直线。'},
+  '醉':{w:'陶醉',s:'陶醉在音乐中。'},
+  '印':{w:'脚印',s:'沙滩上留下脚印。'},
+  '灾':{w:'灾难',s:'发生灾难要互助。'},
+  '含':{w:'包含',s:'包含很多内容。'},
+  '荣':{w:'光荣',s:'劳动最光荣。'},
+  '汪':{w:'汪汪',s:'小狗汪汪叫。'},
+  '宿':{w:'宿舍',s:'住宿舍要守纪律。'},
+  '福':{w:'幸福',s:'幸福的生活。'},
+  '抬':{w:'抬头',s:'抬头看黑板。'},
+  '竿':{w:'竹竿',s:'竹竿用来晾衣服。'},
+  '洁':{w:'洁白',s:'雪花洁白无瑕。'},
+  '艺':{w:'艺术',s:'艺术让生活更美好。'},
+  '晴':{w:'晴天',s:'今天是晴天。'},
+  '朗':{w:'朗读',s:'大声朗读课文。'},
+  '浅':{w:'浅水',s:'浅水区很安全。'},
+  '品':{w:'品德',s:'品德很重要。'},
+  '盛':{w:'盛开',s:'花儿盛开了。'},
+  '纹':{w:'条纹',s:'斑马有条纹。'},
+  '产':{w:'生产',s:'工厂生产产品。'},
+  '陈':{w:'陈旧',s:'这个书桌很陈旧。'},
+  '赢':{w:'输赢',s:'比赛有输赢。'},
+  '胜':{w:'胜利',s:'胜利属于勇者。'},
+  '良':{w:'良好',s:'良好习惯从小养成。'},
+  '沿':{w:'沿海',s:'沿海城市很发达。'},
+  '厚':{w:'厚薄',s:'这本书很厚。'},
+  '丛':{w:'丛林',s:'丛林里探险。'},
+  '富':{w:'丰富',s:'知识很丰富。'},
+  '涛':{w:'波涛',s:'波涛汹涌的大海。'},
+  '扎':{w:'扎实',s:'基础要扎实。'},
+  '扁':{w:'扁担',s:'扁担挑东西。'},
+  '英':{w:'英雄',s:'英雄人物值得学习。'},
+  '雄':{w:'英雄',s:'英雄人物故事。'},
+  '贺':{w:'祝贺',s:'祝贺你取得了好成绩。'},
+  '峡':{w:'峡谷',s:'大峡谷很壮观。'},
+  '扬':{w:'表扬',s:'老师表扬了我。'},
+  '川':{w:'四川',s:'四川有好吃的火锅。'},
+  '奔':{w:'奔跑',s:'马儿在草原上奔跑。'},
+  '碧':{w:'碧绿',s:'湖水碧绿清澈。'},
+  '部':{w:'部队',s:'部队纪律严明。'},
+  '劲':{w:'使劲',s:'使劲用力拉。'},
+  '甩':{w:'甩手',s:'甩甩手放松一下。'},
+  '拦':{w:'阻拦',s:'不要阻拦他前进。'},
+  '降':{w:'降落',s:'飞机安全降落。'},
+  '胆':{w:'胆子',s:'胆子要大一点。'},
+  '决':{w:'决定',s:'我决定努力学习。'},
+  '踪':{w:'踪影',s:'不见踪影。'},
+  '刺':{w:'刺猬',s:'小刺猬背上有刺。'},
+  '汤':{w:'喝汤',s:'吃饭前先喝汤。'},
+  '茶':{w:'茶水',s:'请喝一杯茶。'},
+  '粽':{w:'粽子',s:'端午节吃粽子。'},
+  '察':{w:'观察',s:'观察小动物。'},
+  '扇':{w:'扇子',s:'夏天用扇子扇风。'},
+  '猛':{w:'凶猛',s:'老虎很凶猛。'},
+  '萤':{w:'萤火虫',s:'夜晚萤火虫闪闪发光。'},
+  '评':{w:'批评',s:'虚心接受批评。'},
+  '贵':{w:'珍贵',s:'时间是珍贵的。'},
+  '钱':{w:'金钱',s:'金钱不是万能的。'},
+  '孔':{w:'孔雀',s:'孔雀开屏真漂亮。'},
+  '掌':{w:'手掌',s:'拍手鼓掌。'},
+  '虽':{w:'虽然',s:'虽然辛苦但很快乐。'},
+  '刷':{w:'刷牙',s:'早晚要刷牙。'},
+  '皂':{w:'肥皂',s:'用肥皂洗手。'},
+  '遍':{w:'一遍',s:'多读几遍课文。'},
+  '暑':{w:'暑假',s:'暑假真快乐。'},
+  '旅':{w:'旅行',s:'我们去旅行。'},
+  '晶':{w:'晶莹',s:'露珠晶莹剔透。'},
+  '杉':{w:'杉树',s:'杉树长得笔直。'},
+  '桦':{w:'白桦',s:'白桦树的树皮是白色的。'},
+  '裙':{w:'裙子',s:'她穿着一条花裙子。'},
+  '脖':{w:'脖子',s:'脖子要挺直。'},
+  '臂':{w:'手臂',s:'手臂要摆起来。'},
+  '镜':{w:'镜子',s:'照照镜子整理衣冠。'},
+  '据':{w:'根据',s:'根据课文回答问题。'},
+  '鬼':{w:'魔鬼',s:'世界上没有魔鬼。'},
+  '反':{w:'反对',s:'反对浪费粮食。'},
+  '戴':{w:'爱戴',s:'爱戴我们的老师。'},
+  '详':{w:'详细',s:'详细地说明。'},
+  '猜':{w:'猜测',s:'不要胡乱猜测。'},
+  '梧':{w:'梧桐',s:'梧桐树叶像手掌。'},
+  '桐':{w:'梧桐',s:'梧桐树很高大。'},
+  '疆':{w:'边疆',s:'守卫边疆。'},
+  '桂':{w:'桂花',s:'桂花香气怡人。'},
+  '麦':{w:'麦子',s:'麦子成熟了。'},
+  '桑':{w:'桑树',s:'桑叶可以养蚕。'},
+  '塘':{w:'池塘',s:'池塘里荷花开了。'},
+  '雀':{w:'麻雀',s:'麻雀在枝头叽叽喳喳。'},
+  '幅':{w:'一幅画',s:'墙上挂着一幅画。'},
+  '锦':{w:'锦缎',s:'锦缎很华丽。'},
+  '泡':{w:'泡泡',s:'吹出五彩的泡泡。'},
+  '姓':{w:'姓氏',s:'你姓什么？'},
+  '氏':{w:'姓氏',s:'姓氏代代相传。'},
+  '邻':{w:'邻居',s:'邻居互相帮助。'},
+  '性':{w:'性别',s:'性别平等。'},
+  '龟':{w:'乌龟',s:'乌龟爬得慢。'},
+  '瓢':{w:'瓢虫',s:'七星瓢虫是益虫。'},
+  '炸':{w:'爆炸',s:'气球爆炸了。'},
+  '甘':{w:'甘甜',s:'泉水甘甜。'},
+  '舌':{w:'舌头',s:'伸出舌头尝一尝。'},
+  '毁':{w:'毁坏',s:'不要毁坏公物。'},
+  '淹':{w:'淹没',s:'洪水淹没了田地。'},
+  '守':{w:'守护',s:'守护我们的家园。'},
+  '曹':{w:'曹操',s:'曹操是三国人物。'},
+  '傻':{w:'傻瓜',s:'不要叫别人傻瓜。'},
+  '玲':{w:'玲珑',s:'这个玉佩很玲珑。'},
+  '善':{w:'善良',s:'做一个善良的人。'},
+  '扛':{w:'扛起',s:'扛起责任。'},
+  '窝':{w:'鸟窝',s:'树上有鸟窝。'},
+  '粮':{w:'粮食',s:'珍惜粮食。'},
+  '翠':{w:'翠绿',s:'叶子翠绿欲滴。'},
+  '拨':{w:'拨动',s:'拨动琴弦。'},
+  '咕':{w:'咕咕',s:'肚子饿得咕咕叫。'},
+  '咚':{w:'咚咚',s:'敲门声咚咚响。'},
+  '炮':{w:'鞭炮',s:'过年放鞭炮。'},
+  '掰':{w:'掰开',s:'掰开馒头分着吃。'},
+  '端':{w:'端正',s:'坐姿要端正。'},
+  '绳':{w:'绳子',s:'跳绳可以锻炼身体。'},
+  '偏':{w:'偏心',s:'老师不偏心。'},
+  '鞭':{w:'鞭打',s:'鞭子是用来驱赶牲畜的。'},
+  '萍':{w:'浮萍',s:'池塘里浮萍飘荡。'},
+  '严':{w:'严格',s:'老师要求很严格。'},
+  '幼':{w:'幼儿',s:'幼儿需要呵护。'},
+  '义':{w:'意义',s:'这件事很有意义。'},
+  '支':{w:'支持',s:'互相支持。'},
+  '迁':{w:'迁移',s:'候鸟会迁移。'},
+  '孤':{w:'孤独',s:'不要让他感到孤独。'},
+  '凝':{w:'凝聚',s:'大家凝聚力量。'},
+  '锻':{w:'锻炼',s:'每天锻炼身体。'},
+  '炼':{w:'锻炼',s:'坚持不懈地锻炼。'},
+  '词':{w:'词语',s:'积累词语很重要。'},
+  '爬':{w:'爬山',s:'我们去爬山。'},
+  '酷':{w:'酷热',s:'夏天酷热难耐。'},
+  '棍':{w:'木棍',s:'用木棍当拐杖。'},
+  '通':{w:'通过',s:'通过努力取得好成绩。'},
+  '具':{w:'文具',s:'文具盒里有铅笔。'},
+  '耐':{w:'耐心',s:'做事要有耐心。'},
+  '鹰':{w:'老鹰',s:'老鹰在天空翱翔。'},
+  '翔':{w:'飞翔',s:'鸟儿在天空中飞翔。'},
+  '辛':{w:'辛苦',s:'妈妈工作很辛苦。'},
+};
+
+// 获取某字的词语和例句，无数据时自动生成
+function getCharWordSentence(ch) {
+  const data = CHAR_WORDS[ch];
+  if (data) return data;
+  return {
+    w: ch + '字',
+    s: '我们来学习"' + ch + '"这个字。'
+  };
+}
+
+function getDailyCount(age) {
+  if(debugMode)return ALL_CHARS.length;
+  return 10;
+}
+
+// =============================================
+// 用户管理
+// =============================================
+let profiles = [], currentUser = null;
+let demoWriter = null, quizWriter = null;
+
+function loadProfiles() {
+  try {
+    const d=localStorage.getItem('learningProfiles');
+    if(d){
+      const p=JSON.parse(d);
+      // 校验数据合法性
+      if(p&&p.profiles&&Array.isArray(p.profiles)){
+        profiles=p.profiles;
+        currentUser=p.currentUser||null;
+        // 确保每个 profile 有必要的字段
+        profiles.forEach(prof=>{
+          if(typeof prof.age!=='number')prof.age=6;
+          if(!prof.learnedChars)prof.learnedChars={};
+          if(!prof.dailyRecords)prof.dailyRecords=[];
+          if(prof.todayState&&prof.todayState.date!==today())prof.todayState=null;
+        });
+        return;
+      }
+    }
+  }catch(e){console.error('数据加载失败',e)}
+  // 数据损坏或不存在，重置
+  localStorage.removeItem('learningProfiles');
+  profiles=[];currentUser=null;
+  const old=localStorage.getItem('completedChars');
+  if(old){
+    try{
+      const oldChars=JSON.parse(old);
+      profiles=[{name:'小朋友',initial:'P',color:PROFILE_COLORS[0],age:6,learnedChars:{},todayState:null,dailyRecords:[]}];
+      currentUser='小朋友';saveProfiles();localStorage.removeItem('completedChars');
+    }catch(e){}
+  }
+}
+function saveProfiles(){
+  var data={profiles:profiles,currentUser:currentUser};
+  localStorage.setItem('learningProfiles',JSON.stringify(data));
+}
+// 导出/导入数据（替代服务器备份）
+function exportData(){
+  var data={profiles:profiles,currentUser:currentUser};
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='hanzi-data-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importData(evt){
+  var file=evt.target.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var d=JSON.parse(e.target.result);
+      if(!d||!d.profiles||!Array.isArray(d.profiles)){alert('数据格式错误');return;}
+      if(!confirm('导入将会覆盖当前所有数据，确定继续吗？'))return;
+      profiles=d.profiles;
+      currentUser=d.currentUser||null;
+      localStorage.setItem('learningProfiles',JSON.stringify({profiles:profiles,currentUser:currentUser}));
+      renderProfiles();
+      alert('导入成功！');
+    }catch(err){alert('导入失败：'+err.message);}
+  };
+  reader.readAsText(file);
+  evt.target.value='';
+}
+function getProfile(){return profiles.find(p=>p.name===currentUser)}
+function today(){return new Date().toISOString().slice(0,10)}
+function getDateStr(d){const o=['日','一','二','三','四','五','六'];return `${d.getMonth()+1}月${d.getDate()}日 星期${o[d.getDay()]}`}
+
+// =============================================
+// 页面切换
+// =============================================
+let prevPage = '';
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('visible'));
+  const el=document.getElementById(id);
+  if(el)el.classList.add('visible');
+}
+function hideAll(){document.querySelectorAll('.page').forEach(p=>p.classList.remove('visible'))}
+
+// 显示选择小朋友页面（同时刷新列表）
+function showProfilePage(){
+  loadProfiles();
+  renderProfiles();
+  showPage('profilePage');
+}
+
+// =============================================
+// 选择小朋友
+// =============================================
+function renderProfiles(){
+  const g=document.getElementById('profileGrid');
+  let html='';
+  profiles.forEach((p,i)=>{
+    const done=p.dailyRecords?p.dailyRecords.filter(r=>r.completed).length:0;
+    html+=`<div class="profile-card" onclick="selectProfile('${p.name}')">
+      <div class="profile-avatar" style="background:${p.color};position:relative">${p.initial}
+        <div class="profile-del" onclick="event.stopPropagation();deleteProfile('${p.name}')" title="删除此小朋友">✕</div>
+      </div>
+      <div class="profile-name">${p.name}</div>
+      <div class="profile-stats">打卡 ${done} 天</div>
+    </div>`;
+  });
+  html+=`<div class="add-profile-btn" onclick="showAddProfile()">
+    <div class="plus-icon">+</div>
+    <div class="add-label">添加新小朋友</div>
+  </div>`;
+  g.innerHTML=html;
+}
+
+function selectProfile(name){
+  currentUser=name;saveProfiles();enterDashboard();
+}
+
+function deleteProfile(name){
+  // 先验证家长密码
+  var pwd=prompt('请输入家长密码以确认删除「'+name+'」：');
+  if(!pwd)return;
+  if(pwd!==getParentPwd()){
+    alert('密码错误！');
+    return;
+  }
+  if(!confirm('确定要删除「'+name+'」的所有学习数据吗？\n此操作不可恢复！'))return;
+  var idx=profiles.findIndex(function(p){return p.name===name});
+  if(idx<0)return;
+  profiles.splice(idx,1);
+  if(currentUser===name)currentUser=profiles.length>0?profiles[0].name:null;
+  saveProfiles();
+  renderProfiles();
+}
+
+function showAddProfile(){
+  showPage('addProfilePage');
+  document.getElementById('newProfileName').value='';
+  renderAgeSelector();
+}
+
+function renderAgeSelector(){
+  const sel=document.getElementById('ageSelector');
+  sel.innerHTML=AGE_OPTIONS.map(a=>`<button class="age-btn${a===6?' selected':''}" onclick="selectAge(${a})">${a}岁</button>`).join('');
+}
+
+let selectedAge=6;
+function selectAge(a){selectedAge=a;document.querySelectorAll('.age-btn').forEach(b=>b.classList.toggle('selected',b.textContent==a+'岁'))}
+
+function addNewProfile(){
+  const name=document.getElementById('newProfileName').value.trim();
+  if(!name){alert('请输入名字');return}
+  if(profiles.find(p=>p.name===name)){alert('这个名字已存在');return}
+  profiles.push({
+    name,initial:name.charAt(0).toUpperCase(),color:PROFILE_COLORS[profiles.length%PROFILE_COLORS.length],
+    age:selectedAge,learnedChars:{},todayState:null,dailyRecords:[]
+  });
+  currentUser=name;saveProfiles();enterDashboard();
+}
+
+// =============================================
+// 进入首页
+// =============================================
+function enterDashboard(){
+  showPage('dashboardPage');
+  const p=getProfile();
+  if(!p)return;
+  document.getElementById('dashAvatar').textContent=p.initial;
+  document.getElementById('dashAvatar').style.background=p.color;
+  document.getElementById('dashName').textContent=p.name;
+  document.getElementById('dashAge').textContent=p.age+'岁';
+  document.getElementById('dateStr').textContent=getDateStr(new Date());
+
+  // 初始化今日状态
+  initTodayState(p);
+
+  // 只要有学习进度，就保存每日记录（用于日历显示）
+  if(p.todayState&&p.todayState.currentIndex>0){
+    if(!p.dailyRecords)p.dailyRecords=[];
+    if(!p.dailyRecords.some(r=>r.date===today())){
+      const totalWork=p.todayState.studyList?p.todayState.studyList.length:0;
+      const done=p.todayState.currentIndex;
+      const allDone=done>=totalWork&&p.todayState.quizDone;
+      p.dailyRecords.push({
+        date:today(),
+        learned:done,
+        quizScore:allDone?Math.round(Object.values(p.todayState.quizResults||{}).reduce((a,b)=>a+b,0)/Math.max(1,Object.keys(p.todayState.quizResults||{}).length)):0,
+        completed:allDone
+      });
+      saveProfiles();
+    }
+  }
+
+  updateDashboard();
+}
+
+function initTodayState(p){
+  const d=today();
+  const expectedCount=getDailyCount(p.age);
+  // 如果今日状态已存在且字数匹配，则跳过
+  if(p.todayState&&p.todayState.date===d&&p.todayState.studyList&&p.todayState.studyList.length===expectedCount)return;
+  // 生成今日学习列表
+  const studyList=generateStudyList(p);
+  p.todayState={date:d,studyList,currentIndex:0,quizDone:false,quizResults:{}};
+  saveProfiles();
+}
+
+function generateStudyList(p){
+  const learned=p.learnedChars||{};
+  const count=getDailyCount(p.age);
+  // 调试模式：返回全部汉字
+  if(debugMode)return ALL_CHARS.slice(0,count);
+  // weak字（score<60）
+  const weak=Object.entries(learned).filter(([_,v])=>v.score<60).map(([k])=>k);
+  const list=[];
+  // 先加weak
+  weak.forEach(w=>{if(!list.includes(w)&&ALL_CHARS.includes(w))list.push(w)});
+  // 再补新字
+  for(const ch of CHAR_SORTED){
+    if(list.length>=count)break;
+    if(!learned[ch]&&!list.includes(ch)&&ALL_CHARS.includes(ch))list.push(ch);
+  }
+  return list.length?list:[CHAR_SORTED[0]];
+}
+
+function updateDashboard(){
+  const p=getProfile();if(!p)return;
+  const st=p.todayState;
+  const total=st.studyList.length;
+  const done=st.currentIndex;
+  document.getElementById('learnDesc').textContent=`今天有 ${total} 个字要学`;
+  document.getElementById('learnProgress').style.width=`${(done/total)*100}%`;
+  document.getElementById('learnStatus').textContent=done>=total?'已学完，去测验吧':'继续学习';
+
+  const quizCard=document.getElementById('quizCard');
+  const quizLock=document.getElementById('quizLock');
+  const quizDesc=document.getElementById('quizDesc');
+  if(done>=total||debugMode){
+    quizCard.classList.remove('locked');
+    quizLock.textContent=debugMode&&done<total?'🔓':'';
+    quizDesc.textContent=debugMode&&done<total?'调试：直接开始测验':'点击开始今日小测验';
+    quizCard.onclick=startQuiz;
+  }else{
+    quizCard.classList.add('locked');
+    quizLock.textContent='🔒';
+    quizDesc.textContent=`还需完成 ${total-done} 个字`;
+    quizCard.onclick=null;
+  }
+  if(st.quizDone){
+    quizLock.textContent='✅';
+    quizDesc.textContent='今日测验已完成';
+    quizCard.onclick=null;
+  }
+}
+
+// =============================================
+// 学习页
+// =============================================
+let learnWriter=null;
+let practiceWriter=null;
+let learningMistakes=0;
+let learningScore=0;
+let practiceRound=0;
+let wordListened=false;
+let sentenceListened=false;
+const PRACTICE_REQUIRED=2;
+
+// 阶梯扣分：0错=100, 1错=70, 2错=40, 3+错=30
+function calcScore(mistakes){
+  if(mistakes<=0)return 100;
+  if(mistakes===1)return 70;
+  if(mistakes===2)return 40;
+  return 30;
+}
+function startLearning(){
+  const p=getProfile();if(!p)return;
+  const st=p.todayState;
+  if(!st||!st.studyList||st.studyList.length===0){
+    initTodayState(p);
+  }
+  showPage('learningPage');
+  // 给 DOM 一点时间渲染后初始化
+  setTimeout(renderLearnChar, 50);
+}
+
+function renderLearnChar(){
+  const p=getProfile();if(!p)return;
+  const st=p.todayState;
+  if(!st||!st.studyList||st.studyList.length===0){
+    goToDashboard();return;
+  }
+  if(st.currentIndex>=st.studyList.length){goToDashboard();return}
+  const ch=st.studyList[st.currentIndex];
+  const learned=p.learnedChars||{};
+  const isReview=learned[ch]!==undefined;
+
+  document.getElementById('learnProgressText').textContent=`${st.currentIndex+1}/${st.studyList.length}`;
+  document.getElementById('learnChar').textContent=ch;
+  document.getElementById('learnStepLabel').innerHTML=isReview?'复习巩固':'学新字';
+
+  // 显示词语和例句
+  const {w:word,s:sentence}=getCharWordSentence(ch);
+  document.getElementById('learnWord').textContent=word;
+  document.getElementById('learnSentence').textContent=sentence;
+
+  document.getElementById('learnDemoContainer').innerHTML='';
+  document.getElementById('learnPracticeContainer').innerHTML='';
+  if(learnWriter){try{learnWriter.cancelQuiz()}catch(e){}learnWriter=null}
+  if(practiceWriter){try{practiceWriter.cancelQuiz()}catch(e){}practiceWriter=null}
+
+  practiceRound=0;learningMistakes=0;learningScore=0;
+  wordListened=false;sentenceListened=false;
+  document.getElementById('learnNextBtn').disabled=true;
+  document.getElementById('learnPlayBtn').disabled=false;
+
+  // 重置喇叭状态
+  const ws=document.getElementById('learnWordSpeaker');
+  const ss=document.getElementById('learnSentenceSpeaker');
+  ws.classList.remove('played');ws.classList.remove('playing');
+  ss.classList.remove('played');ss.classList.remove('playing');
+  ws.textContent='🔊';ss.textContent='🔊';
+  document.getElementById('learnListenHint').textContent='👆 点击🔊听词语和句子，听完才能完成';
+
+  setTimeout(()=>{
+    var ds=demoCanvasSize();
+    learnWriter=HanziWriter.create('learnDemoContainer',ch,{
+      width:ds,height:ds,padding:12,
+      strokeColor:'#e74c3c',showOutline:true,outlineColor:'#ddd',showCharacter:true
+    });
+    createPracticeWriter(ch);
+    document.getElementById('learnStatusText').textContent='第1遍：照着轮廓写';
+  },100);
+
+  setTimeout(()=>speakChar(ch),200);
+}
+
+function createPracticeWriter(ch){
+  const pc=document.getElementById('learnPracticeContainer');
+  pc.innerHTML='';
+  if(practiceWriter){try{practiceWriter.cancelQuiz()}catch(e){}practiceWriter=null}
+
+  var ps=practiceCanvasSize();
+  practiceWriter=HanziWriter.create('learnPracticeContainer',ch,{
+    width:ps,height:ps,padding:12,
+    showOutline:true,outlineColor:'#ddd',showCharacter:false,
+    drawingColor:'#333',drawingWidth:6,showHintAfterMisses:2,highlightOnComplete:true
+  });
+
+  const currentRound=practiceRound+1;
+
+  practiceWriter.quiz({
+    onMistake:function(d){
+      learningMistakes++;
+      document.getElementById('learnStatusText').textContent=
+        `第${currentRound}遍·第${d.strokeNum+1}笔错了 (已错${learningMistakes}次)`;
+    },
+    onCorrectStroke:function(d){
+      const total=d.strokesRemaining+d.strokesCompleted;
+      document.getElementById('learnStatusText').textContent=
+        `第${currentRound}遍·第${d.strokeNum+1}笔正确 (${d.strokesCompleted}/${total})`;
+      if(d.strokesRemaining===0){
+        practiceRound++;
+        if(practiceRound>=PRACTICE_REQUIRED){
+          learningScore=calcScore(learningMistakes);
+          const canFinish = wordListened && sentenceListened;
+          document.getElementById('learnNextBtn').disabled=!canFinish;
+          let msg=`第${currentRound}遍完成！练习得分${learningScore}。`;
+          if(!canFinish)msg+=' 先点击🔊听完词语和句子';
+          else msg+=' 可以点完成';
+          document.getElementById('learnStatusText').textContent=msg;
+        }else{
+          document.getElementById('learnStatusText').textContent=
+            `第${currentRound}遍完成！准备写第${practiceRound+1}遍...`;
+          setTimeout(()=>{try{practiceWriter.cancelQuiz()}catch(e){};createPracticeWriter(ch);},1200);
+        }
+      }
+    }
+  });
+}
+
+function nextLearnChar(){
+  const p=getProfile();if(!p)return;
+  const st=p.todayState;
+  if(st.currentIndex<st.studyList.length){
+    if(!p.learnedChars)p.learnedChars={};
+    const ch=st.studyList[st.currentIndex];
+    if(!p.learnedChars[ch]){
+      p.learnedChars[ch]={score:learningScore,learnedDate:today(),practiceScore:learningScore};
+    }else{
+      p.learnedChars[ch]={...p.learnedChars[ch],score:learningScore,learnedDate:today(),practiceScore:learningScore};
+    }
+    st.currentIndex++;
+    saveProfiles();
+    // 每完成一个字，记录当日进度（如果还没记录的话）
+    if(!p.dailyRecords)p.dailyRecords=[];
+    if(!p.dailyRecords.some(r=>r.date===today())){
+      p.dailyRecords.push({date:today(),learned:st.currentIndex,completed:false});
+      saveProfiles();
+    }
+  }
+  if(st.currentIndex>=st.studyList.length){
+    // 学习任务完成，保存每日进度记录
+    saveDailyProgress(p,false);
+    goToDashboard();
+  }else{
+    renderLearnChar();
+  }
+}
+
+// 保存每日进度到 dailyRecords
+function saveDailyProgress(p,isQuizDone){
+  if(!p)return;
+  if(!p.dailyRecords)p.dailyRecords=[];
+  const weakTotal=p.learnedChars?Object.values(p.learnedChars).filter(v=>v&&v.score<60).length:0;
+  const record={
+    date:today(),
+    learned:p.todayState&&p.todayState.studyList?p.todayState.studyList.length:0,
+    quizScore:isQuizDone&&p.todayState&&p.todayState.quizResults?
+      Math.round(Object.values(p.todayState.quizResults).reduce((a,b)=>a+b,0)/Math.max(1,Object.keys(p.todayState.quizResults).length)):0,
+    weakCount:weakTotal,
+    completed:isQuizDone
+  };
+  const idx=p.dailyRecords.findIndex(r=>r.date===today());
+  if(idx>=0){p.dailyRecords[idx]=record}else{p.dailyRecords.push(record)}
+  saveProfiles();
+}
+
+function playLearnAnim(){
+  if(!learnWriter)return;
+  learnWriter.hideCharacter();
+  setTimeout(()=>{
+    learnWriter.animateCharacter({
+      onComplete:()=>{
+        document.getElementById('learnStatusText').textContent=
+          document.getElementById('learnNextBtn').disabled?'动画播完了，继续练习写字':'动画播完了';
+      }
+    });
+    document.getElementById('learnStatusText').textContent='正在播放笔顺动画...';
+  },200);
+  document.getElementById('learnPlayBtn').disabled=true;
+  setTimeout(()=>document.getElementById('learnPlayBtn').disabled=false,3000);
+}
+
+// =============================================
+// 测验页
+// =============================================
+let quizCharIndex=0,quizWriter2=null,quizMistakes=0,quizCorrectStrokes=0,readingAttempts=0,readingScore=0;
+// 语音识别：单 recognizer，continuous:true, interimResults:true，每 4 字重建防累积
+var _activeRec=null;
+var _recMatchCount=0;
+
+function _createRecognizer(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR)return;
+  if(_activeRec){try{_activeRec.onresult=null}catch(e){}try{_activeRec.abort()}catch(e){}}
+  _activeRec=new SR();
+  _activeRec.lang='zh-CN';
+  _activeRec.continuous=true;
+  _activeRec.interimResults=true;
+  _activeRec.maxAlternatives=8;
+  _recMatchCount=0;
+  _activeRec.onresult=function(e){
+    var ra=document.getElementById('quizReadArea');
+    if(ra.style.display==='none')return;
+    var ch=document.getElementById('quizCharDisp').textContent;
+    for(var i=e.resultIndex;i<e.results.length;i++){
+      for(var j=0;j<e.results[i].length;j++){
+        if(charMatch(ch,e.results[i][j].transcript)){
+          _recMatchCount++;
+          readingScore=readingAttempts===0?100:readingAttempts===1?70:50;
+          document.getElementById('quizReadResult').textContent='读对了！';
+          document.getElementById('quizReadResult').style.color='#2ecc71';
+          document.getElementById('quizReadHint').textContent='发音正确！';
+          document.getElementById('quizMicBtn').classList.remove('listening');
+          enableQuizNext();
+          return;
+        }
+      }
+    }
+  };
+}
+
+function charMatch(target,text){
+  if(!target||!text)return false;
+  if(text.indexOf(target)>=0)return true;
+  var tPy=PINYIN[target];
+  if(!tPy)return false;
+  var chars=text.match(/[\u4e00-\u9fff]/g);
+  if(!chars)return false;
+  var tPyBase=tPy.replace(/\d/g,'');
+  for(var i=0;i<chars.length;i++){
+    var rPy=PINYIN[chars[i]];
+    if(rPy&&rPy.replace(/\d/g,'')===tPyBase)return true;
+  }
+  return false;
+}
+
+function startQuiz(){
+  const p=getProfile();if(!p)return;
+  quizCharIndex=0;
+  showPage('quizPage');
+  _createRecognizer();
+  try{_activeRec.start()}catch(e){}
+  renderQuizChar();
+}
+
+function renderQuizChar(){
+  const p=getProfile();if(!p)return;
+  const list=p.todayState.studyList;
+  if(quizCharIndex>=list.length){
+    finishQuiz();return;
+  }
+  const ch=list[quizCharIndex];
+  document.getElementById('quizProgress').textContent=`${quizCharIndex+1}/${list.length}`;
+  document.getElementById('quizCharDisp').textContent=ch;
+  document.getElementById('quizCharDisp').classList.remove('show');
+
+  const c=document.getElementById('quizContainer');c.innerHTML='';
+  if(quizWriter2){try{quizWriter2.cancelQuiz()}catch(e){}quizWriter2=null}
+  document.getElementById('quizReadArea').style.display='none';
+  document.getElementById('quizMicBtn').classList.remove('listening');
+  document.getElementById('quizReadResult').textContent='';
+  document.getElementById('quizReadSkip').style.display='none';
+
+  
+  setTimeout(()=>{
+    document.getElementById('quizCharDisp').classList.add('show');
+  },300);
+
+  quizMistakes=0;quizCorrectStrokes=0;
+  quizWriter2=HanziWriter.create('quizContainer',ch,{
+    width:quizCanvasSize(),height:quizCanvasSize(),padding:12,
+    showOutline:true,outlineColor:'#ddd',showCharacter:false,
+    drawingColor:'#333',drawingWidth:6,showHintAfterMisses:false,highlightOnComplete:true
+  });
+  quizWriter2.quiz({
+    onMistake:function(){quizMistakes++;},
+    onCorrectStroke:function(d){quizCorrectStrokes++},
+    onComplete:function(){}
+  });
+
+  document.getElementById('quizScore').style.display='none';
+  document.getElementById('quizMsg').textContent='写吧！';
+  const btn=document.getElementById('quizNextBtn');
+  btn.textContent='写好了';
+  btn.disabled=false;
+  btn.className='quiz-btn primary';
+  btn.onclick=function(){judgeQuizChar(ch)};
+}
+
+function judgeQuizChar(ch){
+  const btn=document.getElementById('quizNextBtn');
+  btn.disabled=true;
+  document.getElementById('quizMsg').textContent='评分中...';
+
+  setTimeout(()=>{
+    if(quizCorrectStrokes===0){
+      quizMistakes=0;quizCorrectStrokes=0;
+      if(quizWriter2){try{quizWriter2.cancelQuiz()}catch(e){}}
+      const c=document.getElementById('quizContainer');c.innerHTML='';
+      quizWriter2=HanziWriter.create('quizContainer',ch,{
+        width:quizCanvasSize(),height:quizCanvasSize(),padding:12,
+        showOutline:true,outlineColor:'#ddd',showCharacter:false,
+        drawingColor:'#333',drawingWidth:6,showHintAfterMisses:false,highlightOnComplete:true
+      });
+      quizWriter2.quiz({
+        onMistake:function(){quizMistakes++;},
+        onCorrectStroke:function(d){quizCorrectStrokes++},
+        onComplete:function(){}
+      });
+      document.getElementById('quizMsg').textContent='一笔都没写，不能继续！写完了再点"写好了"';
+      document.getElementById('quizMsg').style.color='#e74c3c';
+      btn.textContent='写好了';
+      btn.className='quiz-btn primary';
+      btn.onclick=function(){judgeQuizChar(ch)};
+      btn.disabled=false;
+      return;
+    }
+
+    const p=getProfile();
+    const existing=p.learnedChars[ch];
+    const quizScore=calcScore(quizMistakes);
+    const practiceScore=existing&&existing.practiceScore?existing.practiceScore:quizScore;
+    const finalScore=Math.round(practiceScore*0.10+quizScore*0.45+readingScore*0.45);
+    p.learnedChars[ch]={score:finalScore,learnedDate:today(),practiceScore:practiceScore,quizScore:quizScore,readingScore:readingScore};
+    p.todayState.quizResults[ch]=finalScore;
+    saveProfiles();
+
+    document.getElementById('quizScore').textContent=finalScore+'分';
+    document.getElementById('quizScore').style.display='';
+    document.getElementById('quizScore').style.color=finalScore>=60?'#2ecc71':'#e74c3c';
+    document.getElementById('quizMsg').textContent=finalScore>=80?'掌握不错！':(finalScore>=60?'还需多练习':'不太熟练，明天再复习吧');
+    document.getElementById('quizMsg').textContent+=` (练习${practiceScore}分·写字${quizScore}分·读音${readingScore}分)`;
+    document.getElementById('quizMsg').style.color='';
+    btn.textContent='请朗读';
+    btn.className='quiz-btn primary';
+    btn.disabled=true;
+    const ra=document.getElementById('quizReadArea');
+    ra.style.display='';
+    document.getElementById('quizReadHint').textContent='🎤 点麦克风读出这个字';
+    document.getElementById('quizReadResult').textContent='';
+    document.getElementById('quizMicBtn').classList.remove('listening');
+    setTimeout(function(){
+      if(document.getElementById('quizReadArea').style.display!=='none'){
+        document.getElementById('quizReadSkip').style.display='';
+      }
+    },5000);
+  },800);
+}
+
+function startQuizReading(){
+  var btn=document.getElementById('quizMicBtn');
+  var hint=document.getElementById('quizReadHint');
+  var result=document.getElementById('quizReadResult');
+  result.textContent='';
+  result.style.color='';
+  btn.classList.add('listening');
+  hint.textContent='正在听，大声读出来！';
+  readingAttempts=0;
+  if(_recMatchCount>=4){
+    _createRecognizer();
+    try{_activeRec.start()}catch(e){}
+  }
+}
+
+function skipQuizReading(){
+  readingScore=0;
+  document.getElementById('quizMicBtn').classList.remove('listening');
+  var result=document.getElementById('quizReadResult');
+  result.textContent='已跳过朗读';
+  result.style.color='#999';
+  document.getElementById('quizReadHint').textContent='记住要大声朗读哦';
+  enableQuizNext();
+}
+
+function finishQuiz(){
+  if(_activeRec){try{_activeRec.abort()}catch(e){}_activeRec=null;}
+  var p=getProfile();if(!p)return;
+  p.todayState.quizDone=true;
+  saveDailyProgress(p,true);
+  saveProfiles();
+  showSummary();
+}
+
+function enableQuizNext(){
+  const p=getProfile();
+  const list=p.todayState.studyList;
+  const btn=document.getElementById('quizNextBtn');
+  btn.textContent=quizCharIndex<list.length-1?'下一个 →':'查看结果';
+  btn.className='quiz-btn success';
+  btn.onclick=function(){quizCharIndex++;renderQuizChar()};
+  btn.disabled=false;
+  }
+
+// =============================================
+function goToDashboard(){
+  if(_activeRec){try{_activeRec.abort()}catch(e){}_activeRec=null;}
+  if(learnWriter){try{learnWriter.cancelQuiz()}catch(e){}learnWriter=null}
+  if(quizWriter2){try{quizWriter2.cancelQuiz()}catch(e){}quizWriter2=null}
+  // 返回首页时只要有进度就保存记录
+  const p=getProfile();
+  if(p&&p.todayState&&p.todayState.currentIndex>0){
+    if(!p.dailyRecords)p.dailyRecords=[];
+    if(!p.dailyRecords.some(r=>r.date===today())){
+      const done=p.todayState.currentIndex;
+      const total=p.todayState.studyList?p.todayState.studyList.length:0;
+      p.dailyRecords.push({date:today(),learned:done,completed:false});
+      saveProfiles();
+    }
+  }
+  showPage('dashboardPage');
+  updateDashboard();
+}
+
+// 切换小朋友
+function switchUser(){
+  if(_activeRec){try{_activeRec.abort()}catch(e){}_activeRec=null;}
+  if(learnWriter){try{learnWriter.cancelQuiz()}catch(e){}learnWriter=null}
+  if(quizWriter2){try{quizWriter2.cancelQuiz()}catch(e){}quizWriter2=null}
+  showProfilePage();
+}
+
+// =============================================
+// 总结页
+// =============================================
+function showSummary(){
+  const p=getProfile();if(!p)return;
+  const st=p.todayState;
+  const results=st.quizResults;
+  const scores=Object.values(results);
+  const total=scores.length;
+  const avg=total?Math.round(scores.reduce((a,b)=>a+b,0)/total):0;
+  const weak=Object.entries(results).filter(([_,s])=>s<60).map(([k])=>k);
+
+  document.getElementById('summaryDate').textContent=getDateStr(new Date());
+  document.getElementById('summaryScore').textContent=avg;
+  document.getElementById('summaryTotal').textContent=total;
+  document.getElementById('summaryMastered').textContent=total-weak.length;
+  document.getElementById('summaryWeak').textContent=weak.length;
+  document.getElementById('summaryWeakText').textContent=weak.length?`明天需复习的字: ${weak.join('、')}`:'全部掌握，明天学新字！';
+
+  showPage('summaryPage');
+}
+
+// =============================================
+// 朗读
+// =============================================
+function speakChar(char, btnId, force){
+  if(!window.speechSynthesis)return;
+
+  // 主喇叭：如果正在朗读，点一下取消（词语/句子喇叭不走这个分支）
+  if(!force && window.speechSynthesis.speaking){
+    window.speechSynthesis.cancel();
+    document.querySelectorAll('.learn-speaker').forEach(b=>b.classList.remove('playing'));
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+  try{
+    const u=new SpeechSynthesisUtterance(char);
+    u.lang='zh-CN';u.rate=0.75;u.pitch=1.1;
+    var v=window.speechSynthesis.getVoices().find(function(vv){return vv.lang.indexOf('zh')>=0});
+    if(v)u.voice=v;
+    u.onstart=()=>{
+      if(btnId){const btn=document.getElementById(btnId);if(btn)btn.classList.add('playing')}
+    };
+    u.onend=()=>{document.querySelectorAll('.learn-speaker').forEach(b=>b.classList.remove('playing'))};
+    u.onerror=()=>{document.querySelectorAll('.learn-speaker').forEach(b=>b.classList.remove('playing'))};
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function speakCurrent(){
+  const ch=document.getElementById('learnChar').textContent;
+  speakChar(ch,'learnSpeaker');
+}
+
+function speakWord(){
+  const word=document.getElementById('learnWord').textContent;
+  wordListened=true;
+  const btn=document.getElementById('learnWordSpeaker');
+  btn.classList.add('played');
+  btn.classList.remove('playing');
+  btn.textContent='🔊✓';
+  checkListenDone();
+  speakChar(word,'learnWordSpeaker',true);
+}
+
+function speakSentence(){
+  const sentence=document.getElementById('learnSentence').textContent;
+  sentenceListened=true;
+  const btn=document.getElementById('learnSentenceSpeaker');
+  btn.classList.add('played');
+  btn.classList.remove('playing');
+  btn.textContent='🔊✓';
+  checkListenDone();
+  speakChar(sentence,'learnSentenceSpeaker',true);
+}
+
+function checkListenDone(){
+  const hint=document.getElementById('learnListenHint');
+  if(wordListened&&sentenceListened){
+    hint.textContent='✅ 已听完词语和句子';
+    hint.style.color='#2ecc71';
+    // 如果练习已学完，解锁完成按钮
+    if(practiceRound>=PRACTICE_REQUIRED){
+      document.getElementById('learnNextBtn').disabled=false;
+      document.getElementById('learnStatusText').textContent=
+        `第${practiceRound}遍完成！练习得分${learningScore}。可以点完成`;
+    }
+  }else{
+    const remaining=[];
+    if(!wordListened)remaining.push('词语');
+    if(!sentenceListened)remaining.push('句子');
+    hint.textContent=`👆 还剩 ${remaining.join('和')} 没听`;
+    hint.style.color='';
+  }
+}
+
+// =============================================
+// 日历
+// =============================================
+let calYear,calMonthIdx;
+
+function toggleCalendar(){
+  // 打开前先从 localStorage 刷新数据
+  loadProfiles();
+  const ov=document.getElementById('calendarOverlay');
+  if(ov.classList.contains('visible')){
+    ov.classList.remove('visible');
+  }else{
+    ov.classList.add('visible');
+    const d=new Date();
+    calYear=d.getFullYear();calMonthIdx=d.getMonth();
+    renderCalendar();
+  }
+}
+
+function calMonth(delta){
+  calMonthIdx+=delta;
+  if(calMonthIdx<0){calMonthIdx=11;calYear--}
+  if(calMonthIdx>11){calMonthIdx=0;calYear++}
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const p=getProfile();
+  document.getElementById('calMonthText').textContent=`${calYear}年${calMonthIdx+1}月`;
+  const first=new Date(calYear,calMonthIdx,1);
+  const last=new Date(calYear,calMonthIdx+1,0);
+  const startDay=first.getDay();
+  const days=last.getDate();
+
+  // 收集有打卡记录的日子
+  const records={};
+  if(p&&p.dailyRecords){
+    p.dailyRecords.forEach(r=>{
+      if(r.date)records[r.date]=r;
+    });
+  }
+
+  let html='';
+  function pad2(n){return (n<10?'0':'')+n}
+  for(let i=0;i<startDay;i++)html+=`<div class="cal-day other-month"></div>`;
+  for(let d=1;d<=days;d++){
+    const dateStr=calYear+'-'+pad2(calMonthIdx+1)+'-'+pad2(d);
+    const rec=records[dateStr];
+    const isToday=dateStr===today();
+    let cls='cal-day';
+    if(isToday)cls+=' today';
+    if(rec){
+      if(rec.completed){
+        cls+=' has-record good';
+      }else{
+        cls+=' has-record fair';
+      }
+    }
+    const onclick=rec?`showCalDetail('${dateStr}',this)`:``;
+    const dot=rec?' ●':'';
+    html+=`<div class="${cls}" onclick="${onclick}" data-date="${dateStr}">${d}${dot}</div>`;
+  }
+  document.getElementById('calDays').innerHTML=html;
+  document.getElementById('calDayDetail').classList.remove('visible');
+}
+
+function showCalDetail(dateStr,el){
+  const p=getProfile();
+  document.querySelectorAll('.cal-day').forEach(d=>d.style.background='');
+  if(el)el.style.background='#f0f2ff';
+
+  const det=document.getElementById('calDayDetail');
+  det.classList.add('visible');
+  document.getElementById('calDetailDate').textContent=dateStr;
+
+  const rec=p.dailyRecords.find(r=>r.date===dateStr);
+  const ct=document.getElementById('calDetailContent');
+  if(rec){
+    ct.innerHTML=`
+      <div class="detail-item">${rec.completed?'✅ 已完成':'📖 学习中'}</div>
+      <div class="detail-item">学习字数: ${rec.learned||0}</div>
+      <div class="detail-item">测验得分: ${rec.quizScore||'-'}</div>
+      <div class="detail-item">未掌握: ${rec.weakCount||0} 个</div>
+    `;
+  }else{
+    ct.innerHTML=`<div class="cal-empty">这天没有学习记录</div>`;
+  }
+}
+
+// =============================================
+// 家长控制面板（密码保护）
+// =============================================
+function getParentPwd(){
+  var pwd=localStorage.getItem('parentPwd');
+  if(!pwd){localStorage.setItem('parentPwd','1234');return '1234'}
+  return pwd;
+}
+
+function toggleParentPanel(){
+  var ov=document.getElementById('parentPwdOverlay');
+  ov.classList.add('visible');
+  document.getElementById('parentPwdInput').value='';
+  document.getElementById('parentPwdError').textContent='';
+  document.getElementById('parentPwdInput').focus();
+}
+
+function hideParentPwd(){
+  document.getElementById('parentPwdOverlay').classList.remove('visible');
+}
+
+function verifyParentPwd(){
+  var pwd=document.getElementById('parentPwdInput').value;
+  if(pwd===getParentPwd()){
+    hideParentPwd();
+    document.getElementById('parentOverlay').classList.add('visible');
+    renderParentPanel();
+  }else{
+    document.getElementById('parentPwdError').textContent='密码错误，请重试';
+    document.getElementById('parentPwdInput').value='';
+    document.getElementById('parentPwdInput').focus();
+  }
+}
+
+function hideParentPanel(){
+  document.getElementById('parentOverlay').classList.remove('visible');
+}
+
+function showChangePwd(){
+  document.getElementById('changePwdOverlay').style.display='flex';
+  document.getElementById('pwdOld').value='';
+  document.getElementById('pwdNew').value='';
+  document.getElementById('pwdNew2').value='';
+  document.getElementById('changePwdError').textContent='';
+}
+
+function hideChangePwd(){
+  document.getElementById('changePwdOverlay').style.display='none';
+}
+
+function doChangePwd(){
+  var old=document.getElementById('pwdOld').value;
+  var nw=document.getElementById('pwdNew').value;
+  var nw2=document.getElementById('pwdNew2').value;
+  if(old!==getParentPwd()){
+    document.getElementById('changePwdError').textContent='原密码错误';
+    return;
+  }
+  if(!nw||nw.length<2){
+    document.getElementById('changePwdError').textContent='新密码至少2个字符';
+    return;
+  }
+  if(nw!==nw2){
+    document.getElementById('changePwdError').textContent='两次新密码不一致';
+    return;
+  }
+  localStorage.setItem('parentPwd',nw);
+  document.getElementById('changePwdError').textContent='';
+  hideChangePwd();
+  alert('密码已更新');
+}
+
+function renderParentPanel(){
+  const p=getProfile();
+  if(!p){document.getElementById('parentOverlay').classList.remove('visible');return}
+  const ui=document.getElementById('parentUserInfo');
+  const learned=p.learnedChars||{};
+  const total=ALL_CHARS.length;
+  const learnedCount=Object.keys(learned).length;
+  const weakCount=Object.values(learned).filter(v=>v.score<60).length;
+  ui.innerHTML=`
+    <div class="pu-avatar" style="background:${p.color}">${p.initial}</div>
+    <div>
+      <div class="pu-name">${p.name}（${p.age}岁）</div>
+      <div class="pu-stats">已学 ${learnedCount}/${total} 个字 · 需复习 ${weakCount} 个</div>
+    </div>`;
+  const grid=document.getElementById('parentChars');
+  grid.innerHTML=ALL_CHARS.map(ch=>{
+    const rec=learned[ch];
+    let bg,st;
+    if(!rec){bg='#e0e0e0';st=''}
+    else if(rec.score>=80){bg='#2ecc71';st=rec.score}
+    else if(rec.score>=60){bg='#f9a825';st=rec.score}
+    else{bg='#e74c3c';st=rec.score}
+    return `<div class="parent-char" style="background:${bg}" onclick="editCharStatus('${ch}')">${ch}${st?`<span class="pc-score">${st}</span>`:''}</div>`;
+  }).join('');
+  // 更新调试按钮状态
+  var dbgBtn=document.getElementById('debugToggle');
+  if(dbgBtn){
+    dbgBtn.textContent=debugMode?'🔧 调试模式：开':'🔧 调试模式：关';
+    dbgBtn.className='debug-btn'+(debugMode?' on':'');
+  }
+}
+
+function editCharStatus(ch){
+  const p=getProfile();if(!p)return;
+  const learned=p.learnedChars||{};
+  var action=prompt('「'+ch+'」当前状态：'+(learned[ch]?'得分 '+learned[ch].score+' 分':'未学')+'\n输入 100 标记为掌握\n输入 0 重置为未学\n输入其它分数自定义\n留空取消');
+  if(action===null||action==='')return;
+  var score=parseInt(action);
+  if(isNaN(score)||score<0||score>100){
+    alert('请输入 0-100 之间的分数');
+    return;
+  }
+  if(score===0){
+    delete p.learnedChars[ch];
+  }else{
+    if(!p.learnedChars)p.learnedChars={};
+    if(!p.learnedChars[ch]){
+      p.learnedChars[ch]={score:score,learnedDate:today(),practiceScore:score};
+    }else{
+      p.learnedChars[ch].score=score;
+    }
+  }
+  saveProfiles();
+  // 重新生成本日学习列表，反映编辑后的状态
+  p.todayState=null;
+  initTodayState(p);
+  updateDashboard();
+  renderParentPanel();
+}
+
+// =============================================
+// 调试模式
+// =============================================
+function toggleDebugMode(){
+  debugMode=!debugMode;
+  var btn=document.getElementById('debugToggle');
+  btn.textContent=debugMode?'🔧 调试模式：开':'🔧 调试模式：关';
+  btn.className='debug-btn'+(debugMode?' on':'');
+  // 重置今日状态以应用新模式
+  var p=getProfile();
+  if(p){
+    p.todayState=null;
+    initTodayState(p);
+    updateDashboard();
+    renderParentPanel();
+  }
+}
+
+// =============================================
+// 启动
+// =============================================
+loadProfiles();
+// 如果有已有用户，直接进首页
+if(currentUser&&getProfile()){
+  enterDashboard();
+}else{
+  showPage('welcomePage');
+}
+// 注册 Service Worker（PWA 离线支持）
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+</script>
+</body>
+</html>

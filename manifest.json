@@ -1,0 +1,10 @@
+{
+  "name": "每日汉字打卡",
+  "short_name": "汉字打卡",
+  "description": "小学汉字笔画学习系统",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f0f4f8",
+  "theme_color": "#a18cd1"
+}
