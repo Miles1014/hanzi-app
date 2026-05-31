@@ -11,7 +11,8 @@
 <meta name="apple-mobile-web-app-title" content="每日汉字打卡">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4f8;color:#333;position:fixed;width:100%;height:100%;overflow:hidden;-webkit-user-select:text;user-select:text}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4f8;color:#333;-webkit-user-select:text;user-select:text}
 button{cursor:pointer;font-family:inherit;border:none;outline:none}
 input{font-family:inherit;outline:none}
 
@@ -335,7 +336,7 @@ input{font-family:inherit;outline:none}
 <!-- ===== 添加小朋友 ===== -->
 <div id="addProfilePage" class="page">
   <h2>添加新小朋友</h2>
-  <input type="text" id="newProfileName" placeholder="输入名字" maxlength="8" onkeydown="if(event.key==='Enter')addNewProfile()">
+  <input type="text" id="newProfileName" placeholder="输入名字" maxlength="8" onkeydown="if(event.key==='Enter')addNewProfile()" ontouchstart="this.focus()">
   <div class="input-hint">几岁啦？</div>
   <div class="age-selector" id="ageSelector"></div>
   <div class="btn-group">
