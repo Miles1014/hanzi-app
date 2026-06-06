@@ -264,6 +264,40 @@ input{font-family:inherit;outline:none}
 
 <script>
 // =============================================
+// 拼音格式化（将 yi1 转为 yī）
+// =============================================
+var TONE_MARKS = { '1': '\u{304}', '2': '\u{301}', '3': '\u{30C}', '4': '\u{300}' };
+var TONE_VOWELS = { 'a':1,'e':1,'i':1,'o':1,'u':1,'v':1,
+  'A':1,'E':1,'I':1,'O':1,'U':1,'V':1 };
+
+function formatPinyin(py) {
+  if (!py) return '';
+  var tone = py.match(/[0-4]$/);
+  if (!tone) return py;
+  var base = py.slice(0, -1);
+  var t = tone[0];
+  if (t === '0' || t === '5') return base; // neutral tone
+  // Find the vowel to mark
+  var mark = TONE_MARKS[t];
+  // Find last vowel (or use standard pinyin rules)
+  var idx = -1;
+  // Priority: look for 'a' or 'e' first (pinyin rule: a/e get the mark)
+  if (base.includes('a')) idx = base.lastIndexOf('a');
+  else if (base.includes('e')) idx = base.lastIndexOf('e');
+  else {
+    // Otherwise mark the last vowel
+    for (var i = base.length - 1; i >= 0; i--) {
+      if (TONE_VOWELS[base[i]]) { idx = i; break; }
+    }
+  }
+  if (idx < 0) return base;
+  var result = base.slice(0, idx) + base[idx] + mark + base.slice(idx + 1);
+  // Replace 'v' with 'ü' for display
+  result = result.replace(/v/g, '\u{FC}').replace(/V/g, '\u{DC}');
+  return result;
+}
+
+// =============================================
 // 游戏配置
 // =============================================
 const COLS = 6;
@@ -580,46 +614,57 @@ function startRecognition() {
 
   const ch = fallingChar.char;
   const py = fallingChar.pinyin;
+  var displayPy = formatPinyin(py);
+  var timerStarted = false;
 
   document.getElementById('voiceChar').textContent = ch;
-  document.getElementById('voicePinyin').textContent = py;
+  document.getElementById('voicePinyin').textContent = displayPy;
   document.getElementById('voiceResult').innerHTML = '';
-  document.getElementById('voiceStatus').textContent = '正在听...';
-  document.getElementById('voiceTimer').textContent = gameSettings.timeout;
+  document.getElementById('voiceStatus').textContent = '正在准备麦克风...';
   document.getElementById('voiceOverlay').classList.add('visible');
   document.getElementById('micIcon').classList.add('listening');
   document.getElementById('voiceSkipBtn').style.display = 'block';
+  // Show dashes while waiting for recognizer
+  document.getElementById('voiceTimer').textContent = '--';
 
-  // Start auto-recognition with timeout
-  let timeLeft = gameSettings.timeout;
-  const timerInterval = setInterval(() => {
-    timeLeft--;
+  var timerInterval = null;
+  var timeLeft = 0;
+
+  function startTimer() {
+    if (timerStarted) return;
+    timerStarted = true;
+    timeLeft = gameSettings.timeout;
     document.getElementById('voiceTimer').textContent = timeLeft;
-    if (timeLeft <= 0 && gameState === 'RECOGNIZING') {
-      clearInterval(timerInterval);
-      onVoiceTimeout();
-    }
-  }, 1000);
+    document.getElementById('voiceStatus').textContent = '🎤 请朗读...';
+    timerInterval = setInterval(function() {
+      timeLeft--;
+      document.getElementById('voiceTimer').textContent = timeLeft;
+      if (timeLeft <= 0 && gameState === 'RECOGNIZING') {
+        clearInterval(timerInterval);
+        onVoiceTimeout();
+      }
+    }, 1000);
+  }
+
+  function cleanup() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  }
 
   // Start SpeechRecognition
-  startListening(ch, () => {
-    clearInterval(timerInterval);
-    if (gameState === 'RECOGNIZING') {
-      onVoiceSuccess();
-    }
-  }, () => {
-    clearInterval(timerInterval);
-    if (gameState === 'RECOGNIZING') {
-      onVoiceTimeout();
-    }
-  });
+  startListening(ch, function() {
+    cleanup();
+    if (gameState === 'RECOGNIZING') onVoiceSuccess();
+  }, function() {
+    cleanup();
+    if (gameState === 'RECOGNIZING') onVoiceTimeout();
+  }, startTimer);
 }
 
-function startListening(targetChar, onSuccess, onFail) {
+function startListening(targetChar, onSuccess, onFail, onStart) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
     document.getElementById('voiceStatus').textContent = '⚠️ 浏览器不支持语音识别';
-    setTimeout(onFail, 1500);
+    if (onFail) setTimeout(onFail, 1500);
     return;
   }
 
@@ -634,6 +679,11 @@ function startListening(targetChar, onSuccess, onFail) {
     recognizer.continuous = false;
     recognizer.interimResults = false;
     recognizer.maxAlternatives = 8;
+
+    recognizer.onstart = function() {
+      // Recognizer has started (microphone permission granted on iOS)
+      if (onStart) onStart();
+    };
 
     recognizer.onresult = function(event) {
       const results = event.results;
@@ -657,8 +707,13 @@ function startListening(targetChar, onSuccess, onFail) {
 
     recognizer.onerror = function(event) {
       console.log('SpeechRecognition error:', event.error);
+      // If permission denied on iOS, fail immediately
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        document.getElementById('voiceStatus').textContent = '⚠️ 请允许麦克风权限';
+        if (onFail) setTimeout(onFail, 1000);
+        return;
+      }
       if (event.error === 'no-speech' || event.error === 'aborted') {
-        // Timeout or abort
         if (onFail) onFail();
       }
     };
@@ -998,15 +1053,18 @@ function drawGame() {
     drawCharCell(fallingChar.col, fallingChar.row, fallingChar.char,
       glow ? '#f9a825' : '#3498db', '#fff', alpha, glow);
 
-    // Draw pinyin hint
+    // Draw pinyin hint (formatted with tone marks)
     if (fallingChar.pinyin) {
-      const x = fallingChar.col * cellW + cellW / 2;
-      const y = fallingChar.row * cellH + 6;
-      ctx.fillStyle = `rgba(255,255,255,${alpha * 0.5})`;
-      ctx.font = `${Math.max(10, Math.round(cellW * 0.18))}px system-ui`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillText(fallingChar.pinyin, x, y);
+      var displayPy = formatPinyin(fallingChar.pinyin);
+      if (displayPy) {
+        var x = fallingChar.col * cellW + cellW / 2;
+        var y = fallingChar.row * cellH + 4;
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.font = Math.max(10, Math.round(cellW * 0.17)) + 'px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(displayPy, x, y);
+      }
     }
   }
 }
