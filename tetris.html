@@ -646,8 +646,14 @@ function startRecognition() {
     }, 1000);
   }
 
+  // Safety: start timer after 3s even if recognizer never fires onstart
+  var safetyTimer = setTimeout(function() {
+    if (!timerStarted) startTimer();
+  }, 3000);
+
   function cleanup() {
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
   }
 
   // Start SpeechRecognition
