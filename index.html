@@ -3,17 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>每日汉字打卡</title>
-<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.0/dist/hanzi-writer.min.js"></script>
+<title>每日汉字打卡 v1.0</title>
+<script src="hanzi-writer.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden}
-body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4f8;color:#333;-webkit-user-select:text;user-select:text}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4f8;color:#333;min-height:100vh;overflow:hidden}
 button{cursor:pointer;font-family:inherit;border:none;outline:none}
 input{font-family:inherit;outline:none}
 
 /* 页面切换 */
-.page{display:none;width:100%;height:100%;position:absolute;top:0;left:0}
+.page{display:none;width:100vw;height:100vh;position:fixed;top:0;left:0}
 .page.visible{display:flex;flex-direction:column}
 
 /* ===== 欢迎页 ===== */
@@ -43,9 +42,12 @@ input{font-family:inherit;outline:none}
 /* ===== 添加小朋友 ===== */
 #addProfilePage{background:linear-gradient(135deg,#a18cd1 0%,#fbc2eb 100%);align-items:center;justify-content:center;padding:40px 20px}
 #addProfilePage h2{font-size:1.8em;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,0.15);margin-bottom:16px}
-#addProfilePage input,#addProfilePage [contenteditable]{padding:12px 18px;border:none;border-radius:12px;font-size:1.05em;width:260px;text-align:center;margin-bottom:6px;background:#fff;outline:none}
-#addProfilePage [contenteditable]:empty:before{content:attr(data-placeholder);color:#999}
+#addProfilePage input{padding:12px 18px;border:none;border-radius:12px;font-size:1.05em;width:260px;text-align:center;margin-bottom:6px}
 #addProfilePage .input-hint{font-size:.8em;color:rgba(255,255,255,0.65);margin-bottom:16px}
+.age-selector{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;justify-content:center}
+.age-btn{padding:8px 18px;border-radius:20px;background:rgba(255,255,255,0.15);color:#fff;font-size:.95em;font-weight:bold;transition:all .2s;border:2px solid transparent}
+.age-btn:hover{background:rgba(255,255,255,0.25)}
+.age-btn.selected{background:#fff;color:#a18cd1;border-color:#fff}
 .btn-group{display:flex;gap:12px}
 .btn-primary{background:#fff;color:#a18cd1;padding:10px 32px;border-radius:12px;font-size:1em;font-weight:bold;transition:all .2s}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,0.15)}
@@ -59,6 +61,7 @@ input{font-family:inherit;outline:none}
 .dash-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1em;font-weight:bold;color:#fff;flex-shrink:0}
 .dash-user-info{font-size:.85em}
 .dash-user-info .name{font-weight:bold;color:#333;font-size:1.1em}
+.dash-user-info .age{color:#999}
 .dash-cal-btn{width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;font-size:1.1em;transition:all .2s;border:none}
 .dash-cal-btn:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.12)}
 .dash-date{text-align:center;margin-bottom:20px;flex-shrink:0}
@@ -82,6 +85,9 @@ input{font-family:inherit;outline:none}
 .task-card.quiz-card{border-color:#f9a825}
 .task-card.quiz-card .card-progress-fill{background:linear-gradient(90deg,#f9a825,#ffcc02)}
 .task-card.quiz-card.locked{opacity:.6;pointer-events:none}
+.task-card.game-card{border-color:#2ecc71}
+.task-card.game-card .card-progress-fill{background:linear-gradient(90deg,#2ecc71,#1abc9c)}
+.task-card.game-card.locked{opacity:.55;pointer-events:none}
 .task-card .lock-badge{position:absolute;top:12px;right:14px;font-size:.8em;color:#ccc}
 
 /* ===== 学习页 ===== */
@@ -222,7 +228,6 @@ input{font-family:inherit;outline:none}
 .parent-chars{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
 .parent-char{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.9em;font-weight:bold;color:#fff;transition:transform .15s}
 .parent-char .pc-score{font-size:.5em;font-weight:normal;opacity:.85}
-.batch-active{background:#7F77DD!important;color:#fff!important}
 
 /* ===== 词语和例句区域 ===== */
 .learn-word-area{display:flex;align-items:center;gap:8px;margin-top:4px;flex-shrink:0}
@@ -319,17 +324,14 @@ input{font-family:inherit;outline:none}
 <div id="profilePage" class="page">
   <h2>选择小朋友</h2>
   <div class="profile-grid" id="profileGrid"></div>
-  <div class="btn-group" style="margin-top:20px">
-    <button class="btn-primary" onclick="exportData()">📤 导出数据</button>
-    <button class="btn-secondary" onclick="document.getElementById('importInput').click()">📥 导入数据</button>
-    <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
-  </div>
 </div>
 
 <!-- ===== 添加小朋友 ===== -->
 <div id="addProfilePage" class="page">
   <h2>添加新小朋友</h2>
-  <div contenteditable="true" id="newProfileName" data-placeholder="输入名字" role="textbox" aria-multiline="false" onkeydown="if(event.key==='Enter'){event.preventDefault();addNewProfile()}"></div>
+  <input type="text" id="newProfileName" placeholder="输入名字" maxlength="8" onkeydown="if(event.key==='Enter')addNewProfile()">
+  <div class="input-hint">几岁啦？</div>
+  <div class="age-selector" id="ageSelector"></div>
   <div class="btn-group">
     <button class="btn-primary" onclick="addNewProfile()">确认添加</button>
     <button class="btn-secondary" onclick="showProfilePage()">返回</button>
@@ -343,6 +345,7 @@ input{font-family:inherit;outline:none}
       <div class="dash-avatar" id="dashAvatar">M</div>
       <div class="dash-user-info">
         <div class="name" id="dashName">小朋友</div>
+        <div class="age" id="dashAge">6岁 切换</div>
       </div>
     </div>
     <div style="display:flex;gap:6px">
@@ -367,6 +370,12 @@ input{font-family:inherit;outline:none}
       <div class="card-title">今日小测验</div>
       <div class="card-desc" id="quizDesc">全部学完后可开始测验</div>
       <div class="lock-badge" id="quizLock">🔒</div>
+    </div>
+    <div class="task-card game-card" id="gameCard">
+      <div class="card-icon">🎮</div>
+      <div class="card-title">汉字俄罗斯方块</div>
+      <div class="card-desc" id="gameDesc">测验完成后可解锁游戏</div>
+      <div class="lock-badge" id="gameLock">🔒</div>
     </div>
   </div>
 </div>
@@ -409,7 +418,6 @@ input{font-family:inherit;outline:none}
 <!-- ===== 测验页 ===== -->
 <div id="quizPage" class="page">
   <div class="quiz-header">
-    <button class="learn-back" onclick="goToDashboard()">←</button>
     <h3>📝 今日小测验</h3>
     <span class="quiz-progress" id="quizProgress">1/5</span>
   </div>
@@ -506,22 +514,6 @@ input{font-family:inherit;outline:none}
     <div style="text-align:center;margin:8px 0">
       <button class="pwd-change-btn" onclick="showChangePwd()">更改密码</button>
     </div>
-    <div style="text-align:center;margin:8px 0">
-      <span style="font-size:.85em;color:#666">单日目标：</span>
-      <input type="number" id="dailyGoalInput" min="1" max="30" style="width:60px;padding:4px 8px;border:1px solid #ddd;border-radius:8px;font-size:.9em;text-align:center">
-      <button class="pwd-change-btn" onclick="setDailyGoal()" style="margin-left:6px">设置</button>
-    </div>
-    <div style="text-align:center;margin:8px 0">
-      <button class="pwd-change-btn" onclick="toggleBatchMode()">☑ 批量操作</button>
-    </div>
-    <div id="batchActions" style="display:none;text-align:center;margin:6px 0">
-      <button class="debug-btn" onclick="batchSelectAll()" style="font-size:.8em">全选</button>
-      <button class="debug-btn" onclick="batchDeselectAll()" style="font-size:.8em">取消</button>
-      <button class="debug-btn" onclick="batchSetScore(100)" style="font-size:.8em;background:#2ecc71;color:#fff">✓ 掌握</button>
-      <button class="debug-btn" onclick="batchSetScore(0)" style="font-size:.8em;background:#e74c3c;color:#fff">✕ 未学</button>
-      <button class="debug-btn" onclick="batchCustomScore()" style="font-size:.8em">自定义</button>
-      <div id="batchCount" style="font-size:.7em;color:#999;margin-top:4px">已选 0 个字</div>
-    </div>
     <div class="parent-legend">
       <div class="lg-item"><div class="lg-dot" style="background:#2ecc71"></div>掌握(≥80)</div>
       <div class="lg-item"><div class="lg-dot" style="background:#f9a825"></div>学习中(60-79)</div>
@@ -567,6 +559,7 @@ function practiceCanvasSize(){ return canvasSize(320); }
 function quizCanvasSize(){ return canvasSize(300); }
 const PROFILE_COLORS = ['#a18cd1','#e74c3c','#2ecc71','#f9a825','#9b59b6','#1abc9c','#e67e22','#3498db'];
 var debugMode=false; // 调试模式：取消学习和汉字限制
+const AGE_OPTIONS = [4,5,6,7,8,9,10,11,12];
 
 // =============================================
 // 词语和例句数据
@@ -1852,11 +1845,8 @@ function getCharWordSentence(ch) {
   };
 }
 
-function getDailyCount() {
+function getDailyCount(age) {
   if(debugMode)return ALL_CHARS.length;
-  // 检查当前用户是否有自定义目标
-  const p=getProfile();
-  if(p&&p.dailyGoal)return p.dailyGoal;
   return 10;
 }
 
@@ -1877,6 +1867,7 @@ function loadProfiles() {
         currentUser=p.currentUser||null;
         // 确保每个 profile 有必要的字段
         profiles.forEach(prof=>{
+          if(typeof prof.age!=='number')prof.age=6;
           if(!prof.learnedChars)prof.learnedChars={};
           if(!prof.dailyRecords)prof.dailyRecords=[];
           if(prof.todayState&&prof.todayState.date!==today())prof.todayState=null;
@@ -1900,35 +1891,13 @@ function loadProfiles() {
 function saveProfiles(){
   var data={profiles:profiles,currentUser:currentUser};
   localStorage.setItem('learningProfiles',JSON.stringify(data));
-}
-// 导出/导入数据（替代服务器备份）
-function exportData(){
-  var data={profiles:profiles,currentUser:currentUser};
-  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='hanzi-data-'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-function importData(evt){
-  var file=evt.target.files[0];
-  if(!file)return;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      var d=JSON.parse(e.target.result);
-      if(!d||!d.profiles||!Array.isArray(d.profiles)){alert('数据格式错误');return;}
-      if(!confirm('导入将会覆盖当前所有数据，确定继续吗？'))return;
-      profiles=d.profiles;
-      currentUser=d.currentUser||null;
-      localStorage.setItem('learningProfiles',JSON.stringify({profiles:profiles,currentUser:currentUser}));
-      renderProfiles();
-      alert('导入成功！');
-    }catch(err){alert('导入失败：'+err.message);}
-  };
-  reader.readAsText(file);
-  evt.target.value='';
+  // 自动备份到服务器（异步，不阻塞，失败不影响使用）
+  try{
+    var x=new XMLHttpRequest();
+    x.open('POST','/api/save',true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.send(JSON.stringify(data));
+  }catch(e){}
 }
 function getProfile(){return profiles.find(p=>p.name===currentUser)}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -1998,20 +1967,25 @@ function deleteProfile(name){
 
 function showAddProfile(){
   showPage('addProfilePage');
-  document.getElementById('newProfileName').textContent='';
-  // iOS Safari 需要延迟一下才能弹出键盘
-  setTimeout(function(){
-    document.getElementById('newProfileName').focus();
-  },300);
+  document.getElementById('newProfileName').value='';
+  renderAgeSelector();
 }
 
+function renderAgeSelector(){
+  const sel=document.getElementById('ageSelector');
+  sel.innerHTML=AGE_OPTIONS.map(a=>`<button class="age-btn${a===6?' selected':''}" onclick="selectAge(${a})">${a}岁</button>`).join('');
+}
+
+let selectedAge=6;
+function selectAge(a){selectedAge=a;document.querySelectorAll('.age-btn').forEach(b=>b.classList.toggle('selected',b.textContent==a+'岁'))}
+
 function addNewProfile(){
-  const name=document.getElementById('newProfileName').textContent.trim();
+  const name=document.getElementById('newProfileName').value.trim();
   if(!name){alert('请输入名字');return}
   if(profiles.find(p=>p.name===name)){alert('这个名字已存在');return}
   profiles.push({
     name,initial:name.charAt(0).toUpperCase(),color:PROFILE_COLORS[profiles.length%PROFILE_COLORS.length],
-    learnedChars:{},todayState:null,dailyRecords:[]
+    age:selectedAge,learnedChars:{},todayState:null,dailyRecords:[]
   });
   currentUser=name;saveProfiles();enterDashboard();
 }
@@ -2026,6 +2000,7 @@ function enterDashboard(){
   document.getElementById('dashAvatar').textContent=p.initial;
   document.getElementById('dashAvatar').style.background=p.color;
   document.getElementById('dashName').textContent=p.name;
+  document.getElementById('dashAge').textContent=p.age+'岁';
   document.getElementById('dateStr').textContent=getDateStr(new Date());
 
   // 初始化今日状态
@@ -2053,7 +2028,7 @@ function enterDashboard(){
 
 function initTodayState(p){
   const d=today();
-  const expectedCount=getDailyCount();
+  const expectedCount=getDailyCount(p.age);
   // 如果今日状态已存在且字数匹配，则跳过
   if(p.todayState&&p.todayState.date===d&&p.todayState.studyList&&p.todayState.studyList.length===expectedCount)return;
   // 生成今日学习列表
@@ -2064,7 +2039,7 @@ function initTodayState(p){
 
 function generateStudyList(p){
   const learned=p.learnedChars||{};
-  const count=getDailyCount();
+  const count=getDailyCount(p.age);
   // 调试模式：返回全部汉字
   if(debugMode)return ALL_CHARS.slice(0,count);
   // weak字（score<60）
@@ -2108,6 +2083,22 @@ function updateDashboard(){
     quizDesc.textContent='今日测验已完成';
     quizCard.onclick=null;
   }
+
+  // 游戏卡片 - 测验完成后解锁
+  const gameCard=document.getElementById('gameCard');
+  const gameLock=document.getElementById('gameLock');
+  const gameDesc=document.getElementById('gameDesc');
+  if(st.quizDone||debugMode){
+    gameCard.classList.remove('locked');
+    gameLock.textContent=debugMode&&!st.quizDone?'🔓':'🎮';
+    gameDesc.textContent='点击开始游戏！';
+    gameCard.onclick=startGame;
+  }else{
+    gameCard.classList.add('locked');
+    gameLock.textContent='🔒';
+    gameDesc.textContent='今日测验完成后可解锁';
+    gameCard.onclick=null;
+  }
 }
 
 // =============================================
@@ -2129,6 +2120,20 @@ function calcScore(mistakes){
   if(mistakes===2)return 40;
   return 30;
 }
+// 进入汉字俄罗斯方块游戏
+function startGame(){
+  const p=getProfile();if(!p)return;
+  // 保存当前学习进度
+  if(p.todayState&&p.todayState.currentIndex>0){
+    if(!p.dailyRecords)p.dailyRecords=[];
+    if(!p.dailyRecords.some(r=>r.date===today())){
+      p.dailyRecords.push({date:today(),learned:p.todayState.currentIndex,completed:p.todayState.quizDone||false});
+      saveProfiles();
+    }
+  }
+  window.location.href='tetris.html?user='+encodeURIComponent(p.name);
+}
+
 function startLearning(){
   const p=getProfile();if(!p)return;
   const st=p.todayState;
@@ -2308,24 +2313,14 @@ var _recMatchCount=0;
 
 function _createRecognizer(){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){
-    document.getElementById('quizReadResult').textContent='此浏览器不支持语音识别';
-    document.getElementById('quizReadResult').style.color='#e74c3c';
-    return;
-  }
+  if(!SR)return;
   if(_activeRec){try{_activeRec.onresult=null}catch(e){}try{_activeRec.abort()}catch(e){}}
   _activeRec=new SR();
   _activeRec.lang='zh-CN';
-  _activeRec.continuous=false;
+  _activeRec.continuous=true;
   _activeRec.interimResults=true;
   _activeRec.maxAlternatives=8;
   _recMatchCount=0;
-  _activeRec.onerror=function(e){
-    var hint=document.getElementById('quizReadHint');
-    hint.textContent='语音识别出错 ('+e.error+')，试试点跳过';
-    hint.style.color='#e74c3c';
-    document.getElementById('quizMicBtn').classList.remove('listening');
-  };
   _activeRec.onresult=function(e){
     var ra=document.getElementById('quizReadArea');
     if(ra.style.display==='none')return;
@@ -2366,6 +2361,8 @@ function startQuiz(){
   const p=getProfile();if(!p)return;
   quizCharIndex=0;
   showPage('quizPage');
+  _createRecognizer();
+  try{_activeRec.start()}catch(e){}
   renderQuizChar();
 }
 
@@ -2481,11 +2478,11 @@ function startQuizReading(){
   result.style.color='';
   btn.classList.add('listening');
   hint.textContent='正在听，大声读出来！';
-  hint.style.color='';
   readingAttempts=0;
-  // 每次点麦克风都重建 recognizer，确保从用户手势启动，不被 iOS 静默掐掉
-  _createRecognizer();
-  try{_activeRec.start()}catch(e){}
+  if(_recMatchCount>=4){
+    _createRecognizer();
+    try{_activeRec.start()}catch(e){}
+  }
 }
 
 function skipQuizReading(){
@@ -2766,8 +2763,6 @@ function verifyParentPwd(){
 }
 
 function hideParentPanel(){
-  if(_batchMode){_batchMode=false;_selectedChars={};}
-  document.getElementById('batchActions').style.display='none';
   document.getElementById('parentOverlay').classList.remove('visible');
 }
 
@@ -2805,65 +2800,6 @@ function doChangePwd(){
   alert('密码已更新');
 }
 
-// 批量操作
-var _batchMode = false;
-var _selectedChars = {};
-
-function toggleBatchMode(){
-  _batchMode = !_batchMode;
-  if(!_batchMode) _selectedChars = {};
-  document.getElementById('batchActions').style.display = _batchMode ? '' : 'none';
-  var btn=document.querySelector('[onclick="toggleBatchMode()"]');
-  if(btn)btn.className='pwd-change-btn'+(_batchMode?' batch-active':'');
-  renderParentPanel();
-}
-function toggleSelectChar(ch){
-  if(_selectedChars[ch]){delete _selectedChars[ch]}
-  else{_selectedChars[ch]=true}
-  renderParentPanel();
-}
-function batchSelectAll(){
-  ALL_CHARS.forEach(function(ch){_selectedChars[ch]=true});
-  renderParentPanel();
-}
-function batchDeselectAll(){
-  _selectedChars={};
-  renderParentPanel();
-}
-function batchSetScore(score){
-  var p=getProfile();if(!p)return;
-  var count=Object.keys(_selectedChars).length;
-  if(count===0){alert('请先选择要操作的字');return}
-  if(!confirm('将'+count+'个字的得分设为'+(score===100?'掌握(100分)':score===0?'未学(删除记录)':score+'分')+'，确定吗？'))return;
-  Object.keys(_selectedChars).forEach(function(ch){
-    if(score===0){
-      delete p.learnedChars[ch];
-    }else{
-      if(!p.learnedChars)p.learnedChars={};
-      if(!p.learnedChars[ch]){
-        p.learnedChars[ch]={score:score,learnedDate:today(),practiceScore:score};
-      }else{
-        p.learnedChars[ch].score=score;
-      }
-    }
-  });
-  _selectedChars={};
-  p.todayState=null;
-  initTodayState(p);
-  updateDashboard();
-  saveProfiles();
-  renderParentPanel();
-  alert('已更新'+count+'个字！');
-}
-function batchCustomScore(){
-  var p=getProfile();if(!p)return;
-  var count=Object.keys(_selectedChars).length;
-  if(count===0){alert('请先选择要操作的字');return}
-  var score=parseInt(prompt('请输入分数（0-100）：\n0=删除记录，100=掌握'));
-  if(isNaN(score)||score<0||score>100){alert('请输入0-100的数字');return}
-  batchSetScore(score);
-}
-
 function renderParentPanel(){
   const p=getProfile();
   if(!p){document.getElementById('parentOverlay').classList.remove('visible');return}
@@ -2875,7 +2811,7 @@ function renderParentPanel(){
   ui.innerHTML=`
     <div class="pu-avatar" style="background:${p.color}">${p.initial}</div>
     <div>
-      <div class="pu-name">${p.name}</div>
+      <div class="pu-name">${p.name}（${p.age}岁）</div>
       <div class="pu-stats">已学 ${learnedCount}/${total} 个字 · 需复习 ${weakCount} 个</div>
     </div>`;
   const grid=document.getElementById('parentChars');
@@ -2886,40 +2822,14 @@ function renderParentPanel(){
     else if(rec.score>=80){bg='#2ecc71';st=rec.score}
     else if(rec.score>=60){bg='#f9a825';st=rec.score}
     else{bg='#e74c3c';st=rec.score}
-    const sel=_batchMode&&_selectedChars[ch]?';box-shadow:inset 0 0 0 3px #333':'';
-    const click=_batchMode?`toggleSelectChar('${ch}')`:`editCharStatus('${ch}')`;
-    return `<div class="parent-char" style="background:${bg}${sel}" onclick="${click}">${ch}${st?`<span class="pc-score">${st}</span>`:''}</div>`;
+    return `<div class="parent-char" style="background:${bg}" onclick="editCharStatus('${ch}')">${ch}${st?`<span class="pc-score">${st}</span>`:''}</div>`;
   }).join('');
-  // 更新批量选择计数
-  var bc=document.getElementById('batchCount');
-  if(bc)bc.textContent='已选 '+Object.keys(_selectedChars).length+' 个字';
   // 更新调试按钮状态
   var dbgBtn=document.getElementById('debugToggle');
   if(dbgBtn){
     dbgBtn.textContent=debugMode?'🔧 调试模式：开':'🔧 调试模式：关';
     dbgBtn.className='debug-btn'+(debugMode?' on':'');
   }
-  // 加载单日目标
-  var goalInput=document.getElementById('dailyGoalInput');
-  if(goalInput)goalInput.value=p.dailyGoal||10;
-  // 确保批量操作区域状态正确
-  var ba=document.getElementById('batchActions');
-  if(ba)ba.style.display=_batchMode?'':'none';
-  var bb=document.querySelector('[onclick="toggleBatchMode()"]');
-  if(bb)bb.className='pwd-change-btn'+(_batchMode?' batch-active':'');
-}
-function setDailyGoal(){
-  var p=getProfile();if(!p)return;
-  var v=parseInt(document.getElementById('dailyGoalInput').value);
-  if(isNaN(v)||v<1||v>30){alert('请输入1-30之间的数字');return;}
-  p.dailyGoal=v;
-  // 重置并立即重新生成今日学习列表
-  p.todayState=null;
-  initTodayState(p);
-  updateDashboard();
-  saveProfiles();
-  alert('每日目标已设为'+v+'字');
-  renderParentPanel();
 }
 
 function editCharStatus(ch){
@@ -2977,8 +2887,20 @@ if(currentUser&&getProfile()){
   enterDashboard();
 }else{
   showPage('welcomePage');
+  // localStorage 为空 → 尝试从服务器备份恢复（异步）
+  !async function(){
+    try{
+      var res=await fetch('/api/load');
+      if(!res.ok)return;
+      var d=await res.json();
+      if(!d||!d.data||!d.data.profiles||!Array.isArray(d.data.profiles))return;
+      profiles=d.data.profiles;
+      currentUser=d.data.currentUser||null;
+      localStorage.setItem('learningProfiles',JSON.stringify({profiles:profiles,currentUser:currentUser}));
+      enterDashboard();
+    }catch(e){}
+  }();
 }
-
 </script>
 </body>
 </html>
