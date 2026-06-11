@@ -14,8 +14,8 @@ input{font-family:inherit;outline:none}
 
 /* 顶部栏 */
 #topBar{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:#fff;flex-shrink:0;min-height:44px;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
-#topBar .btn-back{background:#f0f2ff;color:#a18cd1;padding:6px 16px;border-radius:20px;font-size:.85em;font-weight:bold;transition:all .2s}
-#topBar .btn-back:hover{background:#e0e4ff}
+#topBar .btn-back{background:#6c5ce7;color:#fff;padding:6px 16px;border-radius:20px;font-size:.85em;font-weight:bold;transition:all .2s}
+#topBar .btn-back:hover{background:#5a4bd1}
 .stat-group{display:flex;gap:14px;align-items:center}
 .stat-item{text-align:center}
 .stat-item .num{font-size:1.15em;font-weight:bold;color:#333}
@@ -34,11 +34,11 @@ input{font-family:inherit;outline:none}
 #recogHint.active{display:block}
 
 /* 操作按钮 */
-#controls{display:flex;align-items:center;justify-content:center;gap:30px;padding:6px 16px;flex-shrink:0;background:#fff;box-shadow:0 -1px 6px rgba(0,0,0,0.04)}
-.ctrl-btn{width:58px;height:58px;border-radius:50%;background:#f0f2ff;color:#a18cd1;font-size:1.5em;display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation;font-weight:bold}
-.ctrl-btn:active{background:#e0e4ff;transform:scale(.9)}
+#controls{display:flex;align-items:center;justify-content:center;gap:24px;padding:8px 16px;flex-shrink:0;background:#fff;border-top:1px solid #e8e8e8;box-shadow:0 -2px 8px rgba(0,0,0,0.04)}
+.ctrl-btn{width:64px;height:64px;border-radius:50%;background:#f0f2ff;color:#6c5ce7;font-size:1.8em;display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation;font-weight:bold;border:2px solid #d5d0f5}
+.ctrl-btn:active{background:#d5d0f5;transform:scale(.92)}
 .ctrl-btn.disabled{opacity:.3;pointer-events:none}
-.ctrl-btn.drop-btn{background:#fff0f0;color:#e67e22}
+.ctrl-btn.drop-btn{background:#fff0f0;color:#e74c3c;border-color:#f5c0c0}
 
 /* 语音识别弹窗 - 跟随测验页风格 */
 #voiceOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100;display:none;align-items:center;justify-content:center}
@@ -135,9 +135,9 @@ input{font-family:inherit;outline:none}
 </div>
 
 <div id="controls">
-  <button class="ctrl-btn" id="btnLeft" ontouchstart="moveLeft()" onclick="moveLeft()">◀</button>
-  <button class="ctrl-btn drop-btn" id="btnDrop" ontouchstart="dropNow()" onclick="dropNow()">▼</button>
-  <button class="ctrl-btn" id="btnRight" ontouchstart="moveRight()" onclick="moveRight()">▶</button>
+  <button class="ctrl-btn" id="btnLeft" ontouchstart="moveLeft()" onclick="moveLeft()">⬅️</button>
+  <button class="ctrl-btn drop-btn" id="btnDrop" ontouchstart="dropNow()" onclick="dropNow()">⏬</button>
+  <button class="ctrl-btn" id="btnRight" ontouchstart="moveRight()" onclick="moveRight()">➡️</button>
 </div>
 
 <div id="voiceOverlay">
