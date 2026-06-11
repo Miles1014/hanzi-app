@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>每日汉字打卡 v1.0</title>
-<script src="hanzi-writer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.0/dist/hanzi-writer.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4f8;color:#333;min-height:100vh;overflow:hidden}
@@ -1891,13 +1891,6 @@ function loadProfiles() {
 function saveProfiles(){
   var data={profiles:profiles,currentUser:currentUser};
   localStorage.setItem('learningProfiles',JSON.stringify(data));
-  // 自动备份到服务器（异步，不阻塞，失败不影响使用）
-  try{
-    var x=new XMLHttpRequest();
-    x.open('POST','/api/save',true);
-    x.setRequestHeader('Content-Type','application/json');
-    x.send(JSON.stringify(data));
-  }catch(e){}
 }
 function getProfile(){return profiles.find(p=>p.name===currentUser)}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -2887,19 +2880,6 @@ if(currentUser&&getProfile()){
   enterDashboard();
 }else{
   showPage('welcomePage');
-  // localStorage 为空 → 尝试从服务器备份恢复（异步）
-  !async function(){
-    try{
-      var res=await fetch('/api/load');
-      if(!res.ok)return;
-      var d=await res.json();
-      if(!d||!d.data||!d.data.profiles||!Array.isArray(d.data.profiles))return;
-      profiles=d.data.profiles;
-      currentUser=d.data.currentUser||null;
-      localStorage.setItem('learningProfiles',JSON.stringify({profiles:profiles,currentUser:currentUser}));
-      enterDashboard();
-    }catch(e){}
-  }();
 }
 </script>
 </body>
