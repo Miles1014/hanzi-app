@@ -130,7 +130,7 @@ input{font-family:inherit;outline:none}
 .quiz-main{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 20px;gap:18px;min-height:0}
 .quiz-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:4px}
 .quiz-right{display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.quiz-bottom{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 20px 32px;flex-shrink:0;margin-top:auto}
+.quiz-bottom{display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 20px 14px;flex-shrink:0;margin-top:auto}
 .quiz-hint{font-size:.9em;color:#999;flex-shrink:0}
 .quiz-char-disp{font-size:3em;font-weight:bold;color:#555;flex-shrink:0;opacity:0;transition:opacity .3s}
 .quiz-char-disp.show{opacity:1}
@@ -289,7 +289,7 @@ input{font-family:inherit;outline:none}
   .quiz-left{align-items:center;width:auto;min-width:140px}
   .quiz-right{flex:1;max-width:360px}
   .quiz-body{gap:0;min-height:0}
-  .quiz-bottom{gap:2px;padding:0 12px 28px;margin-top:auto}
+  .quiz-bottom{gap:2px;padding:0 12px 12px;margin-top:auto}
   .quiz-canvas{width:300px;height:300px}
   .quiz-canvas svg{width:300px;height:300px}
   .quiz-char-disp{font-size:4.5em}
@@ -297,8 +297,8 @@ input{font-family:inherit;outline:none}
   .quiz-score{font-size:1.2em}
   .quiz-msg{font-size:.75em;min-height:16px}
   /* 大按钮 */
-  .quiz-mic-btn{width:80px;height:80px;font-size:2.2em}
-  .quiz-read-hint{font-size:.95em}
+  .quiz-mic-btn{width:64px;height:64px;font-size:1.8em}
+  .quiz-read-hint{font-size:.85em}
   .quiz-btn{padding:12px 44px;font-size:1.2em;border-radius:16px}
   .quiz-read-skip{font-size:.95em;padding:8px 18px}
   .quiz-btn-area{gap:14px}
@@ -2104,6 +2104,7 @@ let learningScore=0;
 let practiceRound=0;
 let wordListened=false;
 let sentenceListened=false;
+let animationPlayed=false;
 const PRACTICE_REQUIRED=2;
 
 // 阶梯扣分：0错=100, 1错=70, 2错=40, 3+错=30
@@ -2164,7 +2165,7 @@ function renderLearnChar(){
   if(practiceWriter){try{practiceWriter.cancelQuiz()}catch(e){}practiceWriter=null}
 
   practiceRound=0;learningMistakes=0;learningScore=0;
-  wordListened=false;sentenceListened=false;
+  wordListened=false;sentenceListened=false;animationPlayed=false;
   document.getElementById('learnNextBtn').disabled=true;
   document.getElementById('learnPlayBtn').disabled=false;
 
@@ -2217,11 +2218,13 @@ function createPracticeWriter(ch){
         practiceRound++;
         if(practiceRound>=PRACTICE_REQUIRED){
           learningScore=calcScore(learningMistakes);
-          const canFinish = wordListened && sentenceListened;
+          const canFinish = wordListened && sentenceListened && animationPlayed;
           document.getElementById('learnNextBtn').disabled=!canFinish;
           let msg=`第${currentRound}遍完成！练习得分${learningScore}。`;
-          if(!canFinish)msg+=' 先点击🔊听完词语和句子';
-          else msg+=' 可以点完成';
+          if(!canFinish){
+            if(!animationPlayed)msg+=' 先播放笔顺动画';
+            else msg+=' 先点击🔊听完词语和句子';
+          }else msg+=' 可以点完成';
           document.getElementById('learnStatusText').textContent=msg;
         }else{
           document.getElementById('learnStatusText').textContent=
@@ -2286,8 +2289,13 @@ function playLearnAnim(){
   setTimeout(()=>{
     learnWriter.animateCharacter({
       onComplete:()=>{
+        animationPlayed=true;
+        // 检查是否满足所有条件，自动解锁完成按钮
+        if(practiceRound>=PRACTICE_REQUIRED && wordListened && sentenceListened){
+          document.getElementById('learnNextBtn').disabled=false;
+        }
         document.getElementById('learnStatusText').textContent=
-          document.getElementById('learnNextBtn').disabled?'动画播完了，继续练习写字':'动画播完了';
+          document.getElementById('learnNextBtn').disabled?'动画播完了，继续完成其他步骤':'动画播完了，可以点完成';
       }
     });
     document.getElementById('learnStatusText').textContent='正在播放笔顺动画...';
@@ -2617,11 +2625,13 @@ function checkListenDone(){
   if(wordListened&&sentenceListened){
     hint.textContent='✅ 已听完词语和句子';
     hint.style.color='#2ecc71';
-    // 如果练习已学完，解锁完成按钮
-    if(practiceRound>=PRACTICE_REQUIRED){
+    // 如果练习已学完 + 动画已播放，解锁完成按钮
+    if(practiceRound>=PRACTICE_REQUIRED && animationPlayed){
       document.getElementById('learnNextBtn').disabled=false;
       document.getElementById('learnStatusText').textContent=
         `第${practiceRound}遍完成！练习得分${learningScore}。可以点完成`;
+    }else if(practiceRound>=PRACTICE_REQUIRED && !animationPlayed){
+      document.getElementById('learnStatusText').textContent='练习完成，先播放笔顺动画';
     }
   }else{
     const remaining=[];

@@ -3,186 +3,161 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>汉字俄罗斯方块 🎮</title>
+<title>汉字俄罗斯方块</title>
 <script src="pinyin-data.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.0/dist/hanzi-writer.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#1a1a2e;color:#eee;min-height:100vh;overflow:hidden;display:flex;flex-direction:column}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(180deg,#e8f0fe 0%,#fdf6f0 100%);color:#333;min-height:100vh;overflow:hidden;display:flex;flex-direction:column}
 button{cursor:pointer;font-family:inherit;border:none;outline:none;touch-action:manipulation}
 input{font-family:inherit;outline:none}
 
-/* ===== 顶部状态栏 ===== */
-#topBar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#16213e;flex-shrink:0;min-height:48px}
-#topBar .btn-back{background:rgba(255,255,255,0.1);color:#ccc;padding:6px 14px;border-radius:20px;font-size:.85em;transition:all .2s}
-#topBar .btn-back:hover{background:rgba(255,255,255,0.2);color:#fff}
-#topBar .btn-settings{background:rgba(255,255,255,0.08);color:#888;width:32px;height:32px;border-radius:50%;font-size:1em;display:flex;align-items:center;justify-content:center;transition:all .2s}
-.stat-group{display:flex;gap:12px;align-items:center}
+/* 顶部栏 */
+#topBar{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:#fff;flex-shrink:0;min-height:44px;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+#topBar .btn-back{background:#f0f2ff;color:#a18cd1;padding:6px 16px;border-radius:20px;font-size:.85em;font-weight:bold;transition:all .2s}
+#topBar .btn-back:hover{background:#e0e4ff}
+.stat-group{display:flex;gap:14px;align-items:center}
 .stat-item{text-align:center}
-.stat-item .num{font-size:1.2em;font-weight:bold;color:#fff}
-.stat-item .lbl{font-size:.65em;color:#888}
+.stat-item .num{font-size:1.15em;font-weight:bold;color:#333}
+.stat-item .lbl{font-size:.6em;color:#999}
 .stat-item .num.elim{color:#2ecc71}
-.stat-item .num.stacked{color:#e74c3c}
+.stat-item .num.stacked{color:#e67e22}
+#topBar .btn-settings{background:#f5f5f5;color:#888;width:30px;height:30px;border-radius:50%;font-size:.9em;display:flex;align-items:center;justify-content:center;transition:all .2s}
 
-/* ===== 游戏区 ===== */
-#gameArea{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;position:relative;overflow:hidden;min-height:0}
-#canvasWrapper{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;max-width:420px;max-height:640px}
-#gameCanvas{display:block;border-radius:8px;background:#0f3460;width:100%;height:100%}
+/* 游戏区 */
+#gameArea{flex:1;display:flex;align-items:center;justify-content:center;padding:4px;overflow:hidden;min-height:0}
+#canvasWrapper{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+#gameCanvas{display:block;border-radius:12px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.06);width:auto;height:auto;max-width:100%;max-height:100%}
 
-/* ===== 识别区提示 ===== */
-#recogIndicator{position:absolute;left:10%;right:10%;height:28%;top:35%;border:2px dashed rgba(255,193,7,0.4);border-radius:8px;pointer-events:none;display:none;align-items:center;justify-content:center}
-#recogIndicator.active{display:flex}
-#recogIndicator .label{font-size:.7em;color:rgba(255,193,7,0.5);letter-spacing:2px}
+/* 识别区提示 */
+#recogHint{position:absolute;right:10px;top:40%;transform:translateY(-50%);background:rgba(255,255,255,0.85);padding:6px 10px;border-radius:8px;font-size:.7em;color:#a18cd1;pointer-events:none;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.08);white-space:nowrap}
+#recogHint.active{display:block}
 
-/* ===== 操作按钮 ===== */
-#controls{display:flex;align-items:center;justify-content:center;gap:24px;padding:8px 16px;flex-shrink:0;background:#16213e}
-.ctrl-btn{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.1);color:#ddd;font-size:1.6em;display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation}
-.ctrl-btn:active{background:rgba(255,255,255,0.25);transform:scale(.92)}
+/* 操作按钮 */
+#controls{display:flex;align-items:center;justify-content:center;gap:30px;padding:6px 16px;flex-shrink:0;background:#fff;box-shadow:0 -1px 6px rgba(0,0,0,0.04)}
+.ctrl-btn{width:58px;height:58px;border-radius:50%;background:#f0f2ff;color:#a18cd1;font-size:1.5em;display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation;font-weight:bold}
+.ctrl-btn:active{background:#e0e4ff;transform:scale(.9)}
 .ctrl-btn.disabled{opacity:.3;pointer-events:none}
-.ctrl-btn.drop-btn{background:rgba(231,76,60,0.3);color:#e74c3c}
+.ctrl-btn.drop-btn{background:#fff0f0;color:#e67e22}
 
-/* ===== 语音识别弹窗 ===== */
-#voiceOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:none;align-items:center;justify-content:center}
+/* 语音识别弹窗 - 跟随测验页风格 */
+#voiceOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100;display:none;align-items:center;justify-content:center}
 #voiceOverlay.visible{display:flex}
-.voice-box{background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:28px 24px;width:320px;text-align:center}
-.voice-box .char{font-size:4em;font-weight:bold;color:#fff;margin-bottom:8px}
-.voice-box .pinyin{font-size:1.1em;color:#f9a825;margin-bottom:6px}
-.voice-box .hint{font-size:.85em;color:#888;margin-bottom:16px}
-.voice-box .mic-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);display:flex;align-items:center;justify-content:center;font-size:2em;margin:0 auto 12px;transition:all .3s}
-.voice-box .mic-icon.listening{animation:micPulse .6s infinite alternate;box-shadow:0 0 30px rgba(161,140,209,0.5)}
+.voice-box{background:#fff;border-radius:24px;padding:26px 22px;width:310px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.15)}
+.voice-box .char{font-size:4em;font-weight:bold;color:#333;margin-bottom:4px}
+.voice-box .pinyin{font-size:1.2em;color:#a18cd1;margin-bottom:2px;font-weight:bold}
+.voice-box .hint{font-size:.85em;color:#999;margin-bottom:12px}
+.voice-box .mic-icon{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);display:flex;align-items:center;justify-content:center;font-size:1.8em;margin:0 auto 8px;transition:all .3s;color:#fff}
+.voice-box .mic-icon.listening{animation:micPulse .6s infinite alternate;box-shadow:0 0 28px rgba(161,140,209,0.5)}
 @keyframes micPulse{from{transform:scale(1)}to{transform:scale(1.15)}}
-.voice-box .status-text{font-size:.9em;color:#aaa;min-height:1.4em}
-.voice-box .timer{font-size:2em;font-weight:bold;color:#f9a825;margin-top:8px}
-.voice-box .btn-skip{background:transparent;color:#666;padding:8px 20px;border-radius:10px;font-size:.85em;margin-top:12px;border:1px solid rgba(255,255,255,0.1)}
-.voice-box .result-correct{color:#2ecc71;font-size:1.2em;font-weight:bold;margin-top:8px}
-.voice-box .result-wrong{color:#e74c3c;font-size:1.2em;font-weight:bold;margin-top:8px}
+.voice-box .status-text{font-size:.85em;color:#888;min-height:1.3em}
+.voice-box .timer{font-size:1.8em;font-weight:bold;color:#a18cd1;margin-top:4px}
+.voice-box .btn-skip{background:transparent;color:#bbb;padding:6px 16px;border-radius:10px;font-size:.8em;margin-top:8px;text-decoration:underline}
+.voice-box .result-correct{color:#2ecc71;font-size:1.2em;font-weight:bold;margin-top:6px}
+.voice-box .result-wrong{color:#e67e22;font-size:1.2em;font-weight:bold;margin-top:6px}
 
-/* ===== 书写加分弹窗 ===== */
-#writingOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;display:none;align-items:center;justify-content:center}
+/* 书写弹窗 */
+#writingOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;display:none;align-items:center;justify-content:center}
 #writingOverlay.visible{display:flex}
-.write-box{background:#fff;border-radius:24px;padding:20px;width:340px;max-width:90vw;text-align:center;color:#333}
-.write-box h3{font-size:1.1em;color:#555;margin-bottom:4px}
-.write-box .write-char{font-size:3em;font-weight:bold;color:#a18cd1;margin-bottom:8px}
-.write-box .write-hint{font-size:.8em;color:#999;margin-bottom:12px}
-#writeCanvas{width:200px;height:200px;border:2px solid #e0e0e0;border-radius:12px;margin:0 auto 12px;overflow:hidden}
-#writeCanvas svg{display:block}
+.write-box{background:#fff;border-radius:24px;padding:20px;width:320px;max-width:90vw;text-align:center;color:#333;box-shadow:0 10px 40px rgba(0,0,0,0.15)}
+.write-box h3{font-size:1.05em;color:#555;margin-bottom:2px}
+.write-box .write-char{font-size:2.8em;font-weight:bold;color:#a18cd1;margin-bottom:4px}
+.write-box .write-hint{font-size:.78em;color:#999;margin-bottom:8px}
+#writeCanvas{width:200px;height:200px;border:2px solid #e8e8e8;border-radius:12px;margin:0 auto 8px;overflow:hidden}
 .write-btn-group{display:flex;gap:10px;justify-content:center}
-.write-btn{padding:8px 24px;border-radius:12px;font-size:.9em;font-weight:bold;transition:all .15s}
+.write-btn{padding:8px 22px;border-radius:12px;font-size:.9em;font-weight:bold;transition:all .15s}
 .write-btn.skip{background:#f0f0f0;color:#888}
-.write-btn.skip:hover{background:#e0e0e0}
 .write-btn.confirm{background:#2ecc71;color:#fff;display:none}
-.write-btn.bonus-result{font-size:1em;padding:10px 28px;display:none}
+.write-btn.bonus-result{display:none;padding:10px 26px}
 .write-btn.bonus-result.earned{background:#2ecc71;color:#fff;display:inline-block}
-.write-btn.bonus-result.missed{background:#e74c3c;color:#fff;display:inline-block}
 
-/* ===== 游戏结束弹窗 ===== */
-#gameOverOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:300;display:none;align-items:center;justify-content:center}
+/* 游戏结束弹窗 */
+#gameOverOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:center;justify-content:center}
 #gameOverOverlay.visible{display:flex}
-.go-box{background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:28px 24px;width:340px;max-width:90vw;text-align:center}
-.go-box h2{font-size:1.6em;color:#f9a825;margin-bottom:4px}
-.go-box .go-sub{font-size:.85em;color:#888;margin-bottom:16px}
-.go-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
-.go-stat{background:rgba(255,255,255,0.05);border-radius:12px;padding:10px;text-align:center}
-.go-stat .num{font-size:1.4em;font-weight:bold;color:#fff}
+.go-box{background:#fff;border-radius:24px;padding:26px 22px;width:330px;max-width:90vw;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.15)}
+.go-box h2{font-size:1.5em;color:#a18cd1;margin-bottom:2px}
+.go-box .go-sub{font-size:.85em;color:#999;margin-bottom:12px}
+.go-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.go-stat{background:#f8f9ff;border-radius:12px;padding:8px}
+.go-stat .num{font-size:1.5em;font-weight:bold;color:#555}
 .go-stat .num.elim{color:#2ecc71}
-.go-stat .num.stacked{color:#e74c3c}
-.go-stat .lbl{font-size:.7em;color:#777}
-.go-box .go-weak{font-size:.8em;color:#aaa;margin-bottom:14px;min-height:1.2em}
-.go-box .go-weak b{color:#e74c3c}
+.go-stat .num.stacked{color:#e67e22}
+.go-stat .lbl{font-size:.65em;color:#999}
+.go-box .go-weak{font-size:.78em;color:#999;margin-bottom:10px;min-height:1.2em}
 .go-btns{display:flex;gap:10px;justify-content:center}
-.go-btn{padding:10px 28px;border-radius:14px;font-size:.95em;font-weight:bold;transition:all .2s}
-.go-btn.primary{background:#f9a825;color:#fff}
-.go-btn.primary:hover{background:#e8960f}
-.go-btn.secondary{background:rgba(255,255,255,0.1);color:#ccc}
-.go-btn.secondary:hover{background:rgba(255,255,255,0.2)}
+.go-btn{padding:10px 26px;border-radius:14px;font-size:.95em;font-weight:bold;transition:all .2s}
+.go-btn.primary{background:linear-gradient(135deg,#a18cd1,#fbc2eb);color:#fff}
+.go-btn.secondary{background:#f0f0f0;color:#666}
 
-/* ===== 家长设置弹窗 ===== */
-#settingsOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:150;display:none;align-items:center;justify-content:center}
+/* 设置弹窗 */
+#settingsOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150;display:none;align-items:center;justify-content:center}
 #settingsOverlay.visible{display:flex}
-.settings-box{background:#fff;border-radius:24px;padding:22px 20px;width:340px;max-width:90vw;text-align:left;color:#333}
-.settings-box h3{font-size:1.1em;color:#555;margin-bottom:14px;text-align:center}
-.setting-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.settings-box{background:#fff;border-radius:24px;padding:20px;width:320px;max-width:90vw;color:#333;box-shadow:0 10px 40px rgba(0,0,0,0.15)}
+.settings-box h3{font-size:1.1em;color:#555;margin-bottom:12px;text-align:center}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0}
 .setting-row:last-child{border-bottom:none}
-.setting-row .label{font-size:.9em;color:#666}
-.setting-row .value{font-size:.9em;color:#333;font-weight:bold}
-.setting-row select{padding:4px 10px;border-radius:8px;border:1px solid #ddd;font-size:.85em;background:#fafafa}
-.setting-row input[type="range"]{width:100px}
-.settings-btns{display:flex;gap:10px;margin-top:14px;justify-content:center}
-.settings-btn{padding:8px 28px;border-radius:10px;font-size:.9em;font-weight:bold;transition:all .15s}
+.setting-row .label{font-size:.85em;color:#666}
+.setting-row .value{font-size:.85em;font-weight:bold}
+.setting-row select{padding:4px 10px;border-radius:8px;border:1px solid #ddd;font-size:.82em;background:#fafafa}
+.setting-row input[type=range]{width:90px}
+.settings-btns{display:flex;gap:10px;margin-top:12px;justify-content:center}
+.settings-btn{padding:8px 26px;border-radius:10px;font-size:.9em;font-weight:bold}
 .settings-btn.save{background:#a18cd1;color:#fff}
-.settings-btn.save:hover{background:#8e7bc2}
 .settings-btn.cancel{background:#f0f0f0;color:#666}
 
-/* ===== iPad 适配 ===== */
+/* iPad 适配 */
 @media(min-width:768px){
-  #controls{gap:32px;padding:12px 24px}
-  .ctrl-btn{width:64px;height:64px;font-size:1.8em}
-  #canvasWrapper{max-width:500px;max-height:700px}
+  #controls{gap:38px;padding:8px 20px}
+  .ctrl-btn{width:68px;height:68px;font-size:1.8em}
   .voice-box{width:360px}
-  .write-box{width:380px}
+  .voice-box .char{font-size:5em}
+  .write-box{width:360px}
 }
-
-/* ===== 页面加载前隐藏 ===== */
-#gameArea:empty + * {display:none}
 </style>
 </head>
 <body>
 
-<!-- 顶部状态栏 -->
 <div id="topBar">
   <button class="btn-back" onclick="backToDashboard()">← 返回</button>
   <div class="stat-group">
-    <div class="stat-item">
-      <div class="num elim" id="elimCount">0</div>
-      <div class="lbl">消除</div>
-    </div>
-    <div class="stat-item">
-      <div class="num" id="scoreCount">0</div>
-      <div class="lbl">得分</div>
-    </div>
-    <div class="stat-item">
-      <div class="num stacked" id="stackedCount">0</div>
-      <div class="lbl">堆积</div>
-    </div>
+    <div class="stat-item"><div class="num elim" id="elimCount">0</div><div class="lbl">消除</div></div>
+    <div class="stat-item"><div class="num" id="scoreCount">0</div><div class="lbl">得分</div></div>
+    <div class="stat-item"><div class="num stacked" id="stackedCount">0</div><div class="lbl">堆积</div></div>
   </div>
   <button class="btn-settings" onclick="openSettings()">⚙</button>
 </div>
 
-<!-- 游戏区 -->
 <div id="gameArea">
   <div id="canvasWrapper">
     <canvas id="gameCanvas"></canvas>
-    <div id="recogIndicator"><span class="label">▼ 识别区 ▼</span></div>
+    <div id="recogHint">识别中...</div>
   </div>
 </div>
 
-<!-- 操作按钮 -->
 <div id="controls">
-  <button class="ctrl-btn" id="btnLeft" ontouchstart="moveLeft()" onclick="moveLeft()" onkeydown="">◀</button>
+  <button class="ctrl-btn" id="btnLeft" ontouchstart="moveLeft()" onclick="moveLeft()">◀</button>
   <button class="ctrl-btn drop-btn" id="btnDrop" ontouchstart="dropNow()" onclick="dropNow()">▼</button>
   <button class="ctrl-btn" id="btnRight" ontouchstart="moveRight()" onclick="moveRight()">▶</button>
 </div>
 
-<!-- 语音识别弹窗 -->
 <div id="voiceOverlay">
   <div class="voice-box">
     <div class="char" id="voiceChar">字</div>
-    <div class="pinyin" id="voicePinyin">zì</div>
+    <div class="pinyin" id="voicePinyin">zi</div>
     <div class="hint">请你大声读出来</div>
     <div class="mic-icon" id="micIcon">🎤</div>
-    <div class="status-text" id="voiceStatus">正在听...</div>
-    <div class="timer" id="voiceTimer">5</div>
+    <div class="status-text" id="voiceStatus">正在准备...</div>
+    <div class="timer" id="voiceTimer">--</div>
     <div id="voiceResult"></div>
-    <button class="btn-skip" id="voiceSkipBtn" onclick="skipVoice()">跳过这个字 →</button>
+    <button class="btn-skip" id="voiceSkipBtn" onclick="skipVoice()">跳过 →</button>
   </div>
 </div>
 
-<!-- 书写加分弹窗 -->
 <div id="writingOverlay">
   <div class="write-box">
     <h3>✏️ 写一写 赚加分</h3>
     <div class="write-char" id="writeChar">字</div>
-    <div class="write-hint">按笔顺写出这个字，正确 +5 分</div>
+    <div class="write-hint">按笔顺写出这个字，写好了 +5 分</div>
     <div id="writeCanvas"></div>
     <div id="writeResult"></div>
     <div class="write-btn-group">
@@ -193,26 +168,16 @@ input{font-family:inherit;outline:none}
   </div>
 </div>
 
-<!-- 游戏结束弹窗 -->
 <div id="gameOverOverlay">
   <div class="go-box">
     <h2>游戏结束</h2>
     <div class="go-sub" id="goUser">小朋友</div>
     <div class="go-stats">
-      <div class="go-stat">
-        <div class="num elim" id="goElim">0</div>
-        <div class="lbl">消除</div>
-      </div>
-      <div class="go-stat">
-        <div class="num" id="goScore">0</div>
-        <div class="lbl">总分</div>
-      </div>
-      <div class="go-stat">
-        <div class="num stacked" id="goStacked">0</div>
-        <div class="lbl">堆积</div>
-      </div>
+      <div class="go-stat"><div class="num elim" id="goElim">0</div><div class="lbl">消除</div></div>
+      <div class="go-stat"><div class="num" id="goScore">0</div><div class="lbl">总分</div></div>
+      <div class="go-stat"><div class="num stacked" id="goStacked">0</div><div class="lbl">堆积</div></div>
     </div>
-    <div class="go-weak" id="goWeak">表现不错！</div>
+    <div class="go-weak" id="goWeak"></div>
     <div class="go-btns">
       <button class="go-btn primary" onclick="restartGame()">再来一局</button>
       <button class="go-btn secondary" onclick="backToDashboard()">返回首页</button>
@@ -220,1004 +185,435 @@ input{font-family:inherit;outline:none}
   </div>
 </div>
 
-<!-- 家长设置弹窗 -->
 <div id="settingsOverlay">
   <div class="settings-box">
     <h3>⚙ 游戏设置</h3>
-    <div class="setting-row">
-      <span class="label">下落速度</span>
-      <div>
-        <input type="range" id="setSpeed" min="1" max="5" value="3" oninput="updateSettingDisplay('speed')">
-        <span class="value" id="setSpeedVal">中</span>
-      </div>
-    </div>
-    <div class="setting-row">
-      <span class="label">消除方式</span>
-      <select id="setMode" onchange="updateSettingDisplay('mode')">
-        <option value="voice">仅语音</option>
-        <option value="both" selected>语音+书写加分</option>
-      </select>
-    </div>
-    <div class="setting-row">
-      <span class="label">选字范围</span>
-      <select id="setRange">
-        <option value="mastered" selected>已掌握 (≥80分)</option>
-        <option value="weak">需复习 (&lt;60分)</option>
-        <option value="all">全部已学</option>
-      </select>
-    </div>
-    <div class="setting-row">
-      <span class="label">识别超时</span>
-      <select id="setTimeout">
-        <option value="3">3 秒</option>
-        <option value="5" selected>5 秒</option>
-        <option value="8">8 秒</option>
-        <option value="10">10 秒</option>
-      </select>
-    </div>
-    <div class="settings-btns">
-      <button class="settings-btn cancel" onclick="closeSettings()">取消</button>
-      <button class="settings-btn save" onclick="saveSettings()">保存</button>
-    </div>
+    <div class="setting-row"><span class="label">下落速度</span><div><input type="range" id="setSpeed" min="1" max="5" value="3" oninput="updateSettingDisplay('speed')"><span class="value" id="setSpeedVal">中</span></div></div>
+    <div class="setting-row"><span class="label">消除方式</span><select id="setMode"><option value="voice">仅语音</option><option value="both" selected>语音+书写加分</option></select></div>
+    <div class="setting-row"><span class="label">选字范围</span><select id="setRange"><option value="mastered" selected>已掌握(≥80)</option><option value="weak">需复习(&lt;60)</option><option value="all">全部已学</option></select></div>
+    <div class="setting-row"><span class="label">识别超时</span><select id="setTimeout"><option value="3">3 秒</option><option value="5" selected>5 秒</option><option value="8">8 秒</option><option value="10">10 秒</option></select></div>
+    <div class="settings-btns"><button class="settings-btn cancel" onclick="closeSettings()">取消</button><button class="settings-btn save" onclick="saveSettings()">保存</button></div>
   </div>
 </div>
 
 <script>
-// =============================================
-// 拼音格式化（将 yi1 转为 yī）
-// =============================================
-var TONE_MARKS = { '1': '\u{304}', '2': '\u{301}', '3': '\u{30C}', '4': '\u{300}' };
-var TONE_VOWELS = { 'a':1,'e':1,'i':1,'o':1,'u':1,'v':1,
-  'A':1,'E':1,'I':1,'O':1,'U':1,'V':1 };
-
-function formatPinyin(py) {
-  if (!py) return '';
-  var tone = py.match(/[0-4]$/);
-  if (!tone) return py;
-  var base = py.slice(0, -1);
-  var t = tone[0];
-  if (t === '0' || t === '5') return base; // neutral tone
-  // Find the vowel to mark
-  var mark = TONE_MARKS[t];
-  // Find last vowel (or use standard pinyin rules)
-  var idx = -1;
-  // Priority: look for 'a' or 'e' first (pinyin rule: a/e get the mark)
-  if (base.includes('a')) idx = base.lastIndexOf('a');
-  else if (base.includes('e')) idx = base.lastIndexOf('e');
-  else {
-    // Otherwise mark the last vowel
-    for (var i = base.length - 1; i >= 0; i--) {
-      if (TONE_VOWELS[base[i]]) { idx = i; break; }
-    }
-  }
-  if (idx < 0) return base;
-  var result = base.slice(0, idx) + base[idx] + mark + base.slice(idx + 1);
-  // Replace 'v' with 'ü' for display
-  result = result.replace(/v/g, '\u{FC}').replace(/V/g, '\u{DC}');
-  return result;
+// ============================================
+// 拼音格式化
+// ============================================
+var TONE_MARKS={'1':'\u0304','2':'\u0301','3':'\u030C','4':'\u0300'};
+function formatPinyin(py){
+  if(!py)return'';
+  var tone=py.match(/[0-4]$/);
+  if(!tone)return py;
+  var base=py.slice(0,-1),t=tone[0];
+  if(t==='0'||t==='5')return base;
+  var mark=TONE_MARKS[t],idx=-1;
+  if(base.includes('a'))idx=base.lastIndexOf('a');
+  else if(base.includes('e'))idx=base.lastIndexOf('e');
+  else{for(var i=base.length-1;i>=0;i--){if('aeiouvAEIOUV'.indexOf(base[i])>=0){idx=i;break}}}
+  if(idx<0)return base;
+  var r=base.slice(0,idx)+base[idx]+mark+base.slice(idx+1);
+  return r.replace(/v/g,'\u00FC').replace(/V/g,'\u00DC');
 }
 
-// =============================================
-// 游戏配置
-// =============================================
-const COLS = 6;
-const ROWS = 14;
-const RECOG_ROW = 5; // Row where recognition zone starts (from top, 0-indexed)
-const RECOG_HEIGHT = 2; // How many rows the zone covers
-const STACK_ROW = 7; // Row where stacking starts
+// ============================================
+// 配置、状态
+// ============================================
+var COLS=6,ROWS=14,RECOG_ROW=5,RECOG_HEIGHT=2;
+var SPEED_MAP={1:1200,2:900,3:700,4:500,5:350},SPEED_NAMES={1:'很慢',2:'慢',3:'中',4:'快',5:'很快'};
+var gameSettings={speed:3,mode:'both',charRange:'mastered',timeout:5};
+var canvas,ctx,canvasW=0,canvasH=0,cellW=0,cellH=0;
+var grid=[],fallingChar=null,gameState='IDLE';
+var score=0,eliminated=0,stackedCount=0,totalProcessed=0;
+var animFrameId=null,lastDropTime=0,lastFrameTime=0;
+var recognizer=null,_timerInterval=null,_safetyTimer=null;
+var writeCharData=null,writeWriter=null;
+var charQueue=[],currentProfile=null,currentUser='';
+var gameResultSaved=false,droppedChars=[];
 
-const SPEED_MAP = {1:1200, 2:900, 3:700, 4:500, 5:350}; // ms per row drop
-const SPEED_NAMES = {1:'很慢', 2:'慢', 3:'中', 4:'快', 5:'很快'};
-
-// Game settings (adjustable in parent mode)
-let gameSettings = {
-  speed: 3,
-  mode: 'both', // 'voice' or 'both'
-  charRange: 'mastered', // 'mastered', 'weak', 'all'
-  timeout: 5 // seconds
-};
-
-// =============================================
-// Game state
-// =============================================
-let canvas, ctx;
-let canvasW = 0, canvasH = 0;
-let cellW = 0, cellH = 0;
-
-// Grid: 2D array COLS×ROWS, each cell = null or {char, type:'stacked'}
-let grid = [];
-let fallingChar = null; // {char, col, row, pinyin}
-let gameState = 'IDLE'; // IDLE, FALLING, RECOGNIZING, SUCCESS, FAIL, WRITING, GAME_OVER
-let score = 0;
-let eliminated = 0;
-let stackedCount = 0;
-let totalProcessed = 0;
-let animFrameId = null;
-let lastDropTime = 0;
-let recognizer = null;
-let recognitionTimeout = null;
-let writeCharData = null; // Current character data for writing bonus
-let writeWriter = null;
-let charQueue = [];
-let currentProfile = null;
-let currentUser = '';
-let gameResultSaved = false;
-let settingUpdateTimer = null;
-
-// Performance track
-let droppedChars = []; // chars that were stacked (failed)
-let lastFrameTime = 0;
-
-// =============================================
+// ============================================
 // 初始化
-// =============================================
-function initGame() {
-  canvas = document.getElementById('gameCanvas');
-  ctx = canvas.getContext('2d');
-
-  // Load current user from localStorage
-  loadUserAndProfile();
-
-  // Load settings from localStorage
-  loadSettings();
-
-  // Init grid
-  initGrid();
-
-  // Resize canvas
-  resizeCanvas();
-
-  // Build char queue
-  buildCharQueue();
-
-  // Start game
-  startFalling();
-
-  // Start game loop
-  lastFrameTime = performance.now();
-  lastDropTime = lastFrameTime;
-  gameLoop(lastFrameTime);
+// ============================================
+function initGame(){
+  canvas=document.getElementById('gameCanvas');
+  ctx=canvas.getContext('2d');
+  loadUserAndProfile();loadSettings();initGrid();resizeCanvas();
+  buildCharQueue();startFalling();
+  lastFrameTime=performance.now();lastDropTime=lastFrameTime;
+  animFrameId=requestAnimationFrame(gameLoop);
 }
 
-function loadUserAndProfile() {
-  try {
-    const data = JSON.parse(localStorage.getItem('learningProfiles') || '[]');
-    // Find current user - use the first profile that was last active
-    // First try url param
-    const urlParams = new URLSearchParams(window.location.search);
-    currentUser = urlParams.get('user') || '';
-
-    if (!currentUser && data.length > 0) {
-      currentUser = data[0].name;
-    }
-    // Try to find the user that has a todayState
-    if (!currentUser && data.length > 0) {
-      for (const p of data) {
-        if (p.todayState) { currentUser = p.name; break; }
-      }
-    }
-    if (!currentUser && data.length > 0) {
-      currentUser = data[0].name;
-    }
-    currentProfile = data.find(p => p.name === currentUser) || data[0];
-    if (currentProfile) currentUser = currentProfile.name;
-  } catch(e) {
-    currentProfile = null;
-    currentUser = '';
-  }
+function loadUserAndProfile(){
+  try{
+    var data=JSON.parse(localStorage.getItem('learningProfiles')||'[]');
+    var params=new URLSearchParams(window.location.search);
+    currentUser=params.get('user')||'';
+    if(!currentUser&&data.length>0){currentUser=data[0].name}
+    for(var i=0;i<data.length;i++){if(data[i].todayState){currentUser=data[i].name;break}}
+    if(!currentUser&&data.length>0)currentUser=data[0].name;
+    currentProfile=data.find(function(p){return p.name===currentUser})||data[0];
+    if(currentProfile)currentUser=currentProfile.name;
+  }catch(e){currentProfile=null;currentUser='';}
 }
 
-function loadSettings() {
-  try {
-    const saved = localStorage.getItem('tetrisSettings');
-    if (saved) {
-      const s = JSON.parse(saved);
-      Object.assign(gameSettings, s);
-      // Update UI selectors
-      document.getElementById('setSpeed').value = s.speed || 3;
-      document.getElementById('setMode').value = s.mode || 'both';
-      document.getElementById('setRange').value = s.charRange || 'mastered';
-      document.getElementById('setTimeout').value = s.timeout || 5;
-      updateSettingDisplay('speed');
-    }
-  } catch(e) {}
+function loadSettings(){
+  try{var s=JSON.parse(localStorage.getItem('tetrisSettings')||'{}');Object.assign(gameSettings,s);document.getElementById('setSpeed').value=s.speed||3;document.getElementById('setMode').value=s.mode||'both';document.getElementById('setRange').value=s.charRange||'mastered';document.getElementById('setTimeout').value=s.timeout||5;updateSettingDisplay('speed');}catch(e){}
 }
 
-function saveSettingsToStorage() {
-  localStorage.setItem('tetrisSettings', JSON.stringify(gameSettings));
+function saveSettingsToStorage(){localStorage.setItem('tetrisSettings',JSON.stringify(gameSettings));}
+function initGrid(){grid=[];for(var c=0;c<COLS;c++){grid[c]=[];for(var r=0;r<ROWS;r++){grid[c][r]=null}}}
+
+function resizeCanvas(){
+  var w=window.innerWidth-8,topH=document.getElementById('topBar').offsetHeight||44;
+  var ctrlH=document.getElementById('controls').offsetHeight||70;
+  var h=window.innerHeight-topH-ctrlH-8;
+  var aspect=COLS/ROWS;
+  var maxW=h*aspect*0.9;if(maxW<w)w=Math.floor(maxW);
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  canvasW=w;canvasH=Math.floor(w/aspect);
+  canvas.width=canvasW*dpr;canvas.height=canvasH*dpr;
+  canvas.style.width=canvasW+'px';canvas.style.height=canvasH+'px';
+  ctx.scale(dpr,dpr);
+  cellW=Math.floor(canvasW/COLS);cellH=Math.floor(canvasH/ROWS);
 }
 
-function initGrid() {
-  grid = [];
-  for (let c = 0; c < COLS; c++) {
-    grid[c] = [];
-    for (let r = 0; r < ROWS; r++) {
-      grid[c][r] = null;
-    }
+// ============================================
+// 字符队列
+// ============================================
+function buildCharQueue(){
+  charQueue=[];
+  var p=currentProfile;if(!p||!p.learnedChars){charQueue='人大小上山下水火月日'.split('');return}
+  var learned=p.learnedChars,cands=[],range=gameSettings.charRange;
+  for(var ch in learned){
+    if(range==='mastered'&&learned[ch].score>=80)cands.push(ch);
+    else if(range==='weak'&&learned[ch].score<60)cands.push(ch);
+    else if(range==='all')cands.push(ch);
   }
+  if(cands.length===0){for(var ch in learned)cands.push(ch)}
+  if(cands.length===0){charQueue='人大小上山下水火月日'.split('');return}
+  for(var i=cands.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=cands[i];cands[i]=cands[j];cands[j]=t}
+  charQueue=cands;
 }
 
-function resizeCanvas() {
-  const wrapper = document.getElementById('canvasWrapper');
-  const w = wrapper.clientWidth || 360;
-  // Get available height: viewport minus top bar and controls
-  const topBarH = (document.getElementById('topBar').offsetHeight || 48);
-  const controlsH = (document.getElementById('controls').offsetHeight || 72);
-  const availH = window.innerHeight - topBarH - controlsH - 4;
-  const h = wrapper.clientHeight || Math.min(availH, Math.max(w * 1.5, 480));
-
-  const dpr = window.devicePixelRatio || 1;
-  canvasW = w;
-  canvasH = h;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
-  ctx.scale(dpr, dpr);
-
-  cellW = Math.floor(canvasW / COLS);
-  cellH = Math.floor(canvasH / ROWS);
-}
-
-// =============================================
-// 字符队列构建
-// =============================================
-function buildCharQueue() {
-  charQueue = [];
-  const profile = currentProfile;
-  if (!profile || !profile.learnedChars) {
-    // Fallback to some default chars
-    charQueue = '人大小上山下水火月日'.split('');
-    return;
-  }
-
-  const learned = profile.learnedChars;
-  let candidates = [];
-
-  const range = gameSettings.charRange;
-  for (const [ch, data] of Object.entries(learned)) {
-    if (range === 'mastered' && data.score >= 80) candidates.push(ch);
-    else if (range === 'weak' && data.score < 60) candidates.push(ch);
-    else if (range === 'all') candidates.push(ch);
-  }
-
-  // Fallback: if no candidates, use all learned
-  if (candidates.length === 0) {
-    for (const [ch] of Object.entries(learned)) {
-      candidates.push(ch);
-    }
-  }
-
-  // Shuffle
-  for (let i = candidates.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
-  }
-
-  charQueue = candidates;
-  if (charQueue.length === 0) {
-    // Emergency fallback
-    charQueue = '人大小上山下水火月日'.split('');
-  }
-}
-
-// =============================================
+// ============================================
 // 游戏循环
-// =============================================
-function gameLoop(timestamp) {
-  const dt = timestamp - lastFrameTime;
-  lastFrameTime = timestamp;
-
-  if (gameState === 'FALLING' && fallingChar) {
-    // Check if it's time to drop
-    const speedMs = SPEED_MAP[gameSettings.speed] || 700;
-    if (timestamp - lastDropTime >= speedMs) {
-      lastDropTime = timestamp;
-      dropCharOneRow();
-    }
+// ============================================
+function gameLoop(timestamp){
+  var dt=timestamp-lastFrameTime;lastFrameTime=timestamp;
+  if(gameState==='FALLING'&&fallingChar){
+    var spd=SPEED_MAP[gameSettings.speed]||700;
+    if(timestamp-lastDropTime>=spd){lastDropTime=timestamp;dropCharOneRow();}
   }
-
-  drawGame();
-
-  animFrameId = requestAnimationFrame(gameLoop);
+  drawGame();animFrameId=requestAnimationFrame(gameLoop);
 }
 
-// =============================================
-// 掉落逻辑
-// =============================================
-function startFalling() {
-  if (gameState === 'GAME_OVER') return;
-  if (charQueue.length === 0) {
-    buildCharQueue(); // Recycle
-  }
-  if (charQueue.length === 0) {
-    endGame();
-    return;
-  }
-
-  const ch = charQueue.shift();
-  const pinyin = PINYIN[ch] || '';
-  const col = Math.floor(Math.random() * COLS);
-
-  // Check if top is clear at this column
-  if (grid[col][0] !== null) {
-    endGame();
-    return;
-  }
-
-  fallingChar = { char: ch, col, row: 0, pinyin };
-  gameState = 'FALLING';
-  totalProcessed++;
+// ============================================
+// 掉落
+// ============================================
+function startFalling(){
+  if(gameState==='GAME_OVER')return;
+  if(charQueue.length===0)buildCharQueue();
+  if(charQueue.length===0){endGame();return}
+  var ch=charQueue.shift(),col=Math.floor(Math.random()*COLS);
+  if(grid[col][0]!==null){endGame();return}
+  fallingChar={char:ch,col:col,row:0,pinyin:PINYIN[ch]||''};
+  gameState='FALLING';totalProcessed++;
+  document.getElementById('recogHint').classList.remove('active');
 }
 
-function dropCharOneRow() {
-  if (!fallingChar) return;
-
-  const nextRow = fallingChar.row + 1;
-
-  // Check if we've reached recognition zone
-  if (fallingChar.row >= RECOG_ROW && fallingChar.row < RECOG_ROW + RECOG_HEIGHT) {
-    // Entered recognition zone, pause and start recognition
-    startRecognition();
-    return;
-  }
-
-  // Check if we hit the bottom or a stacked char
-  if (nextRow >= ROWS || grid[fallingChar.col][nextRow] !== null) {
-    // Stack it
-    stackChar(fallingChar);
-    return;
-  }
-
-  fallingChar.row = nextRow;
+function dropCharOneRow(){
+  if(!fallingChar)return;
+  var nr=fallingChar.row+1;
+  if(fallingChar.row>=RECOG_ROW&&fallingChar.row<RECOG_ROW+RECOG_HEIGHT){startRecognition();return}
+  if(nr>=ROWS||grid[fallingChar.col][nr]!==null){stackChar(fallingChar);return}
+  fallingChar.row=nr;
 }
 
-function dropNow() {
-  if (gameState !== 'FALLING' || !fallingChar) return;
-  // Fast drop: move to recognition zone or stack directly
-  while (fallingChar && gameState === 'FALLING') {
-    const nextRow = fallingChar.row + 1;
-    if (nextRow >= ROWS || grid[fallingChar.col][nextRow] !== null) {
-      stackChar(fallingChar);
-      return;
-    }
-    if (fallingChar.row >= RECOG_ROW) {
-      startRecognition();
-      return;
-    }
-    fallingChar.row = nextRow;
+function dropNow(){
+  if(gameState!=='FALLING'||!fallingChar)return;
+  while(fallingChar&&gameState==='FALLING'){
+    var nr=fallingChar.row+1;
+    if(nr>=ROWS||grid[fallingChar.col][nr]!==null){stackChar(fallingChar);return}
+    if(fallingChar.row>=RECOG_ROW){startRecognition();return}
+    fallingChar.row=nr;
   }
 }
 
-function moveLeft() {
-  if (gameState !== 'FALLING' || !fallingChar) return;
-  const newCol = fallingChar.col - 1;
-  if (newCol < 0) return;
-  if (grid[newCol][fallingChar.row] !== null) return;
-  fallingChar.col = newCol;
+function moveLeft(){
+  if(gameState!=='FALLING'||!fallingChar)return;
+  var nc=fallingChar.col-1;if(nc<0||grid[nc][fallingChar.row]!==null)return;
+  fallingChar.col=nc;
 }
 
-function moveRight() {
-  if (gameState !== 'FALLING' || !fallingChar) return;
-  const newCol = fallingChar.col + 1;
-  if (newCol >= COLS) return;
-  if (grid[newCol][fallingChar.row] !== null) return;
-  fallingChar.col = newCol;
+function moveRight(){
+  if(gameState!=='FALLING'||!fallingChar)return;
+  var nc=fallingChar.col+1;if(nc>=COLS||grid[nc][fallingChar.row]!==null)return;
+  fallingChar.col=nc;
 }
 
-// =============================================
-// 语音识别
-// =============================================
-function startRecognition() {
-  if (!fallingChar) return;
-  gameState = 'RECOGNIZING';
-
-  const ch = fallingChar.char;
-  const py = fallingChar.pinyin;
-  var displayPy = formatPinyin(py);
-  var timerStarted = false;
-
-  document.getElementById('voiceChar').textContent = ch;
-  document.getElementById('voicePinyin').textContent = displayPy;
-  document.getElementById('voiceResult').innerHTML = '';
-  document.getElementById('voiceStatus').textContent = '正在准备麦克风...';
+// ============================================
+// 语音识别（复用测验页方案：per-char recognizer, continuous:false, maxAlternatives:8）
+// ============================================
+function startRecognition(){
+  if(!fallingChar)return;
+  gameState='RECOGNIZING';document.getElementById('recogHint').classList.add('active');
+  var ch=fallingChar.char,py=formatPinyin(fallingChar.pinyin||'');
+  document.getElementById('voiceChar').textContent=ch;
+  document.getElementById('voicePinyin').textContent=py;
+  document.getElementById('voiceResult').innerHTML='';
+  document.getElementById('voiceStatus').textContent='正在准备...';
   document.getElementById('voiceOverlay').classList.add('visible');
   document.getElementById('micIcon').classList.add('listening');
-  document.getElementById('voiceSkipBtn').style.display = 'block';
-  // Show dashes while waiting for recognizer
-  document.getElementById('voiceTimer').textContent = '--';
+  document.getElementById('voiceSkipBtn').style.display='block';
+  document.getElementById('voiceTimer').textContent='--';
 
-  var timerInterval = null;
-  var timeLeft = 0;
+  if(recognizer){try{recognizer.abort()}catch(e){}recognizer=null;}
+  if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
+  if(_safetyTimer){clearTimeout(_safetyTimer);_safetyTimer=null;}
 
-  function startTimer() {
-    if (timerStarted) return;
-    timerStarted = true;
-    timeLeft = gameSettings.timeout;
-    document.getElementById('voiceTimer').textContent = timeLeft;
-    document.getElementById('voiceStatus').textContent = '🎤 请朗读...';
-    timerInterval = setInterval(function() {
-      timeLeft--;
-      document.getElementById('voiceTimer').textContent = timeLeft;
-      if (timeLeft <= 0 && gameState === 'RECOGNIZING') {
-        clearInterval(timerInterval);
-        onVoiceTimeout();
-      }
-    }, 1000);
+  var timerStarted=false,timeLeft=0;
+
+  function startCountdown(){
+    if(timerStarted)return;timerStarted=true;
+    timeLeft=gameSettings.timeout;
+    document.getElementById('voiceTimer').textContent=timeLeft;
+    document.getElementById('voiceStatus').textContent='🎤 请朗读...';
+    _timerInterval=setInterval(function(){
+      timeLeft--;document.getElementById('voiceTimer').textContent=timeLeft;
+      if(timeLeft<=0&&gameState==='RECOGNIZING'){clearInterval(_timerInterval);onVoiceTimeout();}
+    },1000);
   }
 
-  // Safety: start timer after 3s even if recognizer never fires onstart
-  var safetyTimer = setTimeout(function() {
-    if (!timerStarted) startTimer();
-  }, 3000);
+  _safetyTimer=setTimeout(function(){if(!timerStarted)startCountdown();},3000);
 
-  function cleanup() {
-    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
-  }
+  function cleanup(){if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}if(_safetyTimer){clearTimeout(_safetyTimer);_safetyTimer=null;}}
 
-  // Start SpeechRecognition
-  startListening(ch, function() {
-    cleanup();
-    if (gameState === 'RECOGNIZING') onVoiceSuccess();
-  }, function() {
-    cleanup();
-    if (gameState === 'RECOGNIZING') onVoiceTimeout();
-  }, startTimer);
-}
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){document.getElementById('voiceStatus').textContent='⚠️ 不支持语音';setTimeout(function(){cleanup();onVoiceTimeout();},1500);return}
 
-function startListening(targetChar, onSuccess, onFail, onStart) {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    document.getElementById('voiceStatus').textContent = '⚠️ 浏览器不支持语音识别';
-    if (onFail) setTimeout(onFail, 1500);
-    return;
-  }
-
-  if (recognizer) {
-    try { recognizer.abort(); } catch(e) {}
-    recognizer = null;
-  }
-
-  try {
-    recognizer = new SpeechRecognition();
-    recognizer.lang = 'zh-CN';
-    recognizer.continuous = false;
-    recognizer.interimResults = false;
-    recognizer.maxAlternatives = 8;
-
-    recognizer.onstart = function() {
-      // Recognizer has started (microphone permission granted on iOS)
-      if (onStart) onStart();
-    };
-
-    recognizer.onresult = function(event) {
-      const results = event.results;
-      if (results.length === 0) return;
-      const alternatives = results[results.length - 1];
-      for (let i = 0; i < alternatives.length; i++) {
-        const spoken = alternatives[i].transcript.trim();
-        if (charMatch(spoken, targetChar)) {
-          document.getElementById('voiceResult').innerHTML =
-            '<div class="result-correct">✓ 正确！' + spoken + '</div>';
-          if (onSuccess) onSuccess();
-          return;
+  try{
+    recognizer=new SR();recognizer.lang='zh-CN';recognizer.continuous=false;recognizer.interimResults=false;recognizer.maxAlternatives=8;
+    recognizer.onstart=function(){startCountdown();};
+    recognizer.onresult=function(e){
+      var rs=e.results;if(!rs.length)return;
+      var alts=rs[rs.length-1];
+      for(var i=0;i<alts.length;i++){
+        var spoken=alts[i].transcript.trim();
+        if(charMatch(spoken,ch)){
+          document.getElementById('voiceResult').innerHTML='<div class="result-correct">✓ 正确！</div>';
+          cleanup();onVoiceSuccess();return;
         }
       }
-      // No match
-      const best = alternatives[0].transcript.trim();
-      document.getElementById('voiceStatus').textContent = '你说的是：' + best;
-      document.getElementById('voiceResult').innerHTML =
-        '<div class="result-wrong">再试试？</div>';
+      document.getElementById('voiceStatus').textContent='你说的是：'+alts[0].transcript.trim();
+      document.getElementById('voiceResult').innerHTML='<div class="result-wrong">再试试？</div>';
     };
-
-    recognizer.onerror = function(event) {
-      console.log('SpeechRecognition error:', event.error);
-      // If permission denied on iOS, fail immediately
-      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        document.getElementById('voiceStatus').textContent = '⚠️ 请允许麦克风权限';
-        if (onFail) setTimeout(onFail, 1000);
-        return;
-      }
-      if (event.error === 'no-speech' || event.error === 'aborted') {
-        if (onFail) onFail();
-      }
+    recognizer.onerror=function(e){
+      if(e.error==='not-allowed'||e.error==='service-not-allowed'){document.getElementById('voiceStatus').textContent='⚠️ 请允许麦克风';cleanup();setTimeout(onVoiceTimeout,1000);return}
+      if(e.error==='no-speech'||e.error==='aborted'){cleanup();onVoiceTimeout();}
     };
-
-    recognizer.onend = function() {
-      // If still in RECOGNIZING state and no result was returned, treat as fail
-      if (gameState === 'RECOGNIZING') {
-        // The recognizer ended without a result
-      }
-    };
-
+    recognizer.onend=function(){};
     recognizer.start();
-    document.getElementById('voiceStatus').textContent = '🎤 请朗读...';
-  } catch(e) {
-    console.error('SpeechRecognition start failed:', e);
-    document.getElementById('voiceStatus').textContent = '⚠️ 启动语音失败，点击跳过';
-  }
+  }catch(e){document.getElementById('voiceStatus').textContent='⚠️ 启动失败';cleanup();setTimeout(onVoiceTimeout,1000)}
 }
 
-// Copy from main system: charMatch
-function charMatch(spoken, target) {
-  // Direct match
-  if (spoken === target) return true;
-  // Check pronunciation via PINYIN dict
-  const targetPy = PINYIN[target];
-  if (!targetPy) return spoken === target;
-  // Strip tone numbers
-  const targetBase = targetPy.replace(/[0-9]/g, '');
-  // Generate spoken pinyin using lookup from PINYIN values
-  for (const [ch, py] of Object.entries(PINYIN)) {
-    if (ch === spoken || py.replace(/[0-9]/g, '') === targetBase) return true;
-    // Also check if spoken word contains the target char
-    if (spoken.includes(target)) return true;
-  }
-  // If spoken is single character
-  if (spoken.length === 1) {
-    const spokenPy = PINYIN[spoken];
-    if (spokenPy) {
-      const spokenBase = spokenPy.replace(/[0-9]/g, '');
-      if (spokenBase === targetBase) return true;
-    }
-  }
+function charMatch(spoken,target){
+  if(spoken===target)return true;
+  var tp=PINYIN[target];if(!tp)return spoken===target;
+  var tb=tp.replace(/[0-9]/g,'');
+  if(spoken.includes(target))return true;
+  if(spoken.length===1){var sp=PINYIN[spoken];if(sp&&sp.replace(/[0-9]/g,'')===tb)return true}
+  for(var ch in PINYIN){if(ch===spoken||PINYIN[ch].replace(/[0-9]/g,'')===tb)return true}
   return false;
 }
 
-function onVoiceSuccess() {
-  if (!fallingChar) return;
+function onVoiceSuccess(){
   document.getElementById('micIcon').classList.remove('listening');
-  document.getElementById('voiceStatus').textContent = '✅ 读对了！';
-  document.getElementById('voiceTimer').textContent = '✓';
-
-  score += 10;
-  eliminated++;
-  updateStats();
-
-  const ch = fallingChar.char;
-
-  // Close voice overlay
-  setTimeout(() => {
+  document.getElementById('voiceStatus').textContent='✅ 读对了！';
+  document.getElementById('voiceTimer').textContent='✓';
+  score+=10;eliminated++;updateStats();
+  var ch=fallingChar.char;
+  setTimeout(function(){
     document.getElementById('voiceOverlay').classList.remove('visible');
-    if (gameState !== 'RECOGNIZING') return;
-    gameState = 'SUCCESS';
-
-    // Check if writing bonus is enabled
-    if (gameSettings.mode === 'both') {
-      // Offer writing bonus
-      startWritingBonus(ch);
-    } else {
-      spawnNext();
-    }
-  }, 800);
+    document.getElementById('recogHint').classList.remove('active');
+    if(gameState!=='RECOGNIZING')return;gameState='SUCCESS';
+    if(gameSettings.mode==='both')startWritingBonus(ch);else spawnNext();
+  },600);
 }
 
-function onVoiceTimeout() {
-  if (!fallingChar) return;
+function onVoiceTimeout(){
   document.getElementById('micIcon').classList.remove('listening');
-  document.getElementById('voiceStatus').textContent = '⏰ 时间到';
-  document.getElementById('voiceTimer').textContent = '✕';
-
-  setTimeout(() => {
+  document.getElementById('voiceStatus').textContent='⏰ 时间到';
+  setTimeout(function(){
     document.getElementById('voiceOverlay').classList.remove('visible');
-    if (gameState !== 'RECOGNIZING') return;
+    document.getElementById('recogHint').classList.remove('active');
+    if(gameState!=='RECOGNIZING'||!fallingChar)return;
     stackChar(fallingChar);
-  }, 600);
+  },400);
 }
 
-function skipVoice() {
-  if (recognizer) { try { recognizer.abort(); } catch(e) {} recognizer = null; }
+function skipVoice(){
+  if(recognizer){try{recognizer.abort()}catch(e){}recognizer=null;}
+  if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
+  if(_safetyTimer){clearTimeout(_safetyTimer);_safetyTimer=null;}
   document.getElementById('voiceOverlay').classList.remove('visible');
-  if (gameState !== 'RECOGNIZING' || !fallingChar) return;
+  document.getElementById('micIcon').classList.remove('listening');
+  document.getElementById('recogHint').classList.remove('active');
+  if(gameState!=='RECOGNIZING'||!fallingChar)return;
   stackChar(fallingChar);
 }
 
-// =============================================
-// 堆叠逻辑
-// =============================================
-function stackChar(charData) {
-  if (!charData) return;
-  const col = charData.col;
-  const row = Math.min(charData.row, ROWS - 1);
-
-  // Find the lowest available cell in this column
-  let targetRow = ROWS - 1;
-  for (let r = row; r < ROWS; r++) {
-    if (grid[col][r] !== null) {
-      targetRow = r - 1;
-      break;
-    }
-  }
-
-  if (targetRow < 0) {
-    // Column is full - game over
-    endGame();
-    return;
-  }
-
-  grid[col][targetRow] = { char: charData.char, type: 'stacked' };
-  droppedChars.push(charData.char);
-  stackedCount++;
-  updateStats();
-
-  // Check if any column is full to the top
-  for (let c = 0; c < COLS; c++) {
-    if (grid[c][0] !== null) {
-      endGame();
-      return;
-    }
-  }
-
-  fallingChar = null;
-  gameState = 'FAIL';
-  setTimeout(spawnNext, 300);
+// ============================================
+// 堆叠
+// ============================================
+function stackChar(cd){
+  if(!cd)return;
+  var col=cd.col,tr=ROWS-1;
+  for(var r=Math.min(cd.row,ROWS-1);r<ROWS;r++){if(grid[col][r]!==null){tr=r-1;break}}
+  if(tr<0){endGame();return}
+  grid[col][tr]={char:cd.char,type:'stacked'};
+  droppedChars.push(cd.char);stackedCount++;updateStats();
+  for(var c=0;c<COLS;c++){if(grid[c][0]!==null){endGame();return}}
+  fallingChar=null;gameState='FAIL';
+  setTimeout(spawnNext,300);
 }
 
-// =============================================
+// ============================================
 // 书写加分
-// =============================================
-function startWritingBonus(ch) {
-  gameState = 'WRITING';
-  writeCharData = ch;
-
-  document.getElementById('writeChar').textContent = ch;
-  document.getElementById('writeResult').innerHTML = '';
-  const confirmBtn = document.getElementById('writeConfirmBtn');
-  confirmBtn.style.display = 'inline-block';
-  confirmBtn.className = 'write-btn confirm';
-  confirmBtn.onclick = confirmWriting;
-  const doneBtn = document.getElementById('writeDoneBtn');
-  doneBtn.style.display = 'none';
-
+// ============================================
+function startWritingBonus(ch){
+  gameState='WRITING';writeCharData=ch;
+  document.getElementById('writeChar').textContent=ch;
+  document.getElementById('writeResult').innerHTML='';
+  var cb=document.getElementById('writeConfirmBtn');cb.style.display='inline-block';cb.className='write-btn confirm';
+  document.getElementById('writeDoneBtn').style.display='none';
   document.getElementById('writingOverlay').classList.add('visible');
-
-  // Create Hanzi Writer for free tracing practice
-  setTimeout(() => {
-    const container = document.getElementById('writeCanvas');
-    container.innerHTML = '';
-    try {
-      if (writeWriter) { try { writeWriter.cancelQuiz(); } catch(e){} writeWriter = null; }
-      writeWriter = HanziWriter.create(container, ch, {
-        width: 200, height: 200,
-        padding: 10,
-        strokeColor: '#333',
-        outlineColor: '#ddd',
-        drawingColor: '#a18cd1',
-        highlightColor: '#667eea',
-        showOutline: true,
-        showHintAfterMisses: 2
-      });
-      // Show the character animation so child can see stroke order
+  setTimeout(function(){
+    var ct=document.getElementById('writeCanvas');ct.innerHTML='';
+    try{
+      if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}
+      writeWriter=HanziWriter.create(ct,ch,{width:200,height:200,padding:10,strokeColor:'#333',outlineColor:'#ddd',drawingColor:'#a18cd1',highlightColor:'#667eea',showOutline:true,showHintAfterMisses:2});
       writeWriter.animateCharacter();
-    } catch(e) {
-      console.error('HanziWriter create failed:', e);
-      document.getElementById('writeCanvas').innerHTML = '<div style="color:#999;padding:80px 0">暂不支持</div>';
-      // If Hanzi Writer fails, just give the bonus
-      setTimeout(earnWritingBonus, 500);
-    }
-  }, 100);
+    }catch(e){ct.innerHTML='<div style="color:#999;padding:80px 0">暂不支持</div>';setTimeout(earnWritingBonus,500)}
+  },100);
 }
 
-function confirmWriting() {
-  if (!writeWriter) { earnWritingBonus(); return; }
-  // Tracing completed - give bonus for effort (practice = learning)
-  earnWritingBonus();
+function confirmWriting(){earnWritingBonus();}
+function earnWritingBonus(){
+  if(!writeCharData)return;score+=5;updateStats();
+  document.getElementById('writeResult').innerHTML='<div style="color:#2ecc71;font-size:1em;font-weight:bold">✓ 书写正确 +5分！</div>';
+  document.getElementById('writeConfirmBtn').style.display='none';
+  var db=document.getElementById('writeDoneBtn');db.textContent='继续游戏';db.className='write-btn bonus-result earned';db.style.display='inline-block';
 }
+function skipWriting(){if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}document.getElementById('writingOverlay').classList.remove('visible');writeCharData=null;spawnNext();}
+function closeWritingAndContinue(){if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}document.getElementById('writingOverlay').classList.remove('visible');writeCharData=null;spawnNext();}
 
-function earnWritingBonus() {
-  if (!writeCharData) return;
-  score += 5;
-  updateStats();
+function spawnNext(){fallingChar=null;lastDropTime=performance.now();startFalling();}
 
-  document.getElementById('writeResult').innerHTML =
-    '<div style="color:#2ecc71;font-size:1em;font-weight:bold">✓ 书写正确 +5分！</div>';
-  const confirmBtn = document.getElementById('writeConfirmBtn');
-  confirmBtn.style.display = 'none';
-  const doneBtn = document.getElementById('writeDoneBtn');
-  doneBtn.textContent = '继续游戏';
-  doneBtn.className = 'write-btn bonus-result earned';
-  doneBtn.style.display = 'inline-block';
-}
-
-function skipWriting() {
-  if (writeWriter) { try { writeWriter.cancelQuiz(); } catch(e){} writeWriter = null; }
-  document.getElementById('writingOverlay').classList.remove('visible');
-  writeCharData = null;
-  spawnNext();
-}
-
-function closeWritingAndContinue() {
-  if (writeWriter) { try { writeWriter.cancelQuiz(); } catch(e){} writeWriter = null; }
-  document.getElementById('writingOverlay').classList.remove('visible');
-  writeCharData = null;
-  spawnNext();
-}
-
-// =============================================
-// 生成下一个
-// =============================================
-function spawnNext() {
-  fallingChar = null;
-  lastDropTime = performance.now();
-  startFalling();
-}
-
-// =============================================
-// 游戏结束
-// =============================================
-function endGame() {
-  gameState = 'GAME_OVER';
-  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
-
-  // Cleanup
-  if (recognizer) { try { recognizer.abort(); } catch(e){} recognizer = null; }
+// ============================================
+// 结束
+// ============================================
+function endGame(){
+  gameState='GAME_OVER';if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;}
+  if(recognizer){try{recognizer.abort()}catch(e){}recognizer=null;}
   document.getElementById('voiceOverlay').classList.remove('visible');
   document.getElementById('writingOverlay').classList.remove('visible');
-
-  // Show game over
-  document.getElementById('goScore').textContent = score;
-  document.getElementById('goElim').textContent = eliminated;
-  document.getElementById('goStacked').textContent = stackedCount;
-  document.getElementById('goUser').textContent = currentUser || '小朋友';
-  document.getElementById('goWeak').textContent = droppedChars.length > 0
-    ? '需复习：' + [...new Set(droppedChars)].join('、')
-    : '全部答对，太棒了！🎉';
+  document.getElementById('goScore').textContent=score;
+  document.getElementById('goElim').textContent=eliminated;
+  document.getElementById('goStacked').textContent=stackedCount;
+  document.getElementById('goUser').textContent=currentUser||'小朋友';
+  document.getElementById('goWeak').textContent=droppedChars.length?'需复习：'+[...new Set(droppedChars)].join('、'):'全部答对，太棒了！';
   document.getElementById('gameOverOverlay').classList.add('visible');
-
-  // Save results to profile
   saveGameResults();
 }
 
-function saveGameResults() {
-  if (gameResultSaved) return;
-  gameResultSaved = true;
-
-  try {
-    const data = JSON.parse(localStorage.getItem('learningProfiles') || '[]');
-    const profile = data.find(p => p.name === currentUser);
-    if (!profile) return;
-
-    if (!profile.gameRecords) profile.gameRecords = [];
-    profile.gameRecords.push({
-      date: new Date().toISOString().slice(0, 10),
-      score: score,
-      eliminated: eliminated,
-      stacked: stackedCount,
-      weakChars: [...new Set(droppedChars)]
-    });
-
-    // Also update weak chars in learnedChars for review
-    const learned = profile.learnedChars || {};
-    for (const ch of [...new Set(droppedChars)]) {
-      if (learned[ch]) {
-        // Lower score to mark for review
-        const curScore = learned[ch].score;
-        learned[ch].score = Math.max(curScore - 5, 30);
-        learned[ch].practiceScore = Math.min(learned[ch].practiceScore || 100, curScore - 5);
-      }
+function saveGameResults(){
+  if(gameResultSaved)return;gameResultSaved=true;
+  try{
+    var d=JSON.parse(localStorage.getItem('learningProfiles')||'[]'),p=d.find(function(x){return x.name===currentUser});
+    if(!p)return;
+    if(!p.gameRecords)p.gameRecords=[];
+    p.gameRecords.push({date:new Date().toISOString().slice(0,10),score:score,eliminated:eliminated,stacked:stackedCount,weakChars:[...new Set(droppedChars)]});
+    var learned=p.learnedChars||{};
+    for(var i=0;i<droppedChars.length;i++){
+      var ch=droppedChars[i];
+      if(learned[ch]){var cs=learned[ch].score;learned[ch].score=Math.max(cs-5,30);learned[ch].practiceScore=Math.min(learned[ch].practiceScore||100,cs-5)}
     }
+    localStorage.setItem('learningProfiles',JSON.stringify(d));
+  }catch(e){}
+}
 
-    localStorage.setItem('learningProfiles', JSON.stringify(data));
-  } catch(e) {
-    console.error('Failed to save game results:', e);
+// ============================================
+// 绘制（无网格线、无虚线框、柔和配色）
+// ============================================
+function drawGame(){
+  ctx.clearRect(0,0,canvasW,canvasH);
+  // 背景
+  var grad=ctx.createLinearGradient(0,0,0,canvasH);
+  grad.addColorStop(0,'#f0f4ff');grad.addColorStop(0.45,'#fdf6f0');grad.addColorStop(1,'#fff5f5');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,canvasW,canvasH);
+
+  // 识别区（极淡的半透明带）
+  var ry=RECOG_ROW*cellH,rh=RECOG_HEIGHT*cellH;
+  ctx.fillStyle='rgba(161,140,209,0.08)';
+  ctx.fillRect(0,ry,canvasW,rh);
+
+  // 堆叠字符（柔和的颜色）
+  for(var c=0;c<COLS;c++){for(var r=0;r<ROWS;r++){var cell=grid[c][r];if(cell)drawCharCell(c,r,cell.char,'#fff0f0','#c0392b');}}
+
+  // 下落字符
+  if(fallingChar&&(gameState==='FALLING'||gameState==='RECOGNIZING')){
+    var glow=gameState==='RECOGNIZING';
+    drawCharCell(fallingChar.col,fallingChar.row,fallingChar.char,glow?'#e8e0ff':'#e0ecff','#333',glow);
+    // 拼音提示
+    var dpy=formatPinyin(fallingChar.pinyin||'');
+    if(dpy){var x=fallingChar.col*cellW+cellW/2,y=fallingChar.row*cellH+4;ctx.fillStyle='rgba(0,0,0,0.35)';ctx.font=Math.max(11,Math.round(cellW*0.17))+'px system-ui';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(dpy,x,y)}
   }
 }
 
-// =============================================
-// 绘制
-// =============================================
-function drawGame() {
-  ctx.clearRect(0, 0, canvasW, canvasH);
-
-  // Draw bg
-  ctx.fillStyle = '#0f3460';
-  ctx.fillRect(0, 0, canvasW, canvasH);
-
-  // Draw grid lines
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-  ctx.lineWidth = 0.5;
-  for (let c = 0; c <= COLS; c++) {
-    const x = c * cellW;
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvasH);
-    ctx.stroke();
-  }
-  for (let r = 0; r <= ROWS; r++) {
-    const y = r * cellH;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvasW, y);
-    ctx.stroke();
-  }
-
-  // Draw recognition zone highlight
-  const recogY = RECOG_ROW * cellH;
-  const recogH = RECOG_HEIGHT * cellH;
-  ctx.fillStyle = 'rgba(255, 193, 7, 0.08)';
-  ctx.fillRect(0, recogY, canvasW, recogH);
-  ctx.strokeStyle = 'rgba(255, 193, 7, 0.2)';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
-  ctx.strokeRect(0, recogY, canvasW, recogH);
-  ctx.setLineDash([]);
-
-  // Draw stacked characters
-  for (let c = 0; c < COLS; c++) {
-    for (let r = 0; r < ROWS; r++) {
-      const cell = grid[c][r];
-      if (!cell) continue;
-      drawCharCell(c, r, cell.char, '#e74c3c', '#fff');
-    }
-  }
-
-  // Draw falling character
-  if (fallingChar && (gameState === 'FALLING' || gameState === 'RECOGNIZING')) {
-    const alpha = gameState === 'RECOGNIZING' ? 0.5 : 1;
-    const glow = gameState === 'RECOGNIZING';
-    drawCharCell(fallingChar.col, fallingChar.row, fallingChar.char,
-      glow ? '#f9a825' : '#3498db', '#fff', alpha, glow);
-
-    // Draw pinyin hint (formatted with tone marks)
-    if (fallingChar.pinyin) {
-      var displayPy = formatPinyin(fallingChar.pinyin);
-      if (displayPy) {
-        var x = fallingChar.col * cellW + cellW / 2;
-        var y = fallingChar.row * cellH + 4;
-        ctx.fillStyle = 'rgba(255,255,255,0.45)';
-        ctx.font = Math.max(10, Math.round(cellW * 0.17)) + 'px system-ui';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(displayPy, x, y);
-      }
-    }
-  }
-}
-
-function drawCharCell(col, row, char, bgColor, textColor, alpha = 1, glow = false) {
-  const x = col * cellW;
-  const y = row * cellH;
-  const pad = Math.max(2, Math.round(cellW * 0.08));
-  const r = Math.max(3, Math.round(cellW * 0.12));
-
-  if (glow) {
-    ctx.shadowColor = 'rgba(255, 193, 7, 0.4)';
-    ctx.shadowBlur = 12;
-  }
-
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = bgColor;
+function drawCharCell(col,row,char,bgColor,textColor,glow){
+  var x=col*cellW,y=row*cellH,pad=Math.max(2,Math.round(cellW*0.06)),r=Math.max(4,Math.round(cellW*0.1));
+  if(glow){ctx.shadowColor='rgba(161,140,209,0.4)';ctx.shadowBlur=12}
+  ctx.fillStyle=bgColor;
   ctx.beginPath();
-  ctx.moveTo(x + pad + r, y + pad);
-  ctx.lineTo(x + cellW - pad - r, y + pad);
-  ctx.quadraticCurveTo(x + cellW - pad, y + pad, x + cellW - pad, y + pad + r);
-  ctx.lineTo(x + cellW - pad, y + cellH - pad - r);
-  ctx.quadraticCurveTo(x + cellW - pad, y + cellH - pad, x + cellW - pad - r, y + cellH - pad);
-  ctx.lineTo(x + pad + r, y + cellH - pad);
-  ctx.quadraticCurveTo(x + pad, y + cellH - pad, x + pad, y + cellH - pad - r);
-  ctx.lineTo(x + pad, y + pad + r);
-  ctx.quadraticCurveTo(x + pad, y + pad, x + pad + r, y + pad);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.shadowBlur = 0;
-  ctx.shadowColor = 'transparent';
-
-  // Draw character
-  ctx.fillStyle = textColor;
-  const fontSize = Math.max(18, Math.round(cellW * 0.55));
-  ctx.font = `bold ${fontSize}px system-ui`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(char, x + cellW / 2, y + cellH / 2 + 2);
-
-  ctx.globalAlpha = 1;
+  ctx.moveTo(x+pad+r,y+pad);ctx.lineTo(x+cellW-pad-r,y+pad);
+  ctx.quadraticCurveTo(x+cellW-pad,y+pad,x+cellW-pad,y+pad+r);
+  ctx.lineTo(x+cellW-pad,y+cellH-pad-r);ctx.quadraticCurveTo(x+cellW-pad,y+cellH-pad,x+cellW-pad-r,y+cellH-pad);
+  ctx.lineTo(x+pad+r,y+cellH-pad);ctx.quadraticCurveTo(x+pad,y+cellH-pad,x+pad,y+cellH-pad-r);
+  ctx.lineTo(x+pad,y+pad+r);ctx.quadraticCurveTo(x+pad,y+pad,x+pad+r,y+pad);
+  ctx.closePath();ctx.fill();
+  ctx.shadowBlur=0;ctx.shadowColor='transparent';
+  ctx.fillStyle=textColor;
+  var fs=Math.max(20,Math.round(cellW*0.55));ctx.font='bold '+fs+'px system-ui';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(char,x+cellW/2,y+cellH/2+1);
 }
 
-// =============================================
-// 更新界面
-// =============================================
-function updateStats() {
-  document.getElementById('elimCount').textContent = eliminated;
-  document.getElementById('scoreCount').textContent = score;
-  document.getElementById('stackedCount').textContent = stackedCount;
-}
+// ============================================
+// UI
+// ============================================
+function updateStats(){document.getElementById('elimCount').textContent=eliminated;document.getElementById('scoreCount').textContent=score;document.getElementById('stackedCount').textContent=stackedCount;}
+function updateSettingDisplay(t){if(t==='speed'){var v=parseInt(document.getElementById('setSpeed').value);document.getElementById('setSpeedVal').textContent=SPEED_NAMES[v]||'中'}}
+function openSettings(){document.getElementById('settingsOverlay').classList.add('visible')}
+function closeSettings(){document.getElementById('settingsOverlay').classList.remove('visible')}
+function saveSettings(){gameSettings.speed=parseInt(document.getElementById('setSpeed').value);gameSettings.mode=document.getElementById('setMode').value;gameSettings.charRange=document.getElementById('setRange').value;gameSettings.timeout=parseInt(document.getElementById('setTimeout').value);saveSettingsToStorage();closeSettings();}
 
-function updateSettingDisplay(type) {
-  if (type === 'speed') {
-    const val = parseInt(document.getElementById('setSpeed').value);
-    document.getElementById('setSpeedVal').textContent = SPEED_NAMES[val] || '中';
-  }
-}
-
-// =============================================
-// 设置弹窗
-// =============================================
-function openSettings() {
-  document.getElementById('settingsOverlay').classList.add('visible');
-}
-
-function closeSettings() {
-  document.getElementById('settingsOverlay').classList.remove('visible');
-}
-
-function saveSettings() {
-  gameSettings.speed = parseInt(document.getElementById('setSpeed').value);
-  gameSettings.mode = document.getElementById('setMode').value;
-  gameSettings.charRange = document.getElementById('setRange').value;
-  gameSettings.timeout = parseInt(document.getElementById('setTimeout').value);
-  saveSettingsToStorage();
-  closeSettings();
-}
-
-// =============================================
-// 重新开始 / 返回
-// =============================================
-function restartGame() {
+function restartGame(){
   document.getElementById('gameOverOverlay').classList.remove('visible');
-  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
-
-  score = 0;
-  eliminated = 0;
-  stackedCount = 0;
-  totalProcessed = 0;
-  droppedChars = [];
-  fallingChar = null;
-  gameState = 'IDLE';
-  gameResultSaved = false;
-
-  initGrid();
-  buildCharQueue();
-  updateStats();
-  startFalling();
-
-  lastFrameTime = performance.now();
-  lastDropTime = lastFrameTime;
-  animFrameId = requestAnimationFrame(gameLoop);
+  if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null}
+  score=0;eliminated=0;stackedCount=0;totalProcessed=0;droppedChars=[];fallingChar=null;gameState='IDLE';gameResultSaved=false;
+  initGrid();buildCharQueue();updateStats();startFalling();
+  lastFrameTime=performance.now();lastDropTime=lastFrameTime;animFrameId=requestAnimationFrame(gameLoop);
 }
 
-function backToDashboard() {
-  // Cleanup
-  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
-  if (recognizer) { try { recognizer.abort(); } catch(e){} recognizer = null; }
-  if (writeWriter) { try { writeWriter.cancelQuiz(); } catch(e){} writeWriter = null; }
-  window.location.href = 'index.html';
+function backToDashboard(){
+  if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null}
+  if(recognizer){try{recognizer.abort()}catch(e){}recognizer=null}
+  if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}
+  window.location.href='index.html';
 }
 
-// =============================================
-// 窗口调整
-// =============================================
-let resizeTimeout = null;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(() => {
-    resizeCanvas();
-  }, 200);
-});
-
-// =============================================
-// 键盘控制 (桌面端)
-// =============================================
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowLeft') moveLeft();
-  else if (e.key === 'ArrowRight') moveRight();
-  else if (e.key === 'ArrowDown') dropNow();
-});
-
-// =============================================
-// 启动
-// =============================================
-window.addEventListener('load', () => {
-  setTimeout(initGame, 50);
-});
-
-// Handle visibility change - pause when hidden
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden && animFrameId) {
-    // Game keeps running but will auto-recognize on return
-  }
-});
+window.addEventListener('resize',function(){clearTimeout(this._rt);this._rt=setTimeout(resizeCanvas,200)});
+document.addEventListener('keydown',function(e){if(e.key==='ArrowLeft')moveLeft();else if(e.key==='ArrowRight')moveRight();else if(e.key==='ArrowDown')dropNow();});
+window.addEventListener('load',function(){setTimeout(initGame,50)});
 </script>
 </body>
 </html>
