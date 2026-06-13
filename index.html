@@ -12,7 +12,7 @@ button{cursor:pointer;font-family:inherit;border:none;outline:none}
 input{font-family:inherit;outline:none}
 
 /* 页面切换 */
-.page{display:none;width:100vw;height:100vh;height:100dvh;position:fixed;top:0;left:0}
+.page{display:none;width:100vw;height:100vh;position:fixed;top:0;left:0}
 .page.visible{display:flex;flex-direction:column}
 
 /* ===== 欢迎页 ===== */
@@ -126,11 +126,11 @@ input{font-family:inherit;outline:none}
 .quiz-header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;flex-shrink:0}
 .quiz-header h3{font-size:1em;color:#555}
 .quiz-progress{font-size:.85em;color:#999;font-weight:bold}
-.quiz-body{flex:1;display:flex;flex-direction:column;min-height:0;overflow-y:auto}
-.quiz-main{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 16px;gap:10px;min-height:0}
+.quiz-body{flex:1;display:flex;flex-direction:column;min-height:0}
+.quiz-main{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 20px;gap:18px;min-height:0}
 .quiz-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:4px}
 .quiz-right{display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.quiz-bottom{display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 20px 14px;flex-shrink:0;margin-top:auto}
+.quiz-bottom{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 20px 32px;flex-shrink:0;margin-top:auto}
 .quiz-hint{font-size:.9em;color:#999;flex-shrink:0}
 .quiz-char-disp{font-size:3em;font-weight:bold;color:#555;flex-shrink:0;opacity:0;transition:opacity .3s}
 .quiz-char-disp.show{opacity:1}
@@ -289,7 +289,7 @@ input{font-family:inherit;outline:none}
   .quiz-left{align-items:center;width:auto;min-width:140px}
   .quiz-right{flex:1;max-width:360px}
   .quiz-body{gap:0;min-height:0}
-  .quiz-bottom{gap:2px;padding:0 12px 12px;margin-top:auto}
+  .quiz-bottom{gap:2px;padding:0 12px 28px;margin-top:auto}
   .quiz-canvas{width:300px;height:300px}
   .quiz-canvas svg{width:300px;height:300px}
   .quiz-char-disp{font-size:4.5em}
@@ -297,8 +297,8 @@ input{font-family:inherit;outline:none}
   .quiz-score{font-size:1.2em}
   .quiz-msg{font-size:.75em;min-height:16px}
   /* 大按钮 */
-  .quiz-mic-btn{width:64px;height:64px;font-size:1.8em}
-  .quiz-read-hint{font-size:.85em}
+  .quiz-mic-btn{width:80px;height:80px;font-size:2.2em}
+  .quiz-read-hint{font-size:.95em}
   .quiz-btn{padding:12px 44px;font-size:1.2em;border-radius:16px}
   .quiz-read-skip{font-size:.95em;padding:8px 18px}
   .quiz-btn-area{gap:14px}
@@ -1891,6 +1891,13 @@ function loadProfiles() {
 function saveProfiles(){
   var data={profiles:profiles,currentUser:currentUser};
   localStorage.setItem('learningProfiles',JSON.stringify(data));
+  // 自动备份到服务器（异步，不阻塞，失败不影响使用）
+  try{
+    var x=new XMLHttpRequest();
+    x.open('POST','/api/save',true);
+    x.setRequestHeader('Content-Type','application/json');
+    x.send(JSON.stringify(data));
+  }catch(e){}
 }
 function getProfile(){return profiles.find(p=>p.name===currentUser)}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -2890,6 +2897,19 @@ if(currentUser&&getProfile()){
   enterDashboard();
 }else{
   showPage('welcomePage');
+  // localStorage 为空 → 尝试从服务器备份恢复（异步）
+  !async function(){
+    try{
+      var res=await fetch('/api/load');
+      if(!res.ok)return;
+      var d=await res.json();
+      if(!d||!d.data||!d.data.profiles||!Array.isArray(d.data.profiles))return;
+      profiles=d.data.profiles;
+      currentUser=d.data.currentUser||null;
+      localStorage.setItem('learningProfiles',JSON.stringify({profiles:profiles,currentUser:currentUser}));
+      enterDashboard();
+    }catch(e){}
+  }();
 }
 </script>
 </body>

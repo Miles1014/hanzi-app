@@ -624,6 +624,19 @@ function backToDashboard(){
 window.addEventListener('resize',function(){clearTimeout(this._rt);this._rt=setTimeout(resizeCanvas,200)});
 document.addEventListener('keydown',function(e){if(e.key==='ArrowLeft')moveLeft();else if(e.key==='ArrowRight')moveRight();else if(e.key==='ArrowDown')dropNow();});
 window.addEventListener('load',function(){setTimeout(initGame,50)});
+
+// 诊断面板 - 语音识别状态
+var diagEl=document.createElement('div');
+diagEl.id='diagPanel';
+diagEl.style.cssText='position:fixed;bottom:80px;left:8px;right:8px;background:rgba(0,0,0,0.85);color:#0f0;padding:8px 10px;border-radius:8px;font-size:11px;font-family:monospace;z-index:9999;line-height:1.5;max-height:120px;overflow-y:auto;display:none';
+diagEl.innerHTML='诊断面板';
+document.body.appendChild(diagEl);
+function diag(msg){diagEl.style.display='block';diagEl.innerHTML+='<br>'+new Date().toLocaleTimeString()+' '+msg;diagEl.scrollTop=diagEl.scrollHeight}
+// Expose key objects for console debugging
+window.__diag=diag;
+window.__startVoice=startVoiceRecognition;
+window.__checkSR=function(){diag('SpeechRecognition: '+(window.SpeechRecognition?'yes ':'no ')+'webkitSpeechRecognition: '+(window.webkitSpeechRecognition?'yes':'no'));diag('PINYIN loaded: '+(typeof PINYIN!=='undefined'?'yes ('+Object.keys(PINYIN).length+' chars)':'no'));diag('Game state: '+gameState+(fallingChar?' char='+fallingChar.char+' col='+fallingChar.col:' no falling'));diag('Handler available: '+(typeof startVoiceRecognition==='function'?'yes':'no'))};
+console.log('Tetris diag: call __checkSR() to test');
 </script>
 </body>
 </html>
