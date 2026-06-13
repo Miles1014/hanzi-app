@@ -1891,13 +1891,6 @@ function loadProfiles() {
 function saveProfiles(){
   var data={profiles:profiles,currentUser:currentUser};
   localStorage.setItem('learningProfiles',JSON.stringify(data));
-  // 自动备份到服务器（异步，不阻塞，失败不影响使用）
-  try{
-    var x=new XMLHttpRequest();
-    x.open('POST','/api/save',true);
-    x.setRequestHeader('Content-Type','application/json');
-    x.send(JSON.stringify(data));
-  }catch(e){}
 }
 function getProfile(){return profiles.find(p=>p.name===currentUser)}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -2101,30 +2094,9 @@ function updateDashboard(){
   }
 }
 
-// =============================================
-// 学习页
-// =============================================
-let learnWriter=null;
-let practiceWriter=null;
-let learningMistakes=0;
-let learningScore=0;
-let practiceRound=0;
-let wordListened=false;
-let sentenceListened=false;
-let animationPlayed=false;
-const PRACTICE_REQUIRED=2;
-
-// 阶梯扣分：0错=100, 1错=70, 2错=40, 3+错=30
-function calcScore(mistakes){
-  if(mistakes<=0)return 100;
-  if(mistakes===1)return 70;
-  if(mistakes===2)return 40;
-  return 30;
-}
 // 进入汉字俄罗斯方块游戏
 function startGame(){
   const p=getProfile();if(!p)return;
-  // 保存当前学习进度
   if(p.todayState&&p.todayState.currentIndex>0){
     if(!p.dailyRecords)p.dailyRecords=[];
     if(!p.dailyRecords.some(r=>r.date===today())){
@@ -2135,6 +2107,25 @@ function startGame(){
   window.location.href='tetris.html?user='+encodeURIComponent(p.name);
 }
 
+// =============================================
+// 学习页
+// =============================================
+let learnWriter=null;
+let practiceWriter=null;
+let learningMistakes=0;
+let learningScore=0;
+let practiceRound=0;
+let wordListened=false;
+let sentenceListened=false;
+const PRACTICE_REQUIRED=2;
+
+// 阶梯扣分：0错=100, 1错=70, 2错=40, 3+错=30
+function calcScore(mistakes){
+  if(mistakes<=0)return 100;
+  if(mistakes===1)return 70;
+  if(mistakes===2)return 40;
+  return 30;
+}
 function startLearning(){
   const p=getProfile();if(!p)return;
   const st=p.todayState;
@@ -2172,7 +2163,7 @@ function renderLearnChar(){
   if(practiceWriter){try{practiceWriter.cancelQuiz()}catch(e){}practiceWriter=null}
 
   practiceRound=0;learningMistakes=0;learningScore=0;
-  wordListened=false;sentenceListened=false;animationPlayed=false;
+  wordListened=false;sentenceListened=false;
   document.getElementById('learnNextBtn').disabled=true;
   document.getElementById('learnPlayBtn').disabled=false;
 
@@ -2225,13 +2216,11 @@ function createPracticeWriter(ch){
         practiceRound++;
         if(practiceRound>=PRACTICE_REQUIRED){
           learningScore=calcScore(learningMistakes);
-          const canFinish = wordListened && sentenceListened && animationPlayed;
+          const canFinish = wordListened && sentenceListened;
           document.getElementById('learnNextBtn').disabled=!canFinish;
           let msg=`第${currentRound}遍完成！练习得分${learningScore}。`;
-          if(!canFinish){
-            if(!animationPlayed)msg+=' 先播放笔顺动画';
-            else msg+=' 先点击🔊听完词语和句子';
-          }else msg+=' 可以点完成';
+          if(!canFinish)msg+=' 先点击🔊听完词语和句子';
+          else msg+=' 可以点完成';
           document.getElementById('learnStatusText').textContent=msg;
         }else{
           document.getElementById('learnStatusText').textContent=
@@ -2296,13 +2285,8 @@ function playLearnAnim(){
   setTimeout(()=>{
     learnWriter.animateCharacter({
       onComplete:()=>{
-        animationPlayed=true;
-        // 检查是否满足所有条件，自动解锁完成按钮
-        if(practiceRound>=PRACTICE_REQUIRED && wordListened && sentenceListened){
-          document.getElementById('learnNextBtn').disabled=false;
-        }
         document.getElementById('learnStatusText').textContent=
-          document.getElementById('learnNextBtn').disabled?'动画播完了，继续完成其他步骤':'动画播完了，可以点完成';
+          document.getElementById('learnNextBtn').disabled?'动画播完了，继续练习写字':'动画播完了';
       }
     });
     document.getElementById('learnStatusText').textContent='正在播放笔顺动画...';
@@ -2632,13 +2616,11 @@ function checkListenDone(){
   if(wordListened&&sentenceListened){
     hint.textContent='✅ 已听完词语和句子';
     hint.style.color='#2ecc71';
-    // 如果练习已学完 + 动画已播放，解锁完成按钮
-    if(practiceRound>=PRACTICE_REQUIRED && animationPlayed){
+    // 如果练习已学完，解锁完成按钮
+    if(practiceRound>=PRACTICE_REQUIRED){
       document.getElementById('learnNextBtn').disabled=false;
       document.getElementById('learnStatusText').textContent=
         `第${practiceRound}遍完成！练习得分${learningScore}。可以点完成`;
-    }else if(practiceRound>=PRACTICE_REQUIRED && !animationPlayed){
-      document.getElementById('learnStatusText').textContent='练习完成，先播放笔顺动画';
     }
   }else{
     const remaining=[];
@@ -2897,19 +2879,6 @@ if(currentUser&&getProfile()){
   enterDashboard();
 }else{
   showPage('welcomePage');
-  // localStorage 为空 → 尝试从服务器备份恢复（异步）
-  !async function(){
-    try{
-      var res=await fetch('/api/load');
-      if(!res.ok)return;
-      var d=await res.json();
-      if(!d||!d.data||!d.data.profiles||!Array.isArray(d.data.profiles))return;
-      profiles=d.data.profiles;
-      currentUser=d.data.currentUser||null;
-      localStorage.setItem('learningProfiles',JSON.stringify({profiles:profiles,currentUser:currentUser}));
-      enterDashboard();
-    }catch(e){}
-  }();
 }
 </script>
 </body>
