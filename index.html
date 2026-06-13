@@ -12,7 +12,7 @@ button{cursor:pointer;font-family:inherit;border:none;outline:none}
 input{font-family:inherit;outline:none}
 
 /* 页面切换 */
-.page{display:none;width:100vw;height:100vh;position:fixed;top:0;left:0}
+.page{display:none;width:100vw;height:100vh;height:100dvh;position:fixed;top:0;left:0}
 .page.visible{display:flex;flex-direction:column}
 
 /* ===== 欢迎页 ===== */
@@ -126,8 +126,8 @@ input{font-family:inherit;outline:none}
 .quiz-header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;flex-shrink:0}
 .quiz-header h3{font-size:1em;color:#555}
 .quiz-progress{font-size:.85em;color:#999;font-weight:bold}
-.quiz-body{flex:1;display:flex;flex-direction:column;min-height:0}
-.quiz-main{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 20px;gap:18px;min-height:0}
+.quiz-body{flex:1;display:flex;flex-direction:column;min-height:0;overflow-y:auto}
+.quiz-main{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 16px;gap:10px;min-height:0}
 .quiz-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:4px}
 .quiz-right{display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .quiz-bottom{display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 20px 14px;flex-shrink:0;margin-top:auto}

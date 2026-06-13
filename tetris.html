@@ -47,8 +47,10 @@ input{font-family:inherit;outline:none}
 .voice-box .char{font-size:4em;font-weight:bold;color:#333;margin-bottom:4px}
 .voice-box .pinyin{font-size:1.2em;color:#a18cd1;margin-bottom:2px;font-weight:bold}
 .voice-box .hint{font-size:.85em;color:#999;margin-bottom:12px}
-.voice-box .mic-icon{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);display:flex;align-items:center;justify-content:center;font-size:1.8em;margin:0 auto 8px;transition:all .3s;color:#fff}
+.voice-box .mic-icon{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);display:flex;align-items:center;justify-content:center;font-size:1.8em;margin:0 auto 8px;transition:all .3s;color:#fff;border:none;cursor:pointer;touch-action:manipulation}
+.voice-box .mic-icon:active{transform:scale(.92)}
 .voice-box .mic-icon.listening{animation:micPulse .6s infinite alternate;box-shadow:0 0 28px rgba(161,140,209,0.5)}
+.voice-box .mic-icon.listening:active{transform:scale(1)}
 @keyframes micPulse{from{transform:scale(1)}to{transform:scale(1.15)}}
 .voice-box .status-text{font-size:.85em;color:#888;min-height:1.3em}
 .voice-box .timer{font-size:1.8em;font-weight:bold;color:#a18cd1;margin-top:4px}
@@ -144,10 +146,10 @@ input{font-family:inherit;outline:none}
   <div class="voice-box">
     <div class="char" id="voiceChar">字</div>
     <div class="pinyin" id="voicePinyin">zi</div>
-    <div class="hint">请你大声读出来</div>
-    <div class="mic-icon" id="micIcon">🎤</div>
-    <div class="status-text" id="voiceStatus">正在准备...</div>
-    <div class="timer" id="voiceTimer">--</div>
+    <div class="hint" id="voiceHint">点击🎤开始朗读</div>
+    <button class="mic-icon" id="micIcon" onclick="startVoiceRecognition()">🎤</button>
+    <div class="status-text" id="voiceStatus">点击麦克风开始</div>
+    <div class="timer" id="voiceTimer" style="display:none">--</div>
     <div id="voiceResult"></div>
     <button class="btn-skip" id="voiceSkipBtn" onclick="skipVoice()">跳过 →</button>
   </div>
@@ -361,39 +363,48 @@ function startRecognition(){
   document.getElementById('voiceChar').textContent=ch;
   document.getElementById('voicePinyin').textContent=py;
   document.getElementById('voiceResult').innerHTML='';
-  document.getElementById('voiceStatus').textContent='正在准备...';
-  document.getElementById('voiceOverlay').classList.add('visible');
-  document.getElementById('micIcon').classList.add('listening');
+  document.getElementById('voiceHint').textContent='点击🎤开始朗读';
+  document.getElementById('voiceStatus').textContent='点击麦克风开始';
+  document.getElementById('micIcon').className='mic-icon';
+  document.getElementById('micIcon').onclick=startVoiceRecognition;
+  document.getElementById('voiceTimer').style.display='none';
   document.getElementById('voiceSkipBtn').style.display='block';
-  document.getElementById('voiceTimer').textContent='--';
-
+  document.getElementById('voiceOverlay').classList.add('visible');
+  // Reset recognizer state
   if(recognizer){try{recognizer.abort()}catch(e){}recognizer=null;}
   if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
   if(_safetyTimer){clearTimeout(_safetyTimer);_safetyTimer=null;}
+}
+
+function startVoiceRecognition(){
+  if(gameState!=='RECOGNIZING')return;
+  var ch=document.getElementById('voiceChar').textContent;
+  document.getElementById('micIcon').onclick=null;
+  document.getElementById('voiceHint').textContent='正在听...';
+  document.getElementById('voiceStatus').textContent='🎤 请朗读...';
 
   var timerStarted=false,timeLeft=0;
-
   function startCountdown(){
     if(timerStarted)return;timerStarted=true;
     timeLeft=gameSettings.timeout;
+    document.getElementById('voiceTimer').style.display='block';
     document.getElementById('voiceTimer').textContent=timeLeft;
-    document.getElementById('voiceStatus').textContent='🎤 请朗读...';
     _timerInterval=setInterval(function(){
       timeLeft--;document.getElementById('voiceTimer').textContent=timeLeft;
       if(timeLeft<=0&&gameState==='RECOGNIZING'){clearInterval(_timerInterval);onVoiceTimeout();}
     },1000);
   }
-
-  _safetyTimer=setTimeout(function(){if(!timerStarted)startCountdown();},3000);
-
-  function cleanup(){if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}if(_safetyTimer){clearTimeout(_safetyTimer);_safetyTimer=null;}}
+  function cleanup(){if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}}
 
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){document.getElementById('voiceStatus').textContent='⚠️ 不支持语音';setTimeout(function(){cleanup();onVoiceTimeout();},1500);return}
 
   try{
     recognizer=new SR();recognizer.lang='zh-CN';recognizer.continuous=false;recognizer.interimResults=false;recognizer.maxAlternatives=8;
-    recognizer.onstart=function(){startCountdown();};
+    recognizer.onstart=function(){
+      document.getElementById('micIcon').classList.add('listening');
+      startCountdown();
+    };
     recognizer.onresult=function(e){
       var rs=e.results;if(!rs.length)return;
       var alts=rs[rs.length-1];
@@ -411,7 +422,6 @@ function startRecognition(){
       if(e.error==='not-allowed'||e.error==='service-not-allowed'){document.getElementById('voiceStatus').textContent='⚠️ 请允许麦克风';cleanup();setTimeout(onVoiceTimeout,1000);return}
       if(e.error==='no-speech'||e.error==='aborted'){cleanup();onVoiceTimeout();}
     };
-    recognizer.onend=function(){};
     recognizer.start();
   }catch(e){document.getElementById('voiceStatus').textContent='⚠️ 启动失败';cleanup();setTimeout(onVoiceTimeout,1000)}
 }
