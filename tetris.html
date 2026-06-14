@@ -399,19 +399,51 @@ function startVoiceRecognition(){
   D('SpeechRecognition API: 可用');
 
   try{
-    // 每4次匹配后重建识别器（避免 Safari continuous 模式 results 累积卡死）
-    if(recognizer && _recMatchCount>=4){
-      D('已达4次匹配，重建识别器');
+    if(recognizer && _recMatchCount>=3){
+      D('已达'+_recMatchCount+'次匹配，需重建识别器');
+      document.getElementById('voiceStatus').textContent='正在重新准备麦克风...';
       try{recognizer.abort()}catch(e){}
       recognizer=null;
       _recMatchCount=0;
+      // 延迟200ms等浏览器清理音频资源后再创建新识别器
+      setTimeout(function(){
+        if(gameState!=='RECOGNIZING')return;
+        D('延迟后创建新识别器');
+        createFreshRecognizer();
+      },200);
+      return;
     }
-    if(recognizer){
-      D('复用已有识别器');
+    if(recognizer && _recMatchCount<3){
+      D('复用已有识别器（matchCount='+_recMatchCount+'），重启监听');
+      // 先中止当前会话再重新开始（刷新内部状态）
       try{recognizer.abort()}catch(e){}
-      recognizer=null;
+      setTimeout(function(){
+        if(gameState!=='RECOGNIZING')return;
+        D('重新 start()...');
+        try{recognizer.start()}catch(e){
+          D('start() 失败: '+e.message);
+          recognizer=null;
+          if(gameState==='RECOGNIZING')onVoiceTimeout();
+        }
+      },100);
+      return;
     }
-    recognizer=new SR();
+    createFreshRecognizer();
+  }catch(e){
+    D('⚠ 异常: '+e.message);
+    document.getElementById('voiceStatus').textContent='⚠️ 启动失败: '+e.message;
+    if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
+    setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1000);
+  }
+}
+
+function createFreshRecognizer(){
+  var ch=document.getElementById('voiceChar').textContent;
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){document.getElementById('voiceStatus').textContent='⚠️ 不支持语音';D('FATAL: SpeechRecognition 不可用');setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1500);return}
+  D('SpeechRecognition API: 可用');
+  if(recognizer){try{recognizer.abort()}catch(e){}recognizer=null;}
+  recognizer=new SR();
     recognizer.lang='zh-CN';
     recognizer.continuous=true;
     recognizer.interimResults=true;
