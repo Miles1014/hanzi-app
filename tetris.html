@@ -472,29 +472,6 @@ function startVoiceRecognition(){
   }
 }
 
-    recognizer.onerror=function(e){
-      if(e.error==='not-allowed'||e.error==='service-not-allowed'){
-        document.getElementById('voiceStatus').textContent='⚠️ 请允许麦克风';
-        if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
-        return;
-      }
-      // On no-speech/aborted, the recognizer stopped but the timer will handle timeout
-      document.getElementById('micIcon').className='mic-icon';
-    };
-
-    recognizer.onend=function(){
-      // Recognizer stopped (e.g., page switch, timeout). Timer still running.
-      document.getElementById('micIcon').className='mic-icon';
-    };
-
-    recognizer.start();
-  }catch(e){
-    document.getElementById('voiceStatus').textContent='⚠️ 启动失败';
-    if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
-    setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1000);
-  }
-}
-
 function charMatch(target,text){
   if(!target||!text)return false;
   if(text.indexOf(target)>=0)return true;
