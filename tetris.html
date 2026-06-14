@@ -501,10 +501,11 @@ function createFreshRecognizer(){
       document.getElementById('micIcon').className='mic-icon';
     };
 
-    D('调用 recognizer.start()...');
-    recognizer.start();
-    D('recognizer.start() 已返回');
-  }catch(e){
+    try{
+      D('调用 recognizer.start()...');
+      recognizer.start();
+      D('recognizer.start() 已返回');
+    }catch(e){
     D('⚠ recognizer.start() 抛出异常: '+e.message);
     document.getElementById('voiceStatus').textContent='⚠️ 启动失败: '+e.message;
     if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
