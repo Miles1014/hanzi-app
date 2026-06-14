@@ -360,6 +360,7 @@ function startRecognition(){
   if(!fallingChar)return;
   gameState='RECOGNIZING';document.getElementById('recogHint').classList.add('active');
   var ch=fallingChar.char,py=formatPinyin(fallingChar.pinyin||'');
+  D('识别区激活：'+ch+' ('+py+')');
   document.getElementById('voiceChar').textContent=ch;
   document.getElementById('voicePinyin').textContent=py;
   document.getElementById('voiceResult').innerHTML='';
@@ -370,8 +371,7 @@ function startRecognition(){
   document.getElementById('voiceTimer').style.display='none';
   document.getElementById('voiceSkipBtn').style.display='block';
   document.getElementById('voiceOverlay').classList.add('visible');
-  // If continuous recognizer already exists and is running, no need to restart
-  if(recognizer){onVoiceRecognizerReady();}
+  if(recognizer){D('已有持续识别器，直接开始');onVoiceRecognizerReady();}
 }
 
 function onVoiceRecognizerReady(){
@@ -381,25 +381,26 @@ function onVoiceRecognizerReady(){
   document.getElementById('voiceStatus').textContent='🎤 请朗读...';
   document.getElementById('voiceTimer').style.display='block';
   document.getElementById('voiceTimer').textContent=gameSettings.timeout;
-  // Auto-timeout
   if(_timerInterval){clearInterval(_timerInterval);}
   var t=gameSettings.timeout;
   _timerInterval=setInterval(function(){
     t--;document.getElementById('voiceTimer').textContent=Math.max(0,t);
-    if(t<=0&&gameState==='RECOGNIZING'){clearInterval(_timerInterval);onVoiceTimeout();}
+    if(t<=0&&gameState==='RECOGNIZING'){clearInterval(_timerInterval);D('超时：未检测到语音');onVoiceTimeout();}
   },1000);
 }
 
 function startVoiceRecognition(){
   if(gameState!=='RECOGNIZING')return;
   var ch=document.getElementById('voiceChar').textContent;
+  D('用户点击🎤，准备启动语音识别');
 
-  // Create continuous recognizer (like quiz page: continuous:true, interimResults:true)
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){document.getElementById('voiceStatus').textContent='⚠️ 不支持语音';setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1500);return}
+  if(!SR){document.getElementById('voiceStatus').textContent='⚠️ 不支持语音';D('FATAL: SpeechRecognition 不可用');setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1500);return}
+  D('SpeechRecognition API: 可用');
 
   try{
     if(recognizer){
+      D('清理旧识别器');
       try{recognizer.abort()}catch(e){}
       recognizer=null;
     }
@@ -408,21 +409,29 @@ function startVoiceRecognition(){
     recognizer.continuous=true;
     recognizer.interimResults=true;
     recognizer.maxAlternatives=8;
+    D('创建新识别器: continuous=true, lang=zh-CN');
 
     recognizer.onstart=function(){
+      D('事件: onstart — 麦克风已启动');
       onVoiceRecognizerReady();
     };
 
     recognizer.onresult=function(e){
-      if(gameState!=='RECOGNIZING')return;
+      D('事件: onresult — 收到识别结果，resultIndex='+e.resultIndex+', results.length='+e.results.length);
+      if(gameState!=='RECOGNIZING'){D('  ⚠ gameState 不是 RECOGNIZING，忽略');return}
       var ch=document.getElementById('voiceChar').textContent;
       for(var i=e.resultIndex;i<e.results.length;i++){
+        D('  result['+i+']: isFinal='+e.results[i].isFinal+', alternatives='+e.results[i].length);
         for(var j=0;j<e.results[i].length;j++){
           var spoken=e.results[i][j].transcript.trim();
+          var conf=Math.round(e.results[i][j].confidence*100);
+          D('  alt['+j+']: "'+spoken+'" (confidence='+conf+'%)');
           if(charMatch(ch,spoken)){
+            D('  ✅ 匹配成功！target="'+ch+'", spoken="'+spoken+'"');
             if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
             document.getElementById('voiceResult').innerHTML='<div class="result-correct">✓ 正确！</div>';
             document.getElementById('micIcon').className='mic-icon';
+            score+=10;eliminated++;updateStats();
             setTimeout(function(){
               document.getElementById('voiceOverlay').classList.remove('visible');
               document.getElementById('recogHint').classList.remove('active');
@@ -434,7 +443,34 @@ function startVoiceRecognition(){
           }
         }
       }
+      D('  ❌ 所有候选均不匹配 target="'+ch+'"');
     };
+
+    recognizer.onerror=function(e){
+      D('事件: onerror — error="'+e.error+'"');
+      if(e.error==='not-allowed'||e.error==='service-not-allowed'){
+        document.getElementById('voiceStatus').textContent='⚠️ 请允许麦克风';
+        if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
+        return;
+      }
+      document.getElementById('micIcon').className='mic-icon';
+    };
+
+    recognizer.onend=function(){
+      D('事件: onend — 识别器已停止');
+      document.getElementById('micIcon').className='mic-icon';
+    };
+
+    D('调用 recognizer.start()...');
+    recognizer.start();
+    D('recognizer.start() 已返回');
+  }catch(e){
+    D('⚠ recognizer.start() 抛出异常: '+e.message);
+    document.getElementById('voiceStatus').textContent='⚠️ 启动失败: '+e.message;
+    if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
+    setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1000);
+  }
+}
 
     recognizer.onerror=function(e){
       if(e.error==='not-allowed'||e.error==='service-not-allowed'){
@@ -647,18 +683,49 @@ window.addEventListener('resize',function(){clearTimeout(this._rt);this._rt=setT
 document.addEventListener('keydown',function(e){if(e.key==='ArrowLeft')moveLeft();else if(e.key==='ArrowRight')moveRight();else if(e.key==='ArrowDown')dropNow();});
 window.addEventListener('load',function(){setTimeout(initGame,50)});
 
-// 诊断面板 - 语音识别状态
-var diagEl=document.createElement('div');
+// 诊断面板 - 彻底排查语音识别问题
+var diagEl,diagVisible=true,diagBuf=[];
+
+function D(msg){
+  diagBuf.push(new Date().toLocaleTimeString()+' '+msg);
+  if(diagBuf.length>100)diagBuf.shift();
+  if(diagEl){diagEl.style.display='block';diagEl.innerHTML='<b style="color:#ff0">🎤 语音诊断 ('+diagBuf.length+'条)</b> <span style="color:#aaa;font-size:10px;cursor:pointer" onclick="toggleDiag()">[隐藏] [清空]</span><br>'+diagBuf.join('<br>');diagEl.scrollTop=diagEl.scrollHeight}
+  console.log('[TETRIS-DIAG] '+msg);
+}
+
+function toggleDiag(){
+  diagVisible=!diagVisible;
+  if(diagVisible){diagEl.style.display='block';}else{diagEl.style.display='none';}
+}
+
+// Build diagnostic panel
+diagEl=document.createElement('div');
 diagEl.id='diagPanel';
-diagEl.style.cssText='position:fixed;bottom:80px;left:8px;right:8px;background:rgba(0,0,0,0.85);color:#0f0;padding:8px 10px;border-radius:8px;font-size:11px;font-family:monospace;z-index:9999;line-height:1.5;max-height:120px;overflow-y:auto;display:none';
-diagEl.innerHTML='诊断面板';
+diagEl.style.cssText='position:fixed;bottom:76px;left:6px;right:6px;background:rgba(0,0,0,0.88);color:#0f0;padding:6px 8px;border-radius:8px;font-size:10px;font-family:monospace;z-index:9999;line-height:1.4;max-height:140px;overflow-y:auto';
+diagEl.innerHTML='<b style="color:#ff0">🎤 点击游戏🎤按钮后看这里</b>';
 document.body.appendChild(diagEl);
-function diag(msg){diagEl.style.display='block';diagEl.innerHTML+='<br>'+new Date().toLocaleTimeString()+' '+msg;diagEl.scrollTop=diagEl.scrollHeight}
-// Expose key objects for console debugging
-window.__diag=diag;
-window.__startVoice=startVoiceRecognition;
-window.__checkSR=function(){diag('SpeechRecognition: '+(window.SpeechRecognition?'yes ':'no ')+'webkitSpeechRecognition: '+(window.webkitSpeechRecognition?'yes':'no'));diag('PINYIN loaded: '+(typeof PINYIN!=='undefined'?'yes ('+Object.keys(PINYIN).length+' chars)':'no'));diag('Game state: '+gameState+(fallingChar?' char='+fallingChar.char+' col='+fallingChar.col:' no falling'));diag('Handler available: '+(typeof startVoiceRecognition==='function'?'yes':'no'))};
-console.log('Tetris diag: call __checkSR() to test');
+// Pre-check browser support
+D('页面加载完成');
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+D('SpeechRecognition API: '+(SR?'✅ 可用':'❌ 不可用'));
+D('浏览器: '+navigator.userAgent.substring(0,80));
+D('PINYIN: '+(typeof PINYIN!=='undefined'?'✅ 已加载 ('+Object.keys(PINYIN).length+'字)':'❌ 未加载'));
+D('HTTPS: '+(location.protocol==='https:'?'✅':'❌ '+location.protocol+' (语音需HTTPS)'));
+
+// 一键诊断按钮
+window.__diagAll=function(){
+  D('--- 全面诊断 ---');
+  D('SpeechRecognition: '+(window.SpeechRecognition?'yes':'no'));
+  D('webkitSpeechRecognition: '+(window.webkitSpeechRecognition?'yes':'no'));
+  D('PINYIN: '+(typeof PINYIN!=='undefined'?'yes('+Object.keys(PINYIN).length+'字)':'no'));
+  D('gameState: '+gameState);
+  D('fallingChar: '+(fallingChar?fallingChar.char+' col='+fallingChar.col:'null'));
+  D('recognizer: '+(recognizer?'exists':'null'));
+  D('gameSettings.speed: '+gameSettings.speed+', mode: '+gameSettings.mode+', timeout: '+gameSettings.timeout);
+};
+D('已就绪，打开游戏等汉字掉到识别区后看上方日志');
+
+console.log('TETRIS DIAG: __diagAll() 打印全面诊断');
 </script>
 </body>
 </html>
