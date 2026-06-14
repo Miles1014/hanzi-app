@@ -738,14 +738,6 @@ function triggerScreenShake(intensity){
 // 绘制（无网格线、无虚线框、柔和配色）
 // ============================================
 function drawGame(){
-  ctx.save();
-  if(screenShake.intensity>0){
-    var sx=(Math.random()-0.5)*screenShake.intensity*2;
-    var sy=(Math.random()-0.5)*screenShake.intensity*2;
-    ctx.translate(sx,sy);
-    screenShake.intensity*=screenShake.decay;
-    if(screenShake.intensity<0.3)screenShake.intensity=0;
-  }
   ctx.clearRect(0,0,canvasW,canvasH);
   // 背景
   var grad=ctx.createLinearGradient(0,0,0,canvasH);
@@ -769,7 +761,6 @@ function drawGame(){
   }
   // 粒子特效
   updateParticles();drawParticles(ctx);
-  ctx.restore();
 }
 
 function drawCharCell(col,row,char,bgColor,textColor,glow){
