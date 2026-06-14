@@ -523,10 +523,11 @@ function stackChar(cd){
 // ============================================
 var _writeMisses=0;
 var _writeSubmitted=false;
+var _writeScored=false;
 
 function startWritingBonus(ch){
   gameState='WRITING';writeCharData=ch;
-  _writeMisses=0;_writeSubmitted=false;
+  _writeMisses=0;_writeSubmitted=false;_writeScored=false;
   document.getElementById('writeChar').textContent=ch;
   document.getElementById('writeResult').innerHTML='<div style="color:#667eea;font-size:.95em">🎬 笔顺演示中…请认真观看</div>';
   var cb=document.getElementById('writeConfirmBtn');
@@ -597,6 +598,7 @@ function submitWriting(){
 }
 
 function finalizeWriting(success,msg){
+  _writeScored=success;
   if(success){score+=5;updateStats();}
   document.getElementById('writeResult').innerHTML=
     '<div style="color:'+(success?'#2ecc71':'#e74c3c')+';font-size:1em;font-weight:bold">'+msg+'</div>';
@@ -611,15 +613,17 @@ function finalizeWriting(success,msg){
 function skipWriting(){
   if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}
   document.getElementById('writingOverlay').classList.remove('visible');
-  writeCharData=null;_writeMisses=0;_writeSubmitted=false;
-  spawnNext();
+  var shouldStack=fallingChar;
+  writeCharData=null;_writeMisses=0;_writeSubmitted=false;_writeScored=false;
+  if(shouldStack){stackChar(fallingChar);}else{spawnNext();}
 }
 
 function closeWritingAndContinue(){
   if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}
   document.getElementById('writingOverlay').classList.remove('visible');
-  writeCharData=null;_writeMisses=0;_writeSubmitted=false;
-  spawnNext();
+  var shouldStack=!_writeScored&&fallingChar;
+  writeCharData=null;_writeMisses=0;_writeSubmitted=false;_writeScored=false;
+  if(shouldStack){stackChar(fallingChar);}else{spawnNext();}
 }
 
 function onVoiceTimeout(){
