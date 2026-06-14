@@ -759,8 +759,6 @@ function drawGame(){
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillStyle='#333';ctx.fillText(fallingChar.char,x,y);
   }
-  // 粒子特效（try-catch 防止崩溃影响布局）
-  try{updateParticles();drawParticles(ctx);}catch(e){}
 }
 
 function drawCharCell(col,row,char,bgColor,textColor,glow){
