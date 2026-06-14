@@ -665,7 +665,7 @@ var diagEl,diagVisible=true,diagBuf=[];
 
 function D(msg){
   diagBuf.push(new Date().toLocaleTimeString()+' '+msg);
-  if(diagBuf.length>100)diagBuf.shift();
+  if(diagBuf.length>50)diagBuf.shift();
   if(diagEl){diagEl.style.display='block';diagEl.innerHTML='<b style="color:#ff0">🎤 语音诊断 ('+diagBuf.length+'条)</b> <span style="color:#aaa;font-size:10px;cursor:pointer" onclick="toggleDiag()">[隐藏] [清空]</span><br>'+diagBuf.join('<br>');diagEl.scrollTop=diagEl.scrollHeight}
   console.log('[TETRIS-DIAG] '+msg);
 }
@@ -678,7 +678,7 @@ function toggleDiag(){
 // Build diagnostic panel
 diagEl=document.createElement('div');
 diagEl.id='diagPanel';
-diagEl.style.cssText='position:fixed;bottom:76px;left:6px;right:6px;background:rgba(0,0,0,0.88);color:#0f0;padding:6px 8px;border-radius:8px;font-size:10px;font-family:monospace;z-index:9999;line-height:1.4;max-height:140px;overflow-y:auto';
+diagEl.style.cssText='position:fixed;top:48px;left:6px;right:6px;background:rgba(0,0,0,0.88);color:#0f0;padding:4px 8px;border-radius:8px;font-size:10px;font-family:monospace;z-index:9999;line-height:1.3;max-height:100px;overflow-y:auto';
 diagEl.innerHTML='<b style="color:#ff0">🎤 点击游戏🎤按钮后看这里</b>';
 document.body.appendChild(diagEl);
 // Pre-check browser support
