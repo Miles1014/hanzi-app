@@ -1,5 +1,5 @@
 // 每日汉字打卡 - Service Worker
-const CACHE_NAME = 'hanzi-v1';
+const CACHE_NAME = 'hanzi-v2';
 
 // 安装时预缓存核心资源
 self.addEventListener('install', function(event) {
@@ -8,6 +8,8 @@ self.addEventListener('install', function(event) {
       return cache.addAll([
         'index.html',
         'pinyin.html',
+        'tetris.html',
+        'pinyin-data.js',
         'manifest.json',
         'https://cdn.jsdelivr.net/npm/hanzi-writer@3.0/dist/hanzi-writer.min.js'
       ]);
@@ -29,15 +31,12 @@ self.addEventListener('activate', function(event) {
   self.clients.claim();
 });
 
-// 拦截请求：缓存优先，网络兜底
+// 拦截请求：网络优先，缓存兜底（避免缓存旧版卡死）
 self.addEventListener('fetch', function(event) {
   event.respondWith(
-    caches.match(event.request).then(function(resp) {
-      return resp || fetch(event.request).catch(function() {
-        // 离线时返回已缓存的页面
-        if (event.request.mode === 'navigate') {
-          return caches.match('index.html');
-        }
+    fetch(event.request).catch(function() {
+      return caches.match(event.request).then(function(resp) {
+        return resp || (event.request.mode === 'navigate' ? caches.match('index.html') : null);
       });
     })
   );
