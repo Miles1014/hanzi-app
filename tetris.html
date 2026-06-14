@@ -268,11 +268,11 @@ function resizeCanvas(){
   var ctrlH=document.getElementById('controls').offsetHeight||70;
   var h=window.innerHeight-topH-ctrlH-8;
   var aspect=COLS/ROWS;
-  var maxW=h*aspect*1.05;if(maxW<w)w=Math.floor(maxW);
+  var maxW=h*aspect*1.15;if(maxW<w)w=Math.floor(maxW);
   var dpr=Math.min(window.devicePixelRatio||1,2);
   canvasW=w;canvasH=Math.floor(w/aspect);
   // 画布高度占视口 ~88%
-  canvasH=Math.min(canvasH,Math.round(window.innerHeight*0.88));
+  canvasH=Math.min(canvasH,Math.round(window.innerHeight*0.84));
   canvas.width=canvasW*dpr;canvas.height=canvasH*dpr;
   canvas.style.width=canvasW+'px';canvas.style.height=canvasH+'px';
   ctx.scale(dpr,dpr);
