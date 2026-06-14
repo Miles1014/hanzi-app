@@ -244,11 +244,6 @@ function initGame(){
   buildCharQueue();startFalling();
   lastFrameTime=performance.now();lastDropTime=lastFrameTime;
   animFrameId=requestAnimationFrame(gameLoop);
-  // 自测：1.5秒后在画布中央放一枚礼花，确认粒子系统可用
-  setTimeout(function(){
-    if(!canvasW||!canvasH)return;
-    triggerFirework(canvasW/2,canvasH*0.4,false);
-  },1500);
 }
 
 function loadUserAndProfile(){
