@@ -448,12 +448,11 @@ function startVoiceRecognition(){
             score+=10;eliminated++;updateStats();
             var fwX=fallingChar.col*cellW+cellW/2,fwY=fallingChar.row*cellH+cellH/2;
             setTimeout(function(){
-              triggerFirework(fwX,fwY,false);
               document.getElementById('voiceOverlay').classList.remove('visible');
               document.getElementById('recogHint').classList.remove('active');
               if(gameState!=='RECOGNIZING')return;
               gameState='SUCCESS';
-              if(gameSettings.mode==='both')startWritingBonus(ch);else spawnNext();
+              if(gameSettings.mode==='both')startWritingBonus(ch);else{triggerFirework(fwX,fwY,false);spawnNext();}
             },600);
             return;
           }
