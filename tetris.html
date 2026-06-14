@@ -268,7 +268,7 @@ function resizeCanvas(){
   var ctrlH=document.getElementById('controls').offsetHeight||70;
   var h=window.innerHeight-topH-ctrlH-8;
   var aspect=COLS/ROWS;
-  var maxW=h*aspect*0.9;if(maxW<w)w=Math.floor(maxW);
+  var maxW=h*aspect*0.95;if(maxW<w)w=Math.floor(maxW);
   var dpr=Math.min(window.devicePixelRatio||1,2);
   canvasW=w;canvasH=Math.floor(w/aspect);
   // 画布高度占视口 ~88%
@@ -766,7 +766,7 @@ function drawGame(){
   // 下落字符（只画文字，无背景色、无发光）
   if(fallingChar&&(gameState==='FALLING'||gameState==='RECOGNIZING')){
     var x=fallingChar.col*cellW+cellW/2,y=fallingChar.row*cellH+cellH/2;
-    ctx.font='bold '+Math.max(22,Math.round(cellW*0.6))+'px system-ui';
+    ctx.font='bold '+Math.max(24,Math.round(cellW*0.68))+'px system-ui';
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillStyle='#333';ctx.fillText(fallingChar.char,x,y);
   }
@@ -787,7 +787,7 @@ function drawCharCell(col,row,char,bgColor,textColor,glow){
   ctx.closePath();ctx.fill();
   ctx.shadowBlur=0;ctx.shadowColor='transparent';
   ctx.fillStyle=textColor;
-  var fs=Math.max(20,Math.round(cellW*0.55));ctx.font='bold '+fs+'px system-ui';
+  var fs=Math.max(20,Math.round(cellW*0.62));ctx.font='bold '+fs+'px system-ui';
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(char,x+cellW/2,y+cellH/2+1);
 }
 
