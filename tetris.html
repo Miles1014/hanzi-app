@@ -603,9 +603,6 @@ function drawGame(){
   if(fallingChar&&(gameState==='FALLING'||gameState==='RECOGNIZING')){
     var glow=gameState==='RECOGNIZING';
     drawCharCell(fallingChar.col,fallingChar.row,fallingChar.char,glow?'#e8e0ff':'#e0ecff','#333',glow);
-    // 拼音提示
-    var dpy=formatPinyin(fallingChar.pinyin||'');
-    if(dpy){var x=fallingChar.col*cellW+cellW/2,y=fallingChar.row*cellH+4;ctx.fillStyle='rgba(0,0,0,0.35)';ctx.font=Math.max(11,Math.round(cellW*0.17))+'px system-ui';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(dpy,x,y)}
   }
 }
 
