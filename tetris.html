@@ -391,83 +391,38 @@ function onVoiceRecognizerReady(){
 
 function startVoiceRecognition(){
   if(gameState!=='RECOGNIZING')return;
-  var ch=document.getElementById('voiceChar').textContent;
-  D('用户点击🎤，准备启动语音识别');
+  D('用户点击🎤');
 
+  // 已有持续识别器 → 直接激活监听状态，不再重建
+  if(recognizer){
+    D('复用已有持续识别器');
+    onVoiceRecognizerReady();
+    return;
+  }
+
+  // 首次：创建持续识别器（continuous:true，全程运行不重建）
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){document.getElementById('voiceStatus').textContent='⚠️ 不支持语音';D('FATAL: SpeechRecognition 不可用');setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1500);return}
   D('SpeechRecognition API: 可用');
 
   try{
-    if(recognizer && _recMatchCount>=3){
-      D('已达'+_recMatchCount+'次匹配，需重建识别器');
-      document.getElementById('voiceStatus').textContent='正在重新准备麦克风...';
-      try{recognizer.abort()}catch(e){}
-      recognizer=null;
-      _recMatchCount=0;
-      // 延迟200ms等浏览器清理音频资源后再创建新识别器
-      setTimeout(function(){
-        if(gameState!=='RECOGNIZING')return;
-        D('延迟后创建新识别器');
-        createFreshRecognizer();
-      },200);
-      return;
-    }
-    if(recognizer && _recMatchCount<3){
-      D('复用已有识别器（matchCount='+_recMatchCount+'），重启监听');
-      // 先中止当前会话再重新开始（刷新内部状态）
-      try{recognizer.abort()}catch(e){}
-      setTimeout(function(){
-        if(gameState!=='RECOGNIZING')return;
-        D('重新 start()...');
-        try{recognizer.start()}catch(e){
-          D('start() 失败: '+e.message);
-          recognizer=null;
-          if(gameState==='RECOGNIZING')onVoiceTimeout();
-        }
-      },100);
-      return;
-    }
-    createFreshRecognizer();
-  }catch(e){
-    D('⚠ 异常: '+e.message);
-    document.getElementById('voiceStatus').textContent='⚠️ 启动失败: '+e.message;
-    if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
-    setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1000);
-  }
-}
-
-function createFreshRecognizer(){
-  var ch=document.getElementById('voiceChar').textContent;
-  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){document.getElementById('voiceStatus').textContent='⚠️ 不支持语音';D('FATAL: SpeechRecognition 不可用');setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1500);return}
-  D('SpeechRecognition API: 可用');
-  if(recognizer){try{recognizer.abort()}catch(e){}recognizer=null;}
-  recognizer=new SR();
+    recognizer=new SR();
     recognizer.lang='zh-CN';
     recognizer.continuous=true;
     recognizer.interimResults=true;
     recognizer.maxAlternatives=8;
-    D('创建新识别器: continuous=true, lang=zh-CN');
+    D('创建持续识别器');
 
-    recognizer.onstart=function(){
-      D('事件: onstart — 麦克风已启动');
-      onVoiceRecognizerReady();
-    };
+    recognizer.onstart=function(){D('onstart');onVoiceRecognizerReady();};
 
     recognizer.onresult=function(e){
-      D('事件: onresult — 收到识别结果，resultIndex='+e.resultIndex+', results.length='+e.results.length);
-      if(gameState!=='RECOGNIZING'){D('  ⚠ gameState 不是 RECOGNIZING，忽略');return}
+      if(gameState!=='RECOGNIZING')return;
       var ch=document.getElementById('voiceChar').textContent;
       for(var i=e.resultIndex;i<e.results.length;i++){
-        D('  result['+i+']: isFinal='+e.results[i].isFinal+', alternatives='+e.results[i].length);
         for(var j=0;j<e.results[i].length;j++){
           var spoken=e.results[i][j].transcript.trim();
-          var conf=Math.round(e.results[i][j].confidence*100);
-          D('  alt['+j+']: "'+spoken+'" (confidence='+conf+'%)');
           if(charMatch(ch,spoken)){
-            D('  ✅ 匹配成功！target="'+ch+'", spoken="'+spoken+'", matchCount='+(_recMatchCount+1));
-            _recMatchCount++;
+            D('✅ 匹配 "'+ch+'" "'+spoken+'"');
             if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
             document.getElementById('voiceResult').innerHTML='<div class="result-correct">✓ 正确！</div>';
             document.getElementById('micIcon').className='mic-icon';
@@ -483,11 +438,10 @@ function createFreshRecognizer(){
           }
         }
       }
-      D('  ❌ 所有候选均不匹配 target="'+ch+'"');
     };
 
     recognizer.onerror=function(e){
-      D('事件: onerror — error="'+e.error+'"');
+      D('onerror: '+e.error);
       if(e.error==='not-allowed'||e.error==='service-not-allowed'){
         document.getElementById('voiceStatus').textContent='⚠️ 请允许麦克风';
         if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
@@ -496,18 +450,14 @@ function createFreshRecognizer(){
       document.getElementById('micIcon').className='mic-icon';
     };
 
-    recognizer.onend=function(){
-      D('事件: onend — 识别器已停止');
-      document.getElementById('micIcon').className='mic-icon';
-    };
+    recognizer.onend=function(){D('onend');document.getElementById('micIcon').className='mic-icon';};
 
-    try{
-      D('调用 recognizer.start()...');
-      recognizer.start();
-      D('recognizer.start() 已返回');
-    }catch(e){
-    D('⚠ recognizer.start() 抛出异常: '+e.message);
-    document.getElementById('voiceStatus').textContent='⚠️ 启动失败: '+e.message;
+    D('start()...');
+    recognizer.start();
+    D('start() 返回');
+  }catch(e){
+    D('异常: '+e.message);
+    document.getElementById('voiceStatus').textContent='⚠️ 启动失败';
     if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
     setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1000);
   }
