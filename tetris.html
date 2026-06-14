@@ -370,103 +370,114 @@ function startRecognition(){
   document.getElementById('voiceTimer').style.display='none';
   document.getElementById('voiceSkipBtn').style.display='block';
   document.getElementById('voiceOverlay').classList.add('visible');
-  // Reset recognizer state
-  if(recognizer){try{recognizer.abort()}catch(e){}recognizer=null;}
-  if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
-  if(_safetyTimer){clearTimeout(_safetyTimer);_safetyTimer=null;}
+  // If continuous recognizer already exists and is running, no need to restart
+  if(recognizer){onVoiceRecognizerReady();}
+}
+
+function onVoiceRecognizerReady(){
+  document.getElementById('micIcon').className='mic-icon listening';
+  document.getElementById('micIcon').onclick=null;
+  document.getElementById('voiceHint').textContent='正在听...';
+  document.getElementById('voiceStatus').textContent='🎤 请朗读...';
+  document.getElementById('voiceTimer').style.display='block';
+  document.getElementById('voiceTimer').textContent=gameSettings.timeout;
+  // Auto-timeout
+  if(_timerInterval){clearInterval(_timerInterval);}
+  var t=gameSettings.timeout;
+  _timerInterval=setInterval(function(){
+    t--;document.getElementById('voiceTimer').textContent=Math.max(0,t);
+    if(t<=0&&gameState==='RECOGNIZING'){clearInterval(_timerInterval);onVoiceTimeout();}
+  },1000);
 }
 
 function startVoiceRecognition(){
   if(gameState!=='RECOGNIZING')return;
   var ch=document.getElementById('voiceChar').textContent;
-  document.getElementById('micIcon').onclick=null;
-  document.getElementById('voiceHint').textContent='正在听...';
-  document.getElementById('voiceStatus').textContent='🎤 请朗读...';
 
-  var timerStarted=false,timeLeft=0;
-  function startCountdown(){
-    if(timerStarted)return;timerStarted=true;
-    timeLeft=gameSettings.timeout;
-    document.getElementById('voiceTimer').style.display='block';
-    document.getElementById('voiceTimer').textContent=timeLeft;
-    _timerInterval=setInterval(function(){
-      timeLeft--;document.getElementById('voiceTimer').textContent=timeLeft;
-      if(timeLeft<=0&&gameState==='RECOGNIZING'){clearInterval(_timerInterval);onVoiceTimeout();}
-    },1000);
-  }
-  function cleanup(){if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}}
-
+  // Create continuous recognizer (like quiz page: continuous:true, interimResults:true)
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){document.getElementById('voiceStatus').textContent='⚠️ 不支持语音';setTimeout(function(){cleanup();onVoiceTimeout();},1500);return}
+  if(!SR){document.getElementById('voiceStatus').textContent='⚠️ 不支持语音';setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1500);return}
 
   try{
-    recognizer=new SR();recognizer.lang='zh-CN';recognizer.continuous=false;recognizer.interimResults=false;recognizer.maxAlternatives=8;
+    if(recognizer){
+      try{recognizer.abort()}catch(e){}
+      recognizer=null;
+    }
+    recognizer=new SR();
+    recognizer.lang='zh-CN';
+    recognizer.continuous=true;
+    recognizer.interimResults=true;
+    recognizer.maxAlternatives=8;
+
     recognizer.onstart=function(){
-      document.getElementById('micIcon').classList.add('listening');
-      startCountdown();
+      onVoiceRecognizerReady();
     };
+
     recognizer.onresult=function(e){
-      var rs=e.results;if(!rs.length)return;
-      var alts=rs[rs.length-1];
-      for(var i=0;i<alts.length;i++){
-        var spoken=alts[i].transcript.trim();
-        if(charMatch(spoken,ch)){
-          document.getElementById('voiceResult').innerHTML='<div class="result-correct">✓ 正确！</div>';
-          cleanup();onVoiceSuccess();return;
+      if(gameState!=='RECOGNIZING')return;
+      var ch=document.getElementById('voiceChar').textContent;
+      for(var i=e.resultIndex;i<e.results.length;i++){
+        for(var j=0;j<e.results[i].length;j++){
+          var spoken=e.results[i][j].transcript.trim();
+          if(charMatch(ch,spoken)){
+            if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
+            document.getElementById('voiceResult').innerHTML='<div class="result-correct">✓ 正确！</div>';
+            document.getElementById('micIcon').className='mic-icon';
+            setTimeout(function(){
+              document.getElementById('voiceOverlay').classList.remove('visible');
+              document.getElementById('recogHint').classList.remove('active');
+              if(gameState!=='RECOGNIZING')return;
+              gameState='SUCCESS';
+              if(gameSettings.mode==='both')startWritingBonus(ch);else spawnNext();
+            },600);
+            return;
+          }
         }
       }
-      document.getElementById('voiceStatus').textContent='你说的是：'+alts[0].transcript.trim();
-      document.getElementById('voiceResult').innerHTML='<div class="result-wrong">再试试？</div>';
     };
+
     recognizer.onerror=function(e){
-      if(e.error==='not-allowed'||e.error==='service-not-allowed'){document.getElementById('voiceStatus').textContent='⚠️ 请允许麦克风';cleanup();setTimeout(onVoiceTimeout,1000);return}
-      if(e.error==='no-speech'||e.error==='aborted'){cleanup();onVoiceTimeout();}
+      if(e.error==='not-allowed'||e.error==='service-not-allowed'){
+        document.getElementById('voiceStatus').textContent='⚠️ 请允许麦克风';
+        if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
+        return;
+      }
+      // On no-speech/aborted, the recognizer stopped but the timer will handle timeout
+      document.getElementById('micIcon').className='mic-icon';
     };
+
+    recognizer.onend=function(){
+      // Recognizer stopped (e.g., page switch, timeout). Timer still running.
+      document.getElementById('micIcon').className='mic-icon';
+    };
+
     recognizer.start();
-  }catch(e){document.getElementById('voiceStatus').textContent='⚠️ 启动失败';cleanup();setTimeout(onVoiceTimeout,1000)}
+  }catch(e){
+    document.getElementById('voiceStatus').textContent='⚠️ 启动失败';
+    if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
+    setTimeout(function(){if(gameState==='RECOGNIZING')onVoiceTimeout();},1000);
+  }
 }
 
-function charMatch(spoken,target){
-  if(spoken===target)return true;
-  var tp=PINYIN[target];if(!tp)return spoken===target;
-  var tb=tp.replace(/[0-9]/g,'');
-  if(spoken.includes(target))return true;
-  if(spoken.length===1){var sp=PINYIN[spoken];if(sp&&sp.replace(/[0-9]/g,'')===tb)return true}
-  for(var ch in PINYIN){if(ch===spoken||PINYIN[ch].replace(/[0-9]/g,'')===tb)return true}
+function charMatch(target,text){
+  if(!target||!text)return false;
+  if(text.indexOf(target)>=0)return true;
+  var tPy=PINYIN[target];
+  if(!tPy)return false;
+  var chars=text.match(/[\u4e00-\u9fff]/g);
+  if(!chars)return false;
+  var tPyBase=tPy.replace(/\d/g,'');
+  for(var i=0;i<chars.length;i++){
+    var rPy=PINYIN[chars[i]];
+    if(rPy&&rPy.replace(/\d/g,'')===tPyBase)return true;
+  }
   return false;
 }
 
-function onVoiceSuccess(){
-  document.getElementById('micIcon').classList.remove('listening');
-  document.getElementById('voiceStatus').textContent='✅ 读对了！';
-  document.getElementById('voiceTimer').textContent='✓';
-  score+=10;eliminated++;updateStats();
-  var ch=fallingChar.char;
-  setTimeout(function(){
-    document.getElementById('voiceOverlay').classList.remove('visible');
-    document.getElementById('recogHint').classList.remove('active');
-    if(gameState!=='RECOGNIZING')return;gameState='SUCCESS';
-    if(gameSettings.mode==='both')startWritingBonus(ch);else spawnNext();
-  },600);
-}
-
-function onVoiceTimeout(){
-  document.getElementById('micIcon').classList.remove('listening');
-  document.getElementById('voiceStatus').textContent='⏰ 时间到';
-  setTimeout(function(){
-    document.getElementById('voiceOverlay').classList.remove('visible');
-    document.getElementById('recogHint').classList.remove('active');
-    if(gameState!=='RECOGNIZING'||!fallingChar)return;
-    stackChar(fallingChar);
-  },400);
-}
-
 function skipVoice(){
-  if(recognizer){try{recognizer.abort()}catch(e){}recognizer=null;}
   if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
-  if(_safetyTimer){clearTimeout(_safetyTimer);_safetyTimer=null;}
   document.getElementById('voiceOverlay').classList.remove('visible');
-  document.getElementById('micIcon').classList.remove('listening');
+  document.getElementById('micIcon').className='mic-icon';
   document.getElementById('recogHint').classList.remove('active');
   if(gameState!=='RECOGNIZING'||!fallingChar)return;
   stackChar(fallingChar);
@@ -516,6 +527,17 @@ function earnWritingBonus(){
 }
 function skipWriting(){if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}document.getElementById('writingOverlay').classList.remove('visible');writeCharData=null;spawnNext();}
 function closeWritingAndContinue(){if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}document.getElementById('writingOverlay').classList.remove('visible');writeCharData=null;spawnNext();}
+
+function onVoiceTimeout(){
+  document.getElementById('micIcon').className='mic-icon';
+  document.getElementById('voiceTimer').textContent='⏰';
+  setTimeout(function(){
+    document.getElementById('voiceOverlay').classList.remove('visible');
+    document.getElementById('recogHint').classList.remove('active');
+    if(gameState!=='RECOGNIZING'||!fallingChar)return;
+    stackChar(fallingChar);
+  },400);
+}
 
 function spawnNext(){fallingChar=null;lastDropTime=performance.now();startFalling();}
 
