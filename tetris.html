@@ -528,10 +528,10 @@ function startWritingBonus(ch){
   gameState='WRITING';writeCharData=ch;
   _writeMisses=0;_writeSubmitted=false;
   document.getElementById('writeChar').textContent=ch;
-  document.getElementById('writeResult').innerHTML='<div style="color:#667eea;font-size:.95em">🎬 先看一遍笔顺演示…</div>';
+  document.getElementById('writeResult').innerHTML='<div style="color:#667eea;font-size:.95em">🎬 笔顺演示中…请认真观看</div>';
   var cb=document.getElementById('writeConfirmBtn');
   cb.style.display='none';
-  cb.className='write-btn confirm';cb.disabled=false;cb.textContent='我写完了 ✓';
+  cb.className='write-btn confirm';cb.disabled=false;cb.textContent='✍️ 我写完了';
   document.getElementById('writeDoneBtn').style.display='none';
   document.getElementById('writingOverlay').classList.add('visible');
   setTimeout(function(){
@@ -548,11 +548,10 @@ function startWritingBonus(ch){
       // 第 1 步：演示笔顺
       writeWriter.animateCharacter({
         onComplete:function(){
-          // 第 2 步：演示完，提示小朋友自己写
-          document.getElementById('writeResult').innerHTML='<div style="color:#e67e22;font-size:.95em;font-weight:bold">✍️ 现在轮到你来写啦！</div>';
+          // 第 2 步：演示完，立刻开启 quiz 模式
+          document.getElementById('writeResult').innerHTML='<div style="color:#e67e22;font-size:1em;font-weight:bold">✍️ 轮到你写啦！</div>';
           cb.style.display='inline-block';
-          cb.disabled=true;cb.textContent='正在书写…';
-          // 第 3 步：进入 quiz 模式（开启临摹 + 笔顺检测）
+          cb.disabled=true;cb.textContent='书写中…';
           setTimeout(function(){
             try{
               writeWriter.quiz({
@@ -560,18 +559,18 @@ function startWritingBonus(ch){
                 onMistake:function(){_writeMisses++;},
                 onComplete:function(){
                   _writeSubmitted=true;
-                  cb.disabled=false;cb.textContent='提交 ✓';
+                  cb.disabled=false;cb.textContent='✓ 提交';
                 }
               });
             }catch(e){
-              cb.disabled=false;cb.textContent='我写完了 ✓';
+              cb.disabled=false;cb.textContent='✍️ 我写完了';
             }
-          },200);
+          },300);
         }
       });
     }catch(e){
       ct.innerHTML='<div style="color:#999;padding:80px 0">暂不支持</div>';
-      cb.style.display='inline-block';cb.disabled=false;cb.textContent='我写完了 ✓';
+      cb.style.display='inline-block';cb.disabled=false;cb.textContent='✍️ 我写完了';
     }
   },100);
 }
@@ -580,11 +579,16 @@ function startWritingBonus(ch){
 function submitWriting(){
   if(!writeCharData)return;
   if(!_writeSubmitted){
-    // 还没写完整个字就提交 → 不得分
-    finalizeWriting(false,'写得不够完整，再练习一下！');
+    // 还没走完 HanziWriter 检测：可能是没写完，也可能是漏判
+    // 兜底策略：错笔数 ≤ 2 且至少有一次书写（_writeMisses >= 0）算通过
+    if(_writeMisses<=2){
+      finalizeWriting(true,'✓ 书写正确 +5分！');
+    }else{
+      finalizeWriting(false,'笔画有 '+_writeMisses+' 处错误，再仔细一点！');
+    }
     return;
   }
-  // 已通过 HanziWriter 完成全部笔画，按错笔数给分
+  // 走完 HanziWriter 的 onComplete
   if(_writeMisses<=2){
     finalizeWriting(true,'✓ 书写正确 +5分！');
   }else{
