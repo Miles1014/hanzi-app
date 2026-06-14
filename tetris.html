@@ -721,13 +721,13 @@ function triggerFirework(x,y,big){
 function triggerDust(x,y){
   for(var i=0;i<30;i++){
     var ang=Math.PI+(Math.random()-0.5)*1.8;
-    var sp=Math.random()*3+0.8,sz=Math.random()*35+20,lf=Math.random()*25+15;
+    var sp=Math.random()*3+0.8,sz=Math.random()*21+12,lf=Math.random()*25+15;
     particles.push(new Particle(x,y,'rgba(140,120,100,0.7)',Math.cos(ang)*sp,Math.sin(ang)*sp-1.8,sz,lf,0.1));
   }
   // 碎片粒子
   for(var i=0;i<12;i++){
     var ang=Math.PI+(Math.random()-0.5)*2;
-    var sp=Math.random()*4+1.5,sz=Math.random()*20+15,lf=Math.random()*20+10;
+    var sp=Math.random()*4+1.5,sz=Math.random()*12+9,lf=Math.random()*20+10;
     particles.push(new Particle(x,y,'rgba(100,80,60,0.8)',Math.cos(ang)*sp,Math.sin(ang)*sp-0.8,sz,lf,0.2));
   }
 }
