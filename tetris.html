@@ -24,30 +24,32 @@ input{font-family:inherit;outline:none}
 .stat-item .num.stacked{color:#e67e22}
 #topBar .btn-settings{background:#f5f5f5;color:#888;width:30px;height:30px;border-radius:50%;font-size:.9em;display:flex;align-items:center;justify-content:center;transition:all .2s}
 
-/* 游戏区 - 最大化 */
+/* 游戏区 */
 #gameArea{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;overflow:hidden;min-height:0}
 #canvasWrapper{position:relative;width:100%;flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
-#gameCanvas{display:block;border-radius:0;background:#fff;width:100%;height:100%}
+#gameCanvas{display:block;background:#fff;width:100%;height:100%}
 
-/* 内联语音识别条 - 紧凑，替代弹窗 */
-#recogBar{display:none;align-items:center;justify-content:center;gap:10px;padding:6px 14px;background:#fff;border-top:1px solid #f0f0f0;flex-shrink:0;min-height:44px}
+/* 语音识别条（内联版） */
+#recogBar{display:none;align-items:center;justify-content:center;gap:10px;padding:6px 14px;background:#fff;border-top:1px solid #f0f0f0;flex-shrink:0}
 #recogBar.visible{display:flex}
 #recogBar .rb-char{font-size:1.4em;font-weight:bold;color:#333}
 #recogBar .rb-pinyin{font-size:.9em;color:#a18cd1}
-#recogBar .rb-mic{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);color:#fff;font-size:1.1em;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;touch-action:manipulation;transition:all .2s;flex-shrink:0}
+#recogBar .rb-mic{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);color:#fff;font-size:1.3em;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;touch-action:manipulation;transition:all .2s;flex-shrink:0}
 #recogBar .rb-mic:active{transform:scale(.9)}
-#recogBar .rb-mic.listening{animation:micPulse .6s infinite alternate;box-shadow:0 0 15px rgba(161,140,209,0.5)}
+#recogBar .rb-mic.listening{animation:micPulse .6s infinite alternate;box-shadow:0 0 18px rgba(161,140,209,0.5)}
 @keyframes micPulse{from{transform:scale(1)}to{transform:scale(1.15)}}
-#recogBar .rb-timer{font-size:.9em;font-weight:bold;color:#a18cd1;min-width:20px}
-#recogBar .rb-status{font-size:.78em;color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#recogBar .rb-timer{font-size:1em;font-weight:bold;color:#a18cd1;min-width:22px}
+#recogBar .rb-status{font-size:.82em;color:#888;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #recogBar .rb-skip{font-size:.7em;color:#bbb;background:none;border:none;text-decoration:underline;cursor:pointer;padding:2px 6px}
 
 /* 底部操作按钮 */
-#controls{display:flex;align-items:center;justify-content:center;gap:24px;padding:7px 16px;flex-shrink:0;background:#fff;border-top:1px solid #f0f0f0}
-.ctrl-btn{width:56px;height:56px;border-radius:50%;background:#f0f2ff;color:#6c5ce7;font-size:1.5em;display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation;font-weight:bold;border:2px solid #d5d0f5}
-.ctrl-btn:active{background:#d5d0f5;transform:scale(.92)}
+#controls{display:flex;align-items:center;justify-content:center;gap:20px;padding:6px 12px;flex-shrink:0;background:#fff;border-top:1px solid #f0f0f0}
+.ctrl-btn{width:52px;height:52px;border-radius:50%;background:#f0f2ff;color:#6c5ce7;font-size:1.5em;display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation;font-weight:bold;border:2px solid #d5d0f5}
+.ctrl-btn:active{background:#d5d0f5;transform:scale(.9)}
 .ctrl-btn.disabled{opacity:.3;pointer-events:none}
 .ctrl-btn.drop-btn{background:#fff0f0;color:#e74c3c;border-color:#f5c0c0}
+
+
 
 /* 书写弹窗 */
 #writingOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;display:none;align-items:center;justify-content:center}
@@ -101,8 +103,8 @@ input{font-family:inherit;outline:none}
 /* iPad 适配 */
 @media(min-width:768px){
   #controls{gap:38px;padding:8px 20px}
-  .ctrl-btn{width:68px;height:68px;font-size:1.8em}
-  .rb-mic{width:44px;height:44px;font-size:1.2em}
+  .ctrl-btn{width:64px;height:64px;font-size:1.8em}
+  .rb-mic{width:56px;height:56px;font-size:1.5em}
   .write-box{width:360px}
 }
 </style>
@@ -346,12 +348,13 @@ function startRecognition(){
   D('识别区激活：'+ch+' ('+py+')');
   document.getElementById('voiceChar').textContent=ch;
   document.getElementById('voicePinyin').textContent=py;
+  document.getElementById('voiceResult').innerHTML='';
+  document.getElementById('voiceStatus').textContent='点击🎤开始朗读';
+  document.getElementById('voiceStatus').textContent='点击🎤朗读';
   document.getElementById('micIcon').className='rb-mic';
   document.getElementById('micIcon').onclick=startVoiceRecognition;
   document.getElementById('voiceTimer').style.display='none';
-  document.getElementById('voiceSkipBtn').style.display='block';
-  document.getElementById('voiceResult').innerHTML='';
-  document.getElementById('voiceStatus').textContent='点击🎤朗读';
+  document.getElementById('voiceSkipBtn').style.display='inline';
   document.getElementById('recogBar').classList.add('visible');
   if(recognizer){D('已有持续识别器，直接开始');onVoiceRecognizerReady();}
 }
@@ -359,8 +362,9 @@ function startRecognition(){
 function onVoiceRecognizerReady(){
   document.getElementById('micIcon').className='rb-mic listening';
   document.getElementById('micIcon').onclick=null;
+  document.getElementById('voiceStatus').textContent='正在听...';
   document.getElementById('voiceStatus').textContent='🎤 请朗读...';
-  document.getElementById('voiceTimer').style.display='inline';
+  document.getElementById('voiceTimer').style.display='block';
   document.getElementById('voiceTimer').textContent=gameSettings.timeout;
   if(_timerInterval){clearInterval(_timerInterval);}
   var t=gameSettings.timeout;
@@ -618,7 +622,7 @@ function drawCharCell(col,row,char,bgColor,textColor,glow){
   ctx.closePath();ctx.fill();
   ctx.shadowBlur=0;ctx.shadowColor='transparent';
   ctx.fillStyle=textColor;
-  var fs=Math.max(20,Math.round(cellW*0.55));ctx.font='bold '+fs+'px system-ui';
+  var fs=Math.max(16,Math.round(cellW*0.42));ctx.font='bold '+fs+'px system-ui';
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(char,x+cellW/2,y+cellH/2+1);
 }
 
@@ -649,50 +653,7 @@ function backToDashboard(){
 window.addEventListener('resize',function(){clearTimeout(this._rt);this._rt=setTimeout(resizeCanvas,200)});
 document.addEventListener('keydown',function(e){if(e.key==='ArrowLeft')moveLeft();else if(e.key==='ArrowRight')moveRight();else if(e.key==='ArrowDown')dropNow();});
 window.addEventListener('load',function(){setTimeout(initGame,50)});
-
-// 诊断面板 - 彻底排查语音识别问题
-var diagEl,diagVisible=true,diagBuf=[];
-
-function D(msg){
-  diagBuf.push(new Date().toLocaleTimeString()+' '+msg);
-  if(diagBuf.length>50)diagBuf.shift();
-  if(diagEl){diagEl.style.display='block';diagEl.innerHTML='<b style="color:#ff0">🎤 语音诊断 ('+diagBuf.length+'条)</b> <span style="color:#aaa;font-size:10px;cursor:pointer" onclick="toggleDiag()">[隐藏] [清空]</span><br>'+diagBuf.join('<br>');diagEl.scrollTop=diagEl.scrollHeight}
-  console.log('[TETRIS-DIAG] '+msg);
-}
-
-function toggleDiag(){
-  diagVisible=!diagVisible;
-  if(diagVisible){diagEl.style.display='block';}else{diagEl.style.display='none';}
-}
-
-// Build diagnostic panel
-diagEl=document.createElement('div');
-diagEl.id='diagPanel';
-diagEl.style.cssText='position:fixed;top:48px;left:6px;right:6px;background:rgba(0,0,0,0.88);color:#0f0;padding:4px 8px;border-radius:8px;font-size:10px;font-family:monospace;z-index:9999;line-height:1.3;max-height:100px;overflow-y:auto';
-diagEl.innerHTML='<b style="color:#ff0">🎤 点击游戏🎤按钮后看这里</b>';
-document.body.appendChild(diagEl);
-// Pre-check browser support
-D('页面加载完成');
-var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-D('SpeechRecognition API: '+(SR?'✅ 可用':'❌ 不可用'));
-D('浏览器: '+navigator.userAgent.substring(0,80));
-D('PINYIN: '+(typeof PINYIN!=='undefined'?'✅ 已加载 ('+Object.keys(PINYIN).length+'字)':'❌ 未加载'));
-D('HTTPS: '+(location.protocol==='https:'?'✅':'❌ '+location.protocol+' (语音需HTTPS)'));
-
-// 一键诊断按钮
-window.__diagAll=function(){
-  D('--- 全面诊断 ---');
-  D('SpeechRecognition: '+(window.SpeechRecognition?'yes':'no'));
-  D('webkitSpeechRecognition: '+(window.webkitSpeechRecognition?'yes':'no'));
-  D('PINYIN: '+(typeof PINYIN!=='undefined'?'yes('+Object.keys(PINYIN).length+'字)':'no'));
-  D('gameState: '+gameState);
-  D('fallingChar: '+(fallingChar?fallingChar.char+' col='+fallingChar.col:'null'));
-  D('recognizer: '+(recognizer?'exists':'null'));
-  D('gameSettings.speed: '+gameSettings.speed+', mode: '+gameSettings.mode+', timeout: '+gameSettings.timeout);
-};
-D('已就绪，打开游戏等汉字掉到识别区后看上方日志');
-
-console.log('TETRIS DIAG: __diagAll() 打印全面诊断');
+function D(){}
 </script>
 </body>
 </html>
