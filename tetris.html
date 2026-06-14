@@ -34,7 +34,7 @@ input{font-family:inherit;outline:none}
 #recogHint.active{display:block}
 
 /* 操作按钮 */
-#controls{display:flex;align-items:center;justify-content:center;gap:24px;padding:8px 16px;flex-shrink:0;position:relative;z-index:10}
+#controls{display:flex;align-items:center;justify-content:center;gap:24px;padding:8px 16px;flex-shrink:0;position:relative;z-index:10;margin-top:-20vh}
 .ctrl-btn{width:64px;height:64px;border-radius:50%;background:#f0f2ff;color:#6c5ce7;font-size:1.8em;display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation;font-weight:bold;border:2px solid #d5d0f5}
 .ctrl-btn:active{background:#d5d0f5;transform:scale(.92)}
 .ctrl-btn.disabled{opacity:.3;pointer-events:none}
@@ -272,8 +272,8 @@ function resizeCanvas(){
   var maxW=h*aspect*0.9;if(maxW<w)w=Math.floor(maxW);
   var dpr=Math.min(window.devicePixelRatio||1,2);
   canvasW=w;canvasH=Math.floor(w/aspect);
-  // 减小画布高度，使之靠上显示
-  canvasH=Math.min(canvasH,Math.round(window.innerHeight*0.55));
+  // 画布高度占视口 ~88%
+  canvasH=Math.min(canvasH,Math.round(window.innerHeight*0.88));
   canvas.width=canvasW*dpr;canvas.height=canvasH*dpr;
   canvas.style.width=canvasW+'px';canvas.style.height=canvasH+'px';
   ctx.scale(dpr,dpr);
