@@ -512,7 +512,7 @@ function stackChar(cd){
   if(tr<0){endGame();return}
   grid[col][tr]={char:cd.char,type:'stacked'};
   droppedChars.push(cd.char);stackedCount++;updateStats();
-  triggerDust(col*cellW+cellW/2,tr*cellH+cellH/2);triggerScreenShake(4);
+  triggerDust(col*cellW+cellW/2,tr*cellH+cellH/2);triggerScreenShake(8);
   for(var c=0;c<COLS;c++){if(grid[c][0]!==null){endGame();return}}
   fallingChar=null;gameState='FAIL';
   setTimeout(spawnNext,300);
@@ -710,24 +710,30 @@ function drawParticles(c){
 }
 
 function triggerFirework(x,y,big){
-  var cnt=big?60:35,colors=['#ff6b6b','#feca57','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#ff9f43','#1dd1a1'];
+  var cnt=big?100:60,colors=['#ff6b6b','#feca57','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#ff9f43','#1dd1a1','#f368e0','#ff6348'];
   for(var i=0;i<cnt;i++){
     var ang=(Math.PI*2*i)/cnt+(Math.random()-0.5)*0.8;
-    var sp=Math.random()*4.5+2.5,col=colors[Math.floor(Math.random()*colors.length)];
-    var sz=Math.random()*4+3,lf=Math.random()*50+60;
+    var sp=Math.random()*6+3,col=colors[Math.floor(Math.random()*colors.length)];
+    var sz=Math.random()*6+4,lf=Math.random()*80+100;
     particles.push(new Particle(x,y,col,Math.cos(ang)*sp,Math.sin(ang)*sp,sz,lf));
   }
-  for(var i=0;i<12;i++){
-    var ang=Math.random()*Math.PI*2,sp=Math.random()*6+3;
-    particles.push(new Particle(x,y,'#fff',Math.cos(ang)*sp,Math.sin(ang)*sp,3,30));
+  for(var i=0;i<20;i++){
+    var ang=Math.random()*Math.PI*2,sp=Math.random()*8+3;
+    particles.push(new Particle(x,y,'#fff',Math.cos(ang)*sp,Math.sin(ang)*sp,4,40));
   }
 }
 
 function triggerDust(x,y){
-  for(var i=0;i<18;i++){
-    var ang=Math.PI+(Math.random()-0.5)*1.5;
-    var sp=Math.random()*2+0.5,sz=Math.random()*5+2,lf=Math.random()*18+12;
-    particles.push(new Particle(x,y,'rgba(140,130,120,0.6)',Math.cos(ang)*sp,Math.sin(ang)*sp-1.2,sz,lf,0.08));
+  for(var i=0;i<30;i++){
+    var ang=Math.PI+(Math.random()-0.5)*1.8;
+    var sp=Math.random()*3+0.8,sz=Math.random()*7+4,lf=Math.random()*25+15;
+    particles.push(new Particle(x,y,'rgba(140,120,100,0.7)',Math.cos(ang)*sp,Math.sin(ang)*sp-1.8,sz,lf,0.1));
+  }
+  // 碎片粒子
+  for(var i=0;i<12;i++){
+    var ang=Math.PI+(Math.random()-0.5)*2;
+    var sp=Math.random()*4+1.5,sz=Math.random()*4+3,lf=Math.random()*20+10;
+    particles.push(new Particle(x,y,'rgba(100,80,60,0.8)',Math.cos(ang)*sp,Math.sin(ang)*sp-0.8,sz,lf,0.2));
   }
 }
 
@@ -739,7 +745,16 @@ function triggerScreenShake(intensity){
 // 绘制（无网格线、无虚线框、柔和配色）
 // ============================================
 function drawGame(){
+  var sx=0,sy=0;
+  if(screenShake.intensity>0){
+    sx=Math.round((Math.random()-0.5)*screenShake.intensity*2);
+    sy=Math.round((Math.random()-0.5)*screenShake.intensity*2);
+    screenShake.intensity*=screenShake.decay;
+    if(screenShake.intensity<0.3)screenShake.intensity=0;
+  }
   ctx.clearRect(0,0,canvasW,canvasH);
+  ctx.save();
+  if(sx||sy)ctx.translate(sx,sy);
   // 背景
   var grad=ctx.createLinearGradient(0,0,0,canvasH);
   grad.addColorStop(0,'#f0f4ff');grad.addColorStop(0.45,'#fdf6f0');grad.addColorStop(1,'#fff5f5');
@@ -761,6 +776,7 @@ function drawGame(){
     ctx.fillStyle='#333';ctx.fillText(fallingChar.char,x,y);
   }
   try{updateParticles();drawParticles(ctx);}catch(e){}
+  ctx.restore();
 }
 
 function drawCharCell(col,row,char,bgColor,textColor,glow){
