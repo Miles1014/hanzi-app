@@ -244,6 +244,11 @@ function initGame(){
   buildCharQueue();startFalling();
   lastFrameTime=performance.now();lastDropTime=lastFrameTime;
   animFrameId=requestAnimationFrame(gameLoop);
+  // 自测：1.5秒后在画布中央放一枚礼花，确认粒子系统可用
+  setTimeout(function(){
+    if(!canvasW||!canvasH)return;
+    triggerFirework(canvasW/2,canvasH*0.4,false);
+  },1500);
 }
 
 function loadUserAndProfile(){
@@ -710,24 +715,24 @@ function drawParticles(c){
 }
 
 function triggerFirework(x,y,big){
-  var cnt=big?50:25,colors=['#ff6b6b','#feca57','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#ff9f43','#1dd1a1'];
+  var cnt=big?60:35,colors=['#ff6b6b','#feca57','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#ff9f43','#1dd1a1'];
   for(var i=0;i<cnt;i++){
     var ang=(Math.PI*2*i)/cnt+(Math.random()-0.5)*0.8;
-    var sp=Math.random()*3.5+1.5,col=colors[Math.floor(Math.random()*colors.length)];
-    var sz=Math.random()*2.5+1.5,lf=Math.random()*25+35;
+    var sp=Math.random()*4.5+2.5,col=colors[Math.floor(Math.random()*colors.length)];
+    var sz=Math.random()*4+3,lf=Math.random()*50+60;
     particles.push(new Particle(x,y,col,Math.cos(ang)*sp,Math.sin(ang)*sp,sz,lf));
   }
-  for(var i=0;i<8;i++){
-    var ang=Math.random()*Math.PI*2,sp=Math.random()*5+2;
-    particles.push(new Particle(x,y,'#fff',Math.cos(ang)*sp,Math.sin(ang)*sp,1.2,18));
+  for(var i=0;i<12;i++){
+    var ang=Math.random()*Math.PI*2,sp=Math.random()*6+3;
+    particles.push(new Particle(x,y,'#fff',Math.cos(ang)*sp,Math.sin(ang)*sp,3,30));
   }
 }
 
 function triggerDust(x,y){
-  for(var i=0;i<12;i++){
-    var ang=Math.PI+(Math.random()-0.5)*1.2;
-    var sp=Math.random()*1.5+0.3,sz=Math.random()*3.5+1.5,lf=Math.random()*12+8;
-    particles.push(new Particle(x,y,'rgba(160,150,140,0.5)',Math.cos(ang)*sp,Math.sin(ang)*sp-0.8,sz,lf,0.08));
+  for(var i=0;i<18;i++){
+    var ang=Math.PI+(Math.random()-0.5)*1.5;
+    var sp=Math.random()*2+0.5,sz=Math.random()*5+2,lf=Math.random()*18+12;
+    particles.push(new Particle(x,y,'rgba(140,130,120,0.6)',Math.cos(ang)*sp,Math.sin(ang)*sp-1.2,sz,lf,0.08));
   }
 }
 
