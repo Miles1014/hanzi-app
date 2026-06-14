@@ -25,31 +25,38 @@ input{font-family:inherit;outline:none}
 #topBar .btn-settings{background:#f5f5f5;color:#888;width:30px;height:30px;border-radius:50%;font-size:.9em;display:flex;align-items:center;justify-content:center;transition:all .2s}
 
 /* 游戏区 */
-#gameArea{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;overflow:hidden;min-height:0}
-#canvasWrapper{position:relative;width:100%;flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
-#gameCanvas{display:block;background:#fff;width:100%;height:100%}
+#gameArea{flex:1;display:flex;align-items:center;justify-content:center;padding:4px;overflow:hidden;min-height:0}
+#canvasWrapper{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+#gameCanvas{display:block;border-radius:12px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.06);width:auto;height:auto;max-width:100%;max-height:100%}
 
-/* 语音识别条（内联版） */
-#recogBar{display:none;align-items:center;justify-content:center;gap:10px;padding:6px 14px;background:#fff;border-top:1px solid #f0f0f0;flex-shrink:0}
-#recogBar.visible{display:flex}
-#recogBar .rb-char{font-size:1.4em;font-weight:bold;color:#333}
-#recogBar .rb-pinyin{font-size:.9em;color:#a18cd1}
-#recogBar .rb-mic{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);color:#fff;font-size:1.3em;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;touch-action:manipulation;transition:all .2s;flex-shrink:0}
-#recogBar .rb-mic:active{transform:scale(.9)}
-#recogBar .rb-mic.listening{animation:micPulse .6s infinite alternate;box-shadow:0 0 18px rgba(161,140,209,0.5)}
-@keyframes micPulse{from{transform:scale(1)}to{transform:scale(1.15)}}
-#recogBar .rb-timer{font-size:1em;font-weight:bold;color:#a18cd1;min-width:22px}
-#recogBar .rb-status{font-size:.82em;color:#888;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#recogBar .rb-skip{font-size:.7em;color:#bbb;background:none;border:none;text-decoration:underline;cursor:pointer;padding:2px 6px}
+/* 识别区提示 */
+#recogHint{position:absolute;right:10px;top:40%;transform:translateY(-50%);background:rgba(255,255,255,0.85);padding:6px 10px;border-radius:8px;font-size:.7em;color:#a18cd1;pointer-events:none;display:none;box-shadow:0 1px 4px rgba(0,0,0,0.08);white-space:nowrap}
+#recogHint.active{display:block}
 
-/* 底部操作按钮 */
-#controls{display:flex;align-items:center;justify-content:center;gap:20px;padding:6px 12px;flex-shrink:0;background:#fff;border-top:1px solid #f0f0f0}
-.ctrl-btn{width:52px;height:52px;border-radius:50%;background:#f0f2ff;color:#6c5ce7;font-size:1.5em;display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation;font-weight:bold;border:2px solid #d5d0f5}
-.ctrl-btn:active{background:#d5d0f5;transform:scale(.9)}
+/* 操作按钮 */
+#controls{display:flex;align-items:center;justify-content:center;gap:24px;padding:8px 16px;flex-shrink:0;background:#fff;border-top:1px solid #e8e8e8;box-shadow:0 -2px 8px rgba(0,0,0,0.04)}
+.ctrl-btn{width:64px;height:64px;border-radius:50%;background:#f0f2ff;color:#6c5ce7;font-size:1.8em;display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation;font-weight:bold;border:2px solid #d5d0f5}
+.ctrl-btn:active{background:#d5d0f5;transform:scale(.92)}
 .ctrl-btn.disabled{opacity:.3;pointer-events:none}
 .ctrl-btn.drop-btn{background:#fff0f0;color:#e74c3c;border-color:#f5c0c0}
 
+/* 语音识别弹窗 - 跟随测验页风格 */
+#voiceOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100;display:none;align-items:center;justify-content:center}
+#voiceOverlay.visible{display:flex}
+.voice-box{background:#fff;border-radius:24px;padding:26px 22px;width:310px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.15)}
+.voice-box .char{font-size:4em;font-weight:bold;color:#333;margin-bottom:4px}
 
+.voice-box .hint{font-size:.85em;color:#999;margin-bottom:12px}
+.voice-box .mic-icon{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);display:flex;align-items:center;justify-content:center;font-size:1.8em;margin:0 auto 8px;transition:all .3s;color:#fff;border:none;cursor:pointer;touch-action:manipulation}
+.voice-box .mic-icon:active{transform:scale(.92)}
+.voice-box .mic-icon.listening{animation:micPulse .6s infinite alternate;box-shadow:0 0 28px rgba(161,140,209,0.5)}
+.voice-box .mic-icon.listening:active{transform:scale(1)}
+@keyframes micPulse{from{transform:scale(1)}to{transform:scale(1.15)}}
+.voice-box .status-text{font-size:.85em;color:#888;min-height:1.3em}
+.voice-box .timer{font-size:1.8em;font-weight:bold;color:#a18cd1;margin-top:4px}
+.voice-box .btn-skip{background:transparent;color:#bbb;padding:6px 16px;border-radius:10px;font-size:.8em;margin-top:8px;text-decoration:underline}
+.voice-box .result-correct{color:#2ecc71;font-size:1.2em;font-weight:bold;margin-top:6px}
+.voice-box .result-wrong{color:#e67e22;font-size:1.2em;font-weight:bold;margin-top:6px}
 
 /* 书写弹窗 */
 #writingOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;display:none;align-items:center;justify-content:center}
@@ -103,8 +110,9 @@ input{font-family:inherit;outline:none}
 /* iPad 适配 */
 @media(min-width:768px){
   #controls{gap:38px;padding:8px 20px}
-  .ctrl-btn{width:64px;height:64px;font-size:1.8em}
-  .rb-mic{width:56px;height:56px;font-size:1.5em}
+  .ctrl-btn{width:68px;height:68px;font-size:1.8em}
+  .voice-box{width:360px}
+  .voice-box .char{font-size:5em}
   .write-box{width:360px}
 }
 </style>
@@ -124,15 +132,7 @@ input{font-family:inherit;outline:none}
 <div id="gameArea">
   <div id="canvasWrapper">
     <canvas id="gameCanvas"></canvas>
-  </div>
-  <div id="recogBar">
-    <span class="rb-char" id="voiceChar">字</span>
-    <span class="rb-pinyin" id="voicePinyin">zi</span>
-    <button class="rb-mic" id="micIcon" onclick="startVoiceRecognition()">🎤</button>
-    <span class="rb-timer" id="voiceTimer">--</span>
-    <span class="rb-status" id="voiceStatus">点击🎤朗读</span>
-    <button class="rb-skip" id="voiceSkipBtn" onclick="skipVoice()" style="display:none">跳过</button>
-    <span id="voiceResult"></span>
+    <div id="recogHint">识别中...</div>
   </div>
 </div>
 
@@ -140,6 +140,18 @@ input{font-family:inherit;outline:none}
   <button class="ctrl-btn" id="btnLeft" ontouchstart="moveLeft()" onclick="moveLeft()">⬅️</button>
   <button class="ctrl-btn drop-btn" id="btnDrop" ontouchstart="dropNow()" onclick="dropNow()">⏬</button>
   <button class="ctrl-btn" id="btnRight" ontouchstart="moveRight()" onclick="moveRight()">➡️</button>
+</div>
+
+<div id="voiceOverlay">
+  <div class="voice-box">
+    <div class="char" id="voiceChar">字</div>
+    <div class="hint" id="voiceHint">点击🎤开始朗读</div>
+    <button class="mic-icon" id="micIcon" onclick="startVoiceRecognition()">🎤</button>
+    <div class="status-text" id="voiceStatus">点击麦克风开始</div>
+    <div class="timer" id="voiceTimer" style="display:none">--</div>
+    <div id="voiceResult"></div>
+    <button class="btn-skip" id="voiceSkipBtn" onclick="skipVoice()">跳过 →</button>
+  </div>
 </div>
 
 <div id="writingOverlay">
@@ -253,11 +265,13 @@ function saveSettingsToStorage(){localStorage.setItem('tetrisSettings',JSON.stri
 function initGrid(){grid=[];for(var c=0;c<COLS;c++){grid[c]=[];for(var r=0;r<ROWS;r++){grid[c][r]=null}}}
 
 function resizeCanvas(){
-  var w=window.innerWidth;
-  var wrapper=document.getElementById('canvasWrapper');
-  var h=wrapper.clientHeight||400;
+  var w=window.innerWidth-8,topH=document.getElementById('topBar').offsetHeight||44;
+  var ctrlH=document.getElementById('controls').offsetHeight||70;
+  var h=window.innerHeight-topH-ctrlH-8;
+  var aspect=COLS/ROWS;
+  var maxW=h*aspect*0.9;if(maxW<w)w=Math.floor(maxW);
   var dpr=Math.min(window.devicePixelRatio||1,2);
-  canvasW=w;canvasH=h;
+  canvasW=w;canvasH=Math.floor(w/aspect);
   canvas.width=canvasW*dpr;canvas.height=canvasH*dpr;
   canvas.style.width=canvasW+'px';canvas.style.height=canvasH+'px';
   ctx.scale(dpr,dpr);
@@ -305,7 +319,7 @@ function startFalling(){
   if(grid[col][0]!==null){endGame();return}
   fallingChar={char:ch,col:col,row:0,pinyin:PINYIN[ch]||''};
   gameState='FALLING';totalProcessed++;
-  document.getElementById('recogBar').classList.remove('active');
+  document.getElementById('recogHint').classList.remove('active');
 }
 
 function dropCharOneRow(){
@@ -343,26 +357,25 @@ function moveRight(){
 // ============================================
 function startRecognition(){
   if(!fallingChar)return;
-  gameState='RECOGNIZING';document.getElementById('recogBar').classList.add('active');
+  gameState='RECOGNIZING';document.getElementById('recogHint').classList.add('active');
   var ch=fallingChar.char,py=formatPinyin(fallingChar.pinyin||'');
   D('识别区激活：'+ch+' ('+py+')');
   document.getElementById('voiceChar').textContent=ch;
-  document.getElementById('voicePinyin').textContent=py;
   document.getElementById('voiceResult').innerHTML='';
-  document.getElementById('voiceStatus').textContent='点击🎤开始朗读';
-  document.getElementById('voiceStatus').textContent='点击🎤朗读';
-  document.getElementById('micIcon').className='rb-mic';
+  document.getElementById('voiceHint').textContent='点击🎤开始朗读';
+  document.getElementById('voiceStatus').textContent='点击麦克风开始';
+  document.getElementById('micIcon').className='mic-icon';
   document.getElementById('micIcon').onclick=startVoiceRecognition;
   document.getElementById('voiceTimer').style.display='none';
-  document.getElementById('voiceSkipBtn').style.display='inline';
-  document.getElementById('recogBar').classList.add('visible');
+  document.getElementById('voiceSkipBtn').style.display='block';
+  document.getElementById('voiceOverlay').classList.add('visible');
   if(recognizer){D('已有持续识别器，直接开始');onVoiceRecognizerReady();}
 }
 
 function onVoiceRecognizerReady(){
-  document.getElementById('micIcon').className='rb-mic listening';
+  document.getElementById('micIcon').className='mic-icon listening';
   document.getElementById('micIcon').onclick=null;
-  document.getElementById('voiceStatus').textContent='正在听...';
+  document.getElementById('voiceHint').textContent='正在听...';
   document.getElementById('voiceStatus').textContent='🎤 请朗读...';
   document.getElementById('voiceTimer').style.display='block';
   document.getElementById('voiceTimer').textContent=gameSettings.timeout;
@@ -431,11 +444,11 @@ function startVoiceRecognition(){
             _recMatchCount++;
             if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
             document.getElementById('voiceResult').innerHTML='<div class="result-correct">✓ 正确！</div>';
-            document.getElementById('micIcon').className='rb-mic';
+            document.getElementById('micIcon').className='mic-icon';
             score+=10;eliminated++;updateStats();
             setTimeout(function(){
-              document.getElementById('recogBar').classList.remove('visible');
-              document.getElementById('recogBar').classList.remove('active');
+              document.getElementById('voiceOverlay').classList.remove('visible');
+              document.getElementById('recogHint').classList.remove('active');
               if(gameState!=='RECOGNIZING')return;
               gameState='SUCCESS';
               if(gameSettings.mode==='both')startWritingBonus(ch);else spawnNext();
@@ -483,9 +496,9 @@ function charMatch(target,text){
 
 function skipVoice(){
   if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
-  document.getElementById('recogBar').classList.remove('visible');
-  document.getElementById('micIcon').className='rb-mic';
-  document.getElementById('recogBar').classList.remove('active');
+  document.getElementById('voiceOverlay').classList.remove('visible');
+  document.getElementById('micIcon').className='mic-icon';
+  document.getElementById('recogHint').classList.remove('active');
   if(gameState!=='RECOGNIZING'||!fallingChar)return;
   stackChar(fallingChar);
 }
@@ -536,11 +549,11 @@ function skipWriting(){if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}wr
 function closeWritingAndContinue(){if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}document.getElementById('writingOverlay').classList.remove('visible');writeCharData=null;spawnNext();}
 
 function onVoiceTimeout(){
-  document.getElementById('micIcon').className='rb-mic';
+  document.getElementById('micIcon').className='mic-icon';
   document.getElementById('voiceTimer').textContent='⏰';
   setTimeout(function(){
-    document.getElementById('recogBar').classList.remove('visible');
-    document.getElementById('recogBar').classList.remove('active');
+    document.getElementById('voiceOverlay').classList.remove('visible');
+    document.getElementById('recogHint').classList.remove('active');
     if(gameState!=='RECOGNIZING'||!fallingChar)return;
     stackChar(fallingChar);
   },400);
@@ -554,7 +567,7 @@ function spawnNext(){fallingChar=null;lastDropTime=performance.now();startFallin
 function endGame(){
   gameState='GAME_OVER';if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;}
   if(recognizer){try{recognizer.abort()}catch(e){}recognizer=null;}
-  document.getElementById('recogBar').classList.remove('visible');
+  document.getElementById('voiceOverlay').classList.remove('visible');
   document.getElementById('writingOverlay').classList.remove('visible');
   document.getElementById('goScore').textContent=score;
   document.getElementById('goElim').textContent=eliminated;
@@ -602,7 +615,7 @@ function drawGame(){
   // 下落字符
   if(fallingChar&&(gameState==='FALLING'||gameState==='RECOGNIZING')){
     var glow=gameState==='RECOGNIZING';
-    drawCharCell(fallingChar.col,fallingChar.row,fallingChar.char,glow?'#e8e0ff':'#e0ecff','#333',glow);
+    drawCharCell(fallingChar.col,fallingChar.row,fallingChar.char,'transparent','#333',glow);
   }
 }
 
@@ -619,7 +632,7 @@ function drawCharCell(col,row,char,bgColor,textColor,glow){
   ctx.closePath();ctx.fill();
   ctx.shadowBlur=0;ctx.shadowColor='transparent';
   ctx.fillStyle=textColor;
-  var fs=Math.max(16,Math.round(cellW*0.42));ctx.font='bold '+fs+'px system-ui';
+  var fs=Math.max(20,Math.round(cellW*0.55));ctx.font='bold '+fs+'px system-ui';
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(char,x+cellW/2,y+cellH/2+1);
 }
 
@@ -650,7 +663,50 @@ function backToDashboard(){
 window.addEventListener('resize',function(){clearTimeout(this._rt);this._rt=setTimeout(resizeCanvas,200)});
 document.addEventListener('keydown',function(e){if(e.key==='ArrowLeft')moveLeft();else if(e.key==='ArrowRight')moveRight();else if(e.key==='ArrowDown')dropNow();});
 window.addEventListener('load',function(){setTimeout(initGame,50)});
-function D(){}
+
+// 诊断面板 - 彻底排查语音识别问题
+var diagEl,diagVisible=true,diagBuf=[];
+
+function D(msg){
+  diagBuf.push(new Date().toLocaleTimeString()+' '+msg);
+  if(diagBuf.length>50)diagBuf.shift();
+  if(diagEl){diagEl.style.display='block';diagEl.innerHTML='<b style="color:#ff0">🎤 语音诊断 ('+diagBuf.length+'条)</b> <span style="color:#aaa;font-size:10px;cursor:pointer" onclick="toggleDiag()">[隐藏] [清空]</span><br>'+diagBuf.join('<br>');diagEl.scrollTop=diagEl.scrollHeight}
+  console.log('[TETRIS-DIAG] '+msg);
+}
+
+function toggleDiag(){
+  diagVisible=!diagVisible;
+  if(diagVisible){diagEl.style.display='block';}else{diagEl.style.display='none';}
+}
+
+// Build diagnostic panel
+diagEl=document.createElement('div');
+diagEl.id='diagPanel';
+diagEl.style.cssText='position:fixed;top:48px;left:6px;right:6px;background:rgba(0,0,0,0.88);color:#0f0;padding:4px 8px;border-radius:8px;font-size:10px;font-family:monospace;z-index:9999;line-height:1.3;max-height:100px;overflow-y:auto';
+diagEl.innerHTML='<b style="color:#ff0">🎤 点击游戏🎤按钮后看这里</b>';
+document.body.appendChild(diagEl);
+// Pre-check browser support
+D('页面加载完成');
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+D('SpeechRecognition API: '+(SR?'✅ 可用':'❌ 不可用'));
+D('浏览器: '+navigator.userAgent.substring(0,80));
+D('PINYIN: '+(typeof PINYIN!=='undefined'?'✅ 已加载 ('+Object.keys(PINYIN).length+'字)':'❌ 未加载'));
+D('HTTPS: '+(location.protocol==='https:'?'✅':'❌ '+location.protocol+' (语音需HTTPS)'));
+
+// 一键诊断按钮
+window.__diagAll=function(){
+  D('--- 全面诊断 ---');
+  D('SpeechRecognition: '+(window.SpeechRecognition?'yes':'no'));
+  D('webkitSpeechRecognition: '+(window.webkitSpeechRecognition?'yes':'no'));
+  D('PINYIN: '+(typeof PINYIN!=='undefined'?'yes('+Object.keys(PINYIN).length+'字)':'no'));
+  D('gameState: '+gameState);
+  D('fallingChar: '+(fallingChar?fallingChar.char+' col='+fallingChar.col:'null'));
+  D('recognizer: '+(recognizer?'exists':'null'));
+  D('gameSettings.speed: '+gameSettings.speed+', mode: '+gameSettings.mode+', timeout: '+gameSettings.timeout);
+};
+D('已就绪，打开游戏等汉字掉到识别区后看上方日志');
+
+console.log('TETRIS DIAG: __diagAll() 打印全面诊断');
 </script>
 </body>
 </html>
