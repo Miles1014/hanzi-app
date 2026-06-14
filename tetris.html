@@ -228,7 +228,7 @@ var canvas,ctx,canvasW=0,canvasH=0,cellW=0,cellH=0;
 var grid=[],fallingChar=null,gameState='IDLE';
 var score=0,eliminated=0,stackedCount=0,totalProcessed=0;
 var animFrameId=null,lastDropTime=0,lastFrameTime=0;
-var recognizer=null,_timerInterval=null,_safetyTimer=null;
+var recognizer=null,_timerInterval=null,_safetyTimer=null,_recMatchCount=0;
 var writeCharData=null,writeWriter=null;
 var charQueue=[],currentProfile=null,currentUser='';
 var gameResultSaved=false,droppedChars=[];
@@ -399,8 +399,15 @@ function startVoiceRecognition(){
   D('SpeechRecognition API: 可用');
 
   try{
+    // 每4次匹配后重建识别器（避免 Safari continuous 模式 results 累积卡死）
+    if(recognizer && _recMatchCount>=4){
+      D('已达4次匹配，重建识别器');
+      try{recognizer.abort()}catch(e){}
+      recognizer=null;
+      _recMatchCount=0;
+    }
     if(recognizer){
-      D('清理旧识别器');
+      D('复用已有识别器');
       try{recognizer.abort()}catch(e){}
       recognizer=null;
     }
@@ -427,7 +434,8 @@ function startVoiceRecognition(){
           var conf=Math.round(e.results[i][j].confidence*100);
           D('  alt['+j+']: "'+spoken+'" (confidence='+conf+'%)');
           if(charMatch(ch,spoken)){
-            D('  ✅ 匹配成功！target="'+ch+'", spoken="'+spoken+'"');
+            D('  ✅ 匹配成功！target="'+ch+'", spoken="'+spoken+'", matchCount='+(_recMatchCount+1));
+            _recMatchCount++;
             if(_timerInterval){clearInterval(_timerInterval);_timerInterval=null;}
             document.getElementById('voiceResult').innerHTML='<div class="result-correct">✓ 正确！</div>';
             document.getElementById('micIcon').className='mic-icon';
@@ -644,7 +652,7 @@ function saveSettings(){gameSettings.speed=parseInt(document.getElementById('set
 function restartGame(){
   document.getElementById('gameOverOverlay').classList.remove('visible');
   if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null}
-  score=0;eliminated=0;stackedCount=0;totalProcessed=0;droppedChars=[];fallingChar=null;gameState='IDLE';gameResultSaved=false;
+  score=0;eliminated=0;stackedCount=0;totalProcessed=0;droppedChars=[];fallingChar=null;gameState='IDLE';gameResultSaved=false;_recMatchCount=0;
   initGrid();buildCharQueue();updateStats();startFalling();
   lastFrameTime=performance.now();lastDropTime=lastFrameTime;animFrameId=requestAnimationFrame(gameLoop);
 }
