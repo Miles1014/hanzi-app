@@ -608,10 +608,10 @@ function finalizeWriting(success,msg){
     '<div style="color:'+(success?'#2ecc71':'#e74c3c')+';font-size:1em;font-weight:bold">'+msg+'</div>';
   var cb=document.getElementById('writeConfirmBtn');cb.style.display='none';
   if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}}
-  // 1.2 秒后自动关闭弹窗，继续游戏
+  // 提交后立即关闭弹窗，让小朋友看到烟花特效
   setTimeout(function(){
     if(writeCharData)closeWritingAndContinue();
-  },1200);
+  },50);
 }
 
 function skipWriting(){
