@@ -558,7 +558,7 @@ function demoCanvasSize(){ return canvasSize(280); }
 function practiceCanvasSize(){ return canvasSize(320); }
 function quizCanvasSize(){ return canvasSize(300); }
 const PROFILE_COLORS = ['#a18cd1','#e74c3c','#2ecc71','#f9a825','#9b59b6','#1abc9c','#e67e22','#3498db'];
-var debugMode=false; // 调试模式：取消学习和汉字限制
+var debugMode=!!JSON.parse(localStorage.getItem('debugMode')||'false');
 const AGE_OPTIONS = [4,5,6,7,8,9,10,11,12];
 
 // =============================================
@@ -2857,6 +2857,7 @@ function editCharStatus(ch){
 // =============================================
 function toggleDebugMode(){
   debugMode=!debugMode;
+  localStorage.setItem('debugMode',JSON.stringify(debugMode));
   var btn=document.getElementById('debugToggle');
   btn.textContent=debugMode?'🔧 调试模式：开':'🔧 调试模式：关';
   btn.className='debug-btn'+(debugMode?' on':'');
@@ -2874,6 +2875,14 @@ function toggleDebugMode(){
 // 启动
 // =============================================
 loadProfiles();
+// 同步调试模式按钮状态
+(function(){
+  var btn=document.getElementById('debugToggle');
+  if(btn){
+    btn.textContent=debugMode?'🔧 调试模式：开':'🔧 调试模式：关';
+    btn.className='debug-btn'+(debugMode?' on':'');
+  }
+})();
 // 如果有已有用户，直接进首页
 if(currentUser&&getProfile()){
   enterDashboard();
