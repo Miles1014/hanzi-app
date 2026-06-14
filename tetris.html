@@ -612,10 +612,12 @@ function drawGame(){
   // 堆叠字符（柔和的颜色）
   for(var c=0;c<COLS;c++){for(var r=0;r<ROWS;r++){var cell=grid[c][r];if(cell)drawCharCell(c,r,cell.char,'#fff0f0','#c0392b');}}
 
-  // 下落字符
+  // 下落字符（只画文字，无背景色、无发光）
   if(fallingChar&&(gameState==='FALLING'||gameState==='RECOGNIZING')){
-    var glow=gameState==='RECOGNIZING';
-    drawCharCell(fallingChar.col,fallingChar.row,fallingChar.char,'transparent','#333',glow);
+    var x=fallingChar.col*cellW+cellW/2,y=fallingChar.row*cellH+cellH/2;
+    ctx.font='bold '+Math.max(22,Math.round(cellW*0.6))+'px system-ui';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#333';ctx.fillText(fallingChar.char,x,y);
   }
 }
 
