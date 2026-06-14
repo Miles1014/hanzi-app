@@ -714,25 +714,25 @@ function triggerFirework(x,y,big){
   for(var i=0;i<cnt;i++){
     var ang=(Math.PI*2*i)/cnt+(Math.random()-0.5)*0.8;
     var sp=Math.random()*6+3,col=colors[Math.floor(Math.random()*colors.length)];
-    var sz=Math.random()*6+4,lf=Math.random()*80+100;
+    var sz=Math.random()*30+20,lf=Math.random()*80+100;
     particles.push(new Particle(x,y,col,Math.cos(ang)*sp,Math.sin(ang)*sp,sz,lf));
   }
   for(var i=0;i<20;i++){
     var ang=Math.random()*Math.PI*2,sp=Math.random()*8+3;
-    particles.push(new Particle(x,y,'#fff',Math.cos(ang)*sp,Math.sin(ang)*sp,4,40));
+    particles.push(new Particle(x,y,'#fff',Math.cos(ang)*sp,Math.sin(ang)*sp,20,40));
   }
 }
 
 function triggerDust(x,y){
   for(var i=0;i<30;i++){
     var ang=Math.PI+(Math.random()-0.5)*1.8;
-    var sp=Math.random()*3+0.8,sz=Math.random()*7+4,lf=Math.random()*25+15;
+    var sp=Math.random()*3+0.8,sz=Math.random()*35+20,lf=Math.random()*25+15;
     particles.push(new Particle(x,y,'rgba(140,120,100,0.7)',Math.cos(ang)*sp,Math.sin(ang)*sp-1.8,sz,lf,0.1));
   }
   // 碎片粒子
   for(var i=0;i<12;i++){
     var ang=Math.PI+(Math.random()-0.5)*2;
-    var sp=Math.random()*4+1.5,sz=Math.random()*4+3,lf=Math.random()*20+10;
+    var sp=Math.random()*4+1.5,sz=Math.random()*20+15,lf=Math.random()*20+10;
     particles.push(new Particle(x,y,'rgba(100,80,60,0.8)',Math.cos(ang)*sp,Math.sin(ang)*sp-0.8,sz,lf,0.2));
   }
 }
