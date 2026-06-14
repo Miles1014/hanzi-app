@@ -71,9 +71,6 @@ input{font-family:inherit;outline:none}
 .write-btn.skip{background:#f0f0f0;color:#888}
 .write-btn.confirm{background:#2ecc71;color:#fff;display:none}
 .write-btn.confirm:disabled{background:#aaa;cursor:wait}
-.write-btn.bonus-result{display:none;padding:10px 26px}
-.write-btn.bonus-result.earned{background:#2ecc71;color:#fff;display:inline-block}
-.write-btn.bonus-result.missed{background:#e74c3c;color:#fff;display:inline-block}
 
 /* 游戏结束弹窗 */
 #gameOverOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:center;justify-content:center}
@@ -167,7 +164,6 @@ input{font-family:inherit;outline:none}
     <div class="write-btn-group">
       <button class="write-btn skip" onclick="skipWriting()">跳过</button>
       <button class="write-btn confirm" id="writeConfirmBtn" onclick="submitWriting()">我写完了 ✓</button>
-      <button class="write-btn bonus-result" id="writeDoneBtn" onclick="closeWritingAndContinue()">继续游戏</button>
     </div>
   </div>
 </div>
@@ -536,7 +532,6 @@ function startWritingBonus(ch){
   var cb=document.getElementById('writeConfirmBtn');
   cb.style.display='none';
   cb.className='write-btn confirm';cb.disabled=false;cb.textContent='✍️ 我写完了';
-  document.getElementById('writeDoneBtn').style.display='none';
   document.getElementById('writingOverlay').classList.add('visible');
   setTimeout(function(){
     var ct=document.getElementById('writeCanvas');ct.innerHTML='';
@@ -612,11 +607,11 @@ function finalizeWriting(success,msg){
   document.getElementById('writeResult').innerHTML=
     '<div style="color:'+(success?'#2ecc71':'#e74c3c')+';font-size:1em;font-weight:bold">'+msg+'</div>';
   var cb=document.getElementById('writeConfirmBtn');cb.style.display='none';
-  var db=document.getElementById('writeDoneBtn');
-  db.textContent=success?'继续游戏 +5分':'继续游戏（不得分）';
-  db.className='write-btn '+(success?'bonus-result earned':'bonus-result missed');
-  db.style.display='inline-block';
   if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}}
+  // 1.2 秒后自动关闭弹窗，继续游戏
+  setTimeout(function(){
+    if(writeCharData)closeWritingAndContinue();
+  },1200);
 }
 
 function skipWriting(){
