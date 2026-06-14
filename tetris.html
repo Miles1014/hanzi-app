@@ -70,8 +70,10 @@ input{font-family:inherit;outline:none}
 .write-btn{padding:8px 22px;border-radius:12px;font-size:.9em;font-weight:bold;transition:all .15s}
 .write-btn.skip{background:#f0f0f0;color:#888}
 .write-btn.confirm{background:#2ecc71;color:#fff;display:none}
+.write-btn.confirm:disabled{background:#aaa;cursor:wait}
 .write-btn.bonus-result{display:none;padding:10px 26px}
 .write-btn.bonus-result.earned{background:#2ecc71;color:#fff;display:inline-block}
+.write-btn.bonus-result.missed{background:#e74c3c;color:#fff;display:inline-block}
 
 /* 游戏结束弹窗 */
 #gameOverOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:center;justify-content:center}
@@ -158,12 +160,12 @@ input{font-family:inherit;outline:none}
   <div class="write-box">
     <h3>✏️ 写一写 赚加分</h3>
     <div class="write-char" id="writeChar">字</div>
-    <div class="write-hint">按笔顺写出这个字，写好了 +5 分</div>
+    <div class="write-hint">先看一遍笔顺，然后自己跟着写一遍</div>
     <div id="writeCanvas"></div>
     <div id="writeResult"></div>
     <div class="write-btn-group">
       <button class="write-btn skip" onclick="skipWriting()">跳过</button>
-      <button class="write-btn confirm" id="writeConfirmBtn" onclick="confirmWriting()">写好了 ✓</button>
+      <button class="write-btn confirm" id="writeConfirmBtn" onclick="submitWriting()">我写完了 ✓</button>
       <button class="write-btn bonus-result" id="writeDoneBtn" onclick="closeWritingAndContinue()">继续游戏</button>
     </div>
   </div>
@@ -514,34 +516,107 @@ function stackChar(cd){
 }
 
 // ============================================
-// 书写加分
+// 书写加分：先演示笔顺，再让小朋友自己写
+// 1) animateCharacter 演示一遍
+// 2) 自动进入 quiz 模式
+// 3) 用户提交后，错误笔数 ≤ 2 才 +5 分
 // ============================================
+var _writeMisses=0;
+var _writeSubmitted=false;
+
 function startWritingBonus(ch){
   gameState='WRITING';writeCharData=ch;
+  _writeMisses=0;_writeSubmitted=false;
   document.getElementById('writeChar').textContent=ch;
-  document.getElementById('writeResult').innerHTML='';
-  var cb=document.getElementById('writeConfirmBtn');cb.style.display='inline-block';cb.className='write-btn confirm';
+  document.getElementById('writeResult').innerHTML='<div style="color:#667eea;font-size:.95em">🎬 先看一遍笔顺演示…</div>';
+  var cb=document.getElementById('writeConfirmBtn');
+  cb.style.display='none';
+  cb.className='write-btn confirm';cb.disabled=false;cb.textContent='我写完了 ✓';
   document.getElementById('writeDoneBtn').style.display='none';
   document.getElementById('writingOverlay').classList.add('visible');
   setTimeout(function(){
     var ct=document.getElementById('writeCanvas');ct.innerHTML='';
     try{
       if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}
-      writeWriter=HanziWriter.create(ct,ch,{width:200,height:200,padding:10,strokeColor:'#333',outlineColor:'#ddd',drawingColor:'#a18cd1',highlightColor:'#667eea',showOutline:true,showHintAfterMisses:2});
-      writeWriter.animateCharacter();
-    }catch(e){ct.innerHTML='<div style="color:#999;padding:80px 0">暂不支持</div>';setTimeout(earnWritingBonus,500)}
+      writeWriter=HanziWriter.create(ct,ch,{
+        width:200,height:200,padding:10,
+        strokeColor:'#333',outlineColor:'#ddd',
+        drawingColor:'#a18cd1',highlightColor:'#667eea',
+        showOutline:true,showHintAfterMisses:2,
+        onMistake:function(){_writeMisses++;}
+      });
+      // 第 1 步：演示笔顺
+      writeWriter.animateCharacter({
+        onComplete:function(){
+          // 第 2 步：演示完，提示小朋友自己写
+          document.getElementById('writeResult').innerHTML='<div style="color:#e67e22;font-size:.95em;font-weight:bold">✍️ 现在轮到你来写啦！</div>';
+          cb.style.display='inline-block';
+          cb.disabled=true;cb.textContent='正在书写…';
+          // 第 3 步：进入 quiz 模式（开启临摹 + 笔顺检测）
+          setTimeout(function(){
+            try{
+              writeWriter.quiz({
+                onCorrectStroke:function(){},
+                onMistake:function(){_writeMisses++;},
+                onComplete:function(){
+                  _writeSubmitted=true;
+                  cb.disabled=false;cb.textContent='提交 ✓';
+                }
+              });
+            }catch(e){
+              cb.disabled=false;cb.textContent='我写完了 ✓';
+            }
+          },200);
+        }
+      });
+    }catch(e){
+      ct.innerHTML='<div style="color:#999;padding:80px 0">暂不支持</div>';
+      cb.style.display='inline-block';cb.disabled=false;cb.textContent='我写完了 ✓';
+    }
   },100);
 }
 
-function confirmWriting(){earnWritingBonus();}
-function earnWritingBonus(){
-  if(!writeCharData)return;score+=5;updateStats();
-  document.getElementById('writeResult').innerHTML='<div style="color:#2ecc71;font-size:1em;font-weight:bold">✓ 书写正确 +5分！</div>';
-  document.getElementById('writeConfirmBtn').style.display='none';
-  var db=document.getElementById('writeDoneBtn');db.textContent='继续游戏';db.className='write-btn bonus-result earned';db.style.display='inline-block';
+// 用户点击"我写完了"时，提交并判定
+function submitWriting(){
+  if(!writeCharData)return;
+  if(!_writeSubmitted){
+    // 还没写完整个字就提交 → 不得分
+    finalizeWriting(false,'写得不够完整，再练习一下！');
+    return;
+  }
+  // 已通过 HanziWriter 完成全部笔画，按错笔数给分
+  if(_writeMisses<=2){
+    finalizeWriting(true,'✓ 书写正确 +5分！');
+  }else{
+    finalizeWriting(false,'笔画有 '+_writeMisses+' 处错误，再仔细一点！');
+  }
 }
-function skipWriting(){if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}document.getElementById('writingOverlay').classList.remove('visible');writeCharData=null;spawnNext();}
-function closeWritingAndContinue(){if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}document.getElementById('writingOverlay').classList.remove('visible');writeCharData=null;spawnNext();}
+
+function finalizeWriting(success,msg){
+  if(success){score+=5;updateStats();}
+  document.getElementById('writeResult').innerHTML=
+    '<div style="color:'+(success?'#2ecc71':'#e74c3c')+';font-size:1em;font-weight:bold">'+msg+'</div>';
+  var cb=document.getElementById('writeConfirmBtn');cb.style.display='none';
+  var db=document.getElementById('writeDoneBtn');
+  db.textContent=success?'继续游戏 +5分':'继续游戏（不得分）';
+  db.className='write-btn '+(success?'bonus-result earned':'bonus-result missed');
+  db.style.display='inline-block';
+  if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}}
+}
+
+function skipWriting(){
+  if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}
+  document.getElementById('writingOverlay').classList.remove('visible');
+  writeCharData=null;_writeMisses=0;_writeSubmitted=false;
+  spawnNext();
+}
+
+function closeWritingAndContinue(){
+  if(writeWriter){try{writeWriter.cancelQuiz()}catch(e){}writeWriter=null}
+  document.getElementById('writingOverlay').classList.remove('visible');
+  writeCharData=null;_writeMisses=0;_writeSubmitted=false;
+  spawnNext();
+}
 
 function onVoiceTimeout(){
   document.getElementById('micIcon').className='mic-icon';
