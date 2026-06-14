@@ -1,5 +1,5 @@
 // 每日汉字打卡 - Service Worker
-const CACHE_NAME = 'hanzi-v4';
+const CACHE_NAME = 'hanzi-v5';
 
 // 安装时预缓存核心资源
 self.addEventListener('install', function(event) {
