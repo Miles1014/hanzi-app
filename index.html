@@ -2,21 +2,22 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>每日汉字打卡 v1.0</title>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.0/dist/hanzi-writer.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4f8;color:#333;min-height:100vh;overflow:hidden}
+html,body{height:100%}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f4f8;color:#333;min-height:100vh;min-height:100dvh;overflow:hidden}
 button{cursor:pointer;font-family:inherit;border:none;outline:none}
 input{font-family:inherit;outline:none}
 
 /* 页面切换 */
-.page{display:none;width:100vw;height:100vh;position:fixed;top:0;left:0}
+.page{display:none;width:100%;height:100vh;height:100dvh;position:fixed;top:0;left:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 .page.visible{display:flex;flex-direction:column}
 
 /* ===== 欢迎页 ===== */
-#welcomePage{background:linear-gradient(135deg,#ff9a9e 0%,#fad0c4 50%,#fbc2eb 100%);align-items:center;justify-content:center;text-align:center;padding:40px 20px}
+#welcomePage{background:linear-gradient(135deg,#ff9a9e 0%,#fad0c4 50%,#fbc2eb 100%);align-items:center;justify-content:center;text-align:center;padding:calc(40px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom))}
 #welcomePage h1{font-size:3em;color:#fff;text-shadow:0 3px 15px rgba(0,0,0,0.15);margin-bottom:6px}
 #welcomePage p{font-size:1.1em;color:rgba(255,255,255,0.85);margin-bottom:30px}
 .welcome-btn{background:#fff;color:#e67e9a;padding:14px 48px;border-radius:50px;font-size:1.2em;font-weight:bold;box-shadow:0 4px 20px rgba(0,0,0,0.1);transition:transform .2s}
@@ -165,7 +166,7 @@ input{font-family:inherit;outline:none}
 .summary-btn.primary:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,0.1)}
 
 /* ===== 家长密码验证 ===== */
-#parentPwdOverlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:200;display:none;align-items:center;justify-content:center}
+#parentPwdOverlay{position:fixed;top:0;left:0;width:100%;height:100dvh;background:rgba(0,0,0,0.45);z-index:200;display:none;align-items:center;justify-content:center}
 #parentPwdOverlay.visible{display:flex}
 .parent-pwd-box{background:#fff;border-radius:20px;padding:28px 24px;width:300px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
 .pwd-header{font-size:1.2em;font-weight:bold;color:#555;margin-bottom:6px}
@@ -183,9 +184,9 @@ input{font-family:inherit;outline:none}
 .pwd-change-btn:hover{color:#999}
 
 /* ===== 日历弹窗 ===== */
-#calendarOverlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center}
+#calendarOverlay{position:fixed;top:0;left:0;width:100%;height:100dvh;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center}
 #calendarOverlay.visible{display:flex}
-.calendar-box{background:#fff;border-radius:24px;padding:20px;width:340px;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.calendar-box{background:#fff;border-radius:24px;padding:20px;width:340px;max-height:80dvh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
 .cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .cal-header h3{font-size:1.1em;color:#333}
 .cal-close{width:32px;height:32px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:.9em;cursor:pointer;transition:background .2s}
@@ -211,9 +212,9 @@ input{font-family:inherit;outline:none}
 .cal-empty{text-align:center;color:#bbb;font-size:.8em;padding:20px 0}
 
 /* ===== 家长面板 ===== */
-#parentOverlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center}
+#parentOverlay{position:fixed;top:0;left:0;width:100%;height:100dvh;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:center;justify-content:center}
 #parentOverlay.visible{display:flex}
-.parent-box{background:#fff;border-radius:24px;padding:20px;width:380px;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.parent-box{background:#fff;border-radius:24px;padding:20px;width:380px;max-height:85dvh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
 .parent-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .parent-header h3{font-size:1.1em;color:#333}
 .parent-close{width:32px;height:32px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:.9em;cursor:pointer;transition:background .2s;border:none}
