@@ -2299,73 +2299,39 @@ function playLearnAnim(){
 // 测验页
 // =============================================
 let quizCharIndex=0,quizWriter2=null,quizMistakes=0,quizCorrectStrokes=0,readingAttempts=0,readingScore=0;
-// 语音识别（方案A：单次识别，continuous:false，永不 abort）
-// 每次点麦克风创建全新 SR 实例并在「用户手势内」start；识别说完自然结束（onend），结果天然清零 → 无堆积
-// 绝不调用 abort()/stop() —— iOS 上 abort 会永久损坏后续麦克风（这正是之前「录音持续失效」的根因）
-// 真机验证：若目标 iPad 的 continuous:false 不触发 onresult，把下面 RECOG_CONTINUOUS 改为 true（降级方案B基线）
+// 语音识别：单 recognizer，continuous:true, interimResults:true，每 4 字重建防累积
 var _activeRec=null;
-var _recActive=false;          // 是否正在识别（已 start 且未 onend）
-var _recMatchedThisChar=false; // 当前字是否已判定通过
-var _recAttempts=0;            // 当前字朗读尝试次数
-var RECOG_CONTINUOUS=false;    // 真机兜底开关，默认 false
+var _recMatchCount=0;
 
-function _newRecognizer(){
+function _createRecognizer(){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR)return null;
-  var rec=new SR();
-  rec.lang='zh-CN';
-  rec.continuous=RECOG_CONTINUOUS;
-  rec.interimResults=true;
-  rec.maxAlternatives=8;
-  rec.onresult=function(e){
-    if(!_recActive)return;
+  if(!SR)return;
+  if(_activeRec){try{_activeRec.onresult=null}catch(e){}try{_activeRec.abort()}catch(e){}}
+  _activeRec=new SR();
+  _activeRec.lang='zh-CN';
+  _activeRec.continuous=true;
+  _activeRec.interimResults=true;
+  _activeRec.maxAlternatives=8;
+  _recMatchCount=0;
+  _activeRec.onresult=function(e){
+    var ra=document.getElementById('quizReadArea');
+    if(ra.style.display==='none')return;
     var ch=document.getElementById('quizCharDisp').textContent;
-    // 只处理新增的「最终结果」，避免 interimResults 高频全量遍历导致 e.results 堆积膨胀
     for(var i=e.resultIndex;i<e.results.length;i++){
-      var r=e.results[i];
-      if(!r.isFinal)continue;
-      for(var j=0;j<r.length;j++){
-        if(charMatch(ch,r[j].transcript)){ _onRecMatch(); return; }
+      for(var j=0;j<e.results[i].length;j++){
+        if(charMatch(ch,e.results[i][j].transcript)){
+          _recMatchCount++;
+          readingScore=readingAttempts===0?100:readingAttempts===1?70:50;
+          document.getElementById('quizReadResult').textContent='读对了！';
+          document.getElementById('quizReadResult').style.color='#2ecc71';
+          document.getElementById('quizReadHint').textContent='发音正确！';
+          document.getElementById('quizMicBtn').classList.remove('listening');
+          enableQuizNext();
+          return;
+        }
       }
     }
   };
-  rec.onerror=function(e){
-    if(e.error==='not-allowed'||e.error==='service-not-allowed'){
-      _recActive=false;
-      var res=document.getElementById('quizReadResult');
-      res.textContent='⚠️ 请允许麦克风'; res.style.color='#e74c3c';
-      document.getElementById('quizMicBtn').classList.remove('listening');
-    }
-    // no-speech / network / aborted 等由 onend 统一收尾，不 abort
-  };
-  rec.onend=function(){
-    _recActive=false;
-    document.getElementById('quizMicBtn').classList.remove('listening');
-    if(!_recMatchedThisChar){
-      // 没读对：提示重试；多次无结果给出自愈提示（iOS 限制下最诚实的恢复手段）
-      if(_recAttempts>=2) document.getElementById('quizReadHint').textContent='没听清，点麦克风再试一次，或点「跳过」';
-      if(_recAttempts>=3){
-        document.getElementById('quizReadResult').textContent='麦克风好像没反应？退出本页重新进入可恢复';
-        document.getElementById('quizReadResult').style.color='#999';
-      }
-    }
-  };
-  return rec;
-}
-
-function _onRecMatch(){
-  _recMatchedThisChar=true;
-  _recActive=false;
-  readingScore=readingAttempts===0?100:readingAttempts===1?70:50;
-  var res=document.getElementById('quizReadResult');
-  res.textContent='读对了！'; res.style.color='#2ecc71';
-  document.getElementById('quizReadHint').textContent='发音正确！';
-  document.getElementById('quizMicBtn').classList.remove('listening');
-  enableQuizNext();
-}
-
-function resetQuizReading(){
-  _recMatchedThisChar=false; _recAttempts=0; _recActive=false;
 }
 
 function charMatch(target,text){
@@ -2387,7 +2353,8 @@ function startQuiz(){
   const p=getProfile();if(!p)return;
   quizCharIndex=0;
   showPage('quizPage');
-  // 识别器改为「按需在点麦克风时创建」（方案A），不在整段测验常驻，从根上消除 e.results 堆积
+  _createRecognizer();
+  try{_activeRec.start()}catch(e){}
   renderQuizChar();
 }
 
@@ -2484,7 +2451,6 @@ function judgeQuizChar(ch){
     btn.disabled=true;
     const ra=document.getElementById('quizReadArea');
     ra.style.display='';
-    resetQuizReading();
     document.getElementById('quizReadHint').textContent='🎤 点麦克风读出这个字';
     document.getElementById('quizReadResult').textContent='';
     document.getElementById('quizMicBtn').classList.remove('listening');
@@ -2497,21 +2463,18 @@ function judgeQuizChar(ch){
 }
 
 function startQuizReading(){
-  if(_recActive)return; // 正在识别中，忽略重复点击（避免重复 start() 抛错）
   var btn=document.getElementById('quizMicBtn');
   var hint=document.getElementById('quizReadHint');
   var result=document.getElementById('quizReadResult');
-  result.textContent=''; result.style.color='';
+  result.textContent='';
+  result.style.color='';
   btn.classList.add('listening');
   hint.textContent='正在听，大声读出来！';
-  readingAttempts=0; _recAttempts++;
-  // TTS 与识别互斥：开始识别前停掉朗读，防止回声被识别且抢麦克风
-  if(window.speechSynthesis){ try{window.speechSynthesis.cancel();}catch(e){} }
-  // 每次朗读都创建全新实例，识别结束即被回收，结果天然不累积
-  _activeRec=_newRecognizer();
-  if(!_activeRec){ hint.textContent='⚠️ 设备不支持语音识别'; return; }
-  try{ _activeRec.start(); _recActive=true; }
-  catch(e){ _recActive=false; btn.classList.remove('listening'); }
+  readingAttempts=0;
+  if(_recMatchCount>=4){
+    _createRecognizer();
+    try{_activeRec.start()}catch(e){}
+  }
 }
 
 function skipQuizReading(){
@@ -2525,7 +2488,7 @@ function skipQuizReading(){
 }
 
 function finishQuiz(){
-  _activeRec=null;
+  if(_activeRec){try{_activeRec.abort()}catch(e){}_activeRec=null;}
   var p=getProfile();if(!p)return;
   p.todayState.quizDone=true;
   saveDailyProgress(p,true);
@@ -2545,7 +2508,7 @@ function enableQuizNext(){
 
 // =============================================
 function goToDashboard(){
-  _activeRec=null;
+  if(_activeRec){try{_activeRec.abort()}catch(e){}_activeRec=null;}
   if(learnWriter){try{learnWriter.cancelQuiz()}catch(e){}learnWriter=null}
   if(quizWriter2){try{quizWriter2.cancelQuiz()}catch(e){}quizWriter2=null}
   // 返回首页时只要有进度就保存记录
@@ -2565,7 +2528,7 @@ function goToDashboard(){
 
 // 切换小朋友
 function switchUser(){
-  _activeRec=null;
+  if(_activeRec){try{_activeRec.abort()}catch(e){}_activeRec=null;}
   if(learnWriter){try{learnWriter.cancelQuiz()}catch(e){}learnWriter=null}
   if(quizWriter2){try{quizWriter2.cancelQuiz()}catch(e){}quizWriter2=null}
   showProfilePage();
